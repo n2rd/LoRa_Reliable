@@ -231,10 +231,8 @@ void heltec_deep_sleep(int seconds = 0) {
   pinMode(SCL_OLED, INPUT);
   pinMode(RST_OLED, INPUT);
   // Set button wakeup if applicable
-  #ifdef HELTEC_POWER_BUTTON
-    esp_sleep_enable_ext0_wakeup(BUTTON, LOW);
-    button.waitForRelease();
-  #endif
+  esp_sleep_enable_ext0_wakeup(BUTTON, LOW);
+  button.waitForRelease();
   // Set timer wakeup if applicable
   if (seconds > 0) {
     esp_sleep_enable_timer_wakeup((int64_t)seconds * 1000000);
