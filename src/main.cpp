@@ -16,7 +16,7 @@
 #define SERVER_ADDRESS 1  
 #define MY_ADDRESS 1
 #define DEFAULT_FREQUENCY 905.2
-#define DEFAULT_POWER_INDEX 6     //0.0dBm see table below
+#define DEFAULT_POWER_INDEX 6     //22 dBm see table below
 #define DEFAULT_MODULATION_INDEX 7      //see LoRa settings table below
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 
