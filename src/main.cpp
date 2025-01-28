@@ -15,9 +15,9 @@
 #define ADDRESS_MAX 4 //use 1 for server, others are all clients
 #define SERVER_ADDRESS 1  
 #define MY_ADDRESS 1
-#define DEFAULT_FREQUENCY 915.0
-#define DEFAULT_POWER_INDEX 2     //0.0dBm see table below
-#define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
+#define DEFAULT_FREQUENCY 905.2
+#define DEFAULT_POWER_INDEX 6     //0.0dBm see table below
+#define DEFAULT_MODULATION_INDEX 7      //see LoRa settings table below
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 
 // Pause between transmited packets in seconds.
