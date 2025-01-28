@@ -9,12 +9,14 @@
 // Turns the 'PRG' button into the power button, long press is off 
 #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
 
+//version
+#define VERSION "16:24 28-1-2025"
 //
 // SETUP Parameters
 //
 #define ADDRESS_MAX 5 //use 1 for server, others are all clients
 #define SERVER_ADDRESS 1  
-#define MY_ADDRESS 4
+#define MY_ADDRESS 1
 #define DEFAULT_FREQUENCY 905.2
 #define DEFAULT_POWER_INDEX 6     //see table below 
 #define DEFAULT_MODULATION_INDEX 7      //see LoRa settings table below
@@ -123,7 +125,15 @@ void setup()
   display.flipScreenVertically();
 
 
-  //set up the radio with default values
+  //start the radio
+  if (manager.init()) 
+  {
+    both.printf("Radio Started as #%i\n Version: ", MY_ADDRESS); 
+    both.println(VERSION);
+  } else {
+    both.println("Radio failed to initialize");
+  }
+
   power_index = DEFAULT_POWER_INDEX;
   modulation_index = DEFAULT_MODULATION_INDEX;
   both.printf("Starting Radio at %.1f MHz\n", DEFAULT_FREQUENCY);
@@ -143,15 +153,6 @@ void setup()
   // Battery
   float vbat = heltec_vbat();
   both.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));
-
-  //start the radio
-  if (manager.init()) 
-  {
-    both.printf("Radio Started as #%i\n", MY_ADDRESS); 
-  } else {
-    both.println("Radio failed to initialize");
-  }
-
 //messages
 //   both.println("Single click to change power");
 //   both.println("Double click to change modulation");
