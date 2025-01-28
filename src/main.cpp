@@ -12,11 +12,11 @@
 //
 // SETUP Parameters
 //
-#define ADDRESS_MAX 4 //use 1 for server, others are all clients
+#define ADDRESS_MAX 5 //use 1 for server, others are all clients
 #define SERVER_ADDRESS 1  
-#define MY_ADDRESS 1
+#define MY_ADDRESS 4
 #define DEFAULT_FREQUENCY 905.2
-#define DEFAULT_POWER_INDEX 6     //22 dBm see table below
+#define DEFAULT_POWER_INDEX 6     //see table below 
 #define DEFAULT_MODULATION_INDEX 7      //see LoRa settings table below
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 
@@ -195,10 +195,12 @@ void loop()
       both.println("sendtoWait failed");
       }
       counter++;
-      uint8_t len = sizeof(buf);
-      uint8_t from;
-      manager.recvfromAckTimeout(buf, &len, 2000, &from);
-      both.printf("From %i: %s\n",from, (char*)buf);
+      if (manager.waitAvailableTimeout(1000)) {
+        uint8_t len = sizeof(buf);
+        uint8_t from;
+        manager.recvfrom(buf, &len, &from);
+        both.printf("From %i: %s\n",from, (char*)buf);
+      }
     } //legal to transmit
   } // as a client
 }
