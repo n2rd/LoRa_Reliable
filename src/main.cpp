@@ -14,7 +14,7 @@
 //
 #define ADDRESS_MAX 4 //use 1 for server, others are all clients
 #define SERVER_ADDRESS 1  
-#define MY_ADDRESS 1
+#define MY_ADDRESS 3
 #define DEFAULT_FREQUENCY 905.2
 #define DEFAULT_POWER_INDEX 6     //22 dBm see table below
 #define DEFAULT_MODULATION_INDEX 7      //see LoRa settings table below
@@ -192,13 +192,14 @@ void loop()
       {
         both.printf("Sent %s\n", data);
       } else {
-      both.println("sendtoWait failed");
+        both.println("sendtoWait failed");
       }
       counter++;
       uint8_t len = sizeof(buf);
-      uint8_t from;
+      uint8_t from = 0;
       manager.recvfromAckTimeout(buf, &len, 2000, &from);
-      both.printf("From %i: %s\n",from, (char*)buf);
+      if (from != 0)
+        both.printf("From %i: %s\n",from, (char*)buf);
     } //legal to transmit
   } // as a client
 }
