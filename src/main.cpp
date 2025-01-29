@@ -10,7 +10,7 @@
 #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
 
 //version
-#define VERSION "16:24 28-1-2025"
+#define VERSION "16:25 29-1-2025"
 //
 // SETUP Parameters
 //
@@ -18,14 +18,14 @@
 #define SERVER_ADDRESS 1  
 #define MY_ADDRESS 3
 #define DEFAULT_FREQUENCY 905.2
-#define DEFAULT_POWER_INDEX 6     //see table below 
-#define DEFAULT_MODULATION_INDEX 7      //see LoRa settings table below
+#define DEFAULT_POWER_INDEX 6     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+#define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 
 // Pause between transmited packets in seconds.
 #define PAUSE       20  // client, time between transmissions
-#define TIMEOUT   200  //for sendtoWait
-#define RETRIES   3     //for sendtoWait
+#define TIMEOUT     200  //for sendtoWait
+#define RETRIES     3     //for sendtoWait
 
 #include <SPI.h>
 #include <RH_SX126x.h>
@@ -128,15 +128,18 @@ void setup()
   //start the radio
   if (manager.init()) 
   {
-    both.printf("Radio Started as #%i\n Version: ", MY_ADDRESS); 
-    both.println(VERSION);
+    both.printf("V %s\n", VERSION); 
   } else {
     both.println("Radio failed to initialize");
   }
 
   power_index = DEFAULT_POWER_INDEX;
   modulation_index = DEFAULT_MODULATION_INDEX;
-  both.printf("Starting Radio at %.1f MHz\n", DEFAULT_FREQUENCY);
+  if (MY_ADDRESS == 1) {
+    both.printf("Server %.1f MHz\n", DEFAULT_FREQUENCY);
+  } else {
+    both.printf("Client #%i at %.1f MHz\n", MY_ADDRESS, DEFAULT_FREQUENCY);
+  }
   both.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
   driver.setFrequency(DEFAULT_FREQUENCY);
   //default modulation, get details from PROGMEM
@@ -156,6 +159,7 @@ void setup()
 //messages
 //   both.println("Single click to change power");
 //   both.println("Double click to change modulation");
+//lets query it all back from the receiver
 }
 
 void loop()
@@ -166,22 +170,30 @@ void loop()
   //now operate in different roles
   if (MY_ADDRESS == 1)  //serving as a server
   {
-    if (manager.available())  //true if data is available
+    if (manager.available())  //message has come in
     {
       // Wait for a message addressed to us from the client
       uint8_t len = sizeof(buf);
       uint8_t from;
-      manager.recvfromAck(buf, &len, &from);
-      int snr = driver.lastSNR();
-      int rssi = driver.lastRssi();
-      both.printf("From %i: %s\n",from, (char*)buf);
-      both.printf("RSSI: %i   SNR: %i\n", rssi, snr);
-      //now send a report back to the client
-      sprintf((char *)data, "RSSI %i SNR %i\n", rssi, snr);
-      manager.sendto(data, sizeof(data), from);
+      uint8_t to;
+      uint8_t id;
+      uint8_t flags;
+      if (manager.recvfromAck(buf, &len, &from, &to, &id, &flags))
+      {
+        int snr = driver.lastSNR();
+        int rssi = driver.lastRssi();
+        both.printf("From %i: %s\n",from, (char*)buf);
+        both.printf("RSSI: %i   SNR: %i\n", rssi, snr);
+        both.printf("to %i  id %i flags %i\n", to, id, flags);
+        // Send a reply back to the originator client
+        sprintf((char *)data, "RSSI %i SNR %i\n", rssi, snr);
+        //manager.sendtoWait(data, sizeof(data), from);
+        if (!manager.sendtoWait(data, sizeof(data), from))
+          Serial.println("sendtoWait failed");
+      }
     }
-  }  
-  
+  }  //address 1 SERVER
+
   if (MY_ADDRESS > 1)  //serving as a client
   {  
     // Send a message to manager_server
@@ -189,22 +201,33 @@ void loop()
     {
       tx_time = millis();
       sprintf((char *)data, "%i", counter);
+      //now let us reset transmission count
+      manager.resetRetransmissions();
+      both.printf("Sending %s\n", data);
       if (manager.sendtoWait(data, sizeof(data), SERVER_ADDRESS))
       {
-        both.printf("Sent %s\n", data);
+        int retransmisison_count = manager.retransmissions();
+        both.printf("Sent %s (retrans %i)\n", data, retransmisison_count);
+        // Now wait for a reply from the server
+        uint8_t len = sizeof(buf);
+        uint8_t from;   
+        if (manager.recvfromAckTimeout(buf, &len, 2000, &from))
+        {
+          Serial.print("got reply from : 0x");
+          Serial.print(from, HEX);
+          Serial.print(": ");
+          Serial.println((char*)buf);
+        } else {
+          Serial.println("No reply, is rf95_reliable_datagram_server running?");
+        }
       } else {
-        both.println("sendtoWait failed");
+        int retransmisison_count = manager.retransmissions();
+        both.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
       }
       counter++;
-      if (manager.waitAvailableTimeout(1000)) {
-        uint8_t len = sizeof(buf);
-        uint8_t from;
-        manager.recvfrom(buf, &len, &from);
-        both.printf("From %i: %s\n",from, (char*)buf);
-      }
     } //legal to transmit
   } // as a client
-}
+} //loop
 
 
 void check_button() 
