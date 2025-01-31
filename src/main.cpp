@@ -10,7 +10,7 @@
 #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
 
 //version
-#define VERSION "16:25 29-1-2025"
+#define VERSION "20:05 30-1-2025"
 //
 // SETUP Parameters
 //
@@ -183,12 +183,31 @@ void loop()
         int snr = driver.lastSNR();
         int rssi = driver.lastRssi();
         both.printf("From %i: %s\n",from, (char*)buf);
-        both.printf("RSSI: %i   SNR: %i\n", rssi, snr);
-        both.printf("to %i  id %i flags %i\n", to, id, flags);
+        both.printf("RSSI %i   SNR %i flags: %i\n", rssi, snr, flags);
         // Send a reply back to the originator client
-        sprintf((char *)data, "RSSI %i SNR %i\n", rssi, snr);
-        //manager.sendtoWait(data, sizeof(data), from);
-        if (!manager.sendtoWait(data, sizeof(data), from))
+        char* data_st = "SS -123 SNR +12 R Y"; 
+        rssi = abs(rssi);
+        data_st[4] = static_cast<char>('0' + rssi /100 % 10);
+        data_st[5] = static_cast<char>('0' + rssi /10 % 10);
+        data_st[6] = static_cast<char>('0' + rssi % 10);
+        if (snr >= 0) 
+        { 
+          data_st[12] = '+';
+        } else {
+          data_st[12] = '-';
+        }
+        snr = abs(snr);
+        data_st[13] = static_cast<char>('0' + snr/10 % 10);
+        data_st[14] = static_cast<char>('0' + snr % 10);
+
+        if (flags & 0x40) 
+        { 
+          data_st[18] = 'Y';
+        } else {
+          data_st[18] = 'N';
+        }
+
+        if (!manager.sendtoWait((uint8_t *)data_st, 18, from))
           Serial.println("sendtoWait failed");
       }
     }
@@ -200,25 +219,31 @@ void loop()
     if (millis() - tx_time > PAUSE * 1000) 
     {
       tx_time = millis();
-      sprintf((char *)data, "%i", counter);
+      data[0] = 'C';
+      data[1] = '#';
+      data[2] = static_cast<char>('0' + counter / 100 % 10);
+      data[3] = static_cast<char>('0' + counter / 10 % 10); 
+      data[4] = static_cast<char>('0' + counter % 10);
       //now let us reset transmission count
       manager.resetRetransmissions();
-      both.printf("Sending %s\n", data);
-      if (manager.sendtoWait(data, sizeof(data), SERVER_ADDRESS))
+      if (manager.sendtoWait((uint8_t *)data, 5, SERVER_ADDRESS))
       {
         int retransmisison_count = manager.retransmissions();
-        both.printf("Sent %s (retrans %i)\n", data, retransmisison_count);
+        both.print("Sent ");
+        for(int i=0; i<5; i++) 
+        {
+          both.print(static_cast<char>(data[i]));
+        }
+        both.printf(" retrans = %i\n", retransmisison_count);
+
         // Now wait for a reply from the server
         uint8_t len = sizeof(buf);
         uint8_t from;   
         if (manager.recvfromAckTimeout(buf, &len, 2000, &from))
         {
-          Serial.print("got reply from : 0x");
-          Serial.print(from, HEX);
-          Serial.print(": ");
-          Serial.println((char*)buf);
+          both.printf("%i-> %s\n", from, (char*)buf);
         } else {
-          Serial.println("No reply, is rf95_reliable_datagram_server running?");
+          both.println("No return reply");
         }
       } else {
         int retransmisison_count = manager.retransmissions();
