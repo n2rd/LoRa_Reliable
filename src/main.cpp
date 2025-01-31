@@ -10,14 +10,25 @@
 #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
 
 //version
-#define VERSION "15:01 31-1-2025"
+#define VERSION "16:03 31-1-2025"
 //
 // SETUP Parameters
 //
-#define ADDRESS_MAX 5 //use 1 for server, others are all clients
+#define ADDRESS_MAX 9 //use 1 for server, others are all clients
 #define SERVER_ADDRESS 1  
-#define MY_ADDRESS 1
+#define MY_ADDRESS 1    //Raj Server
+//#define MY_ADDRESS 2    //Ron, Fixed
+//#define MY_ADDRESS 3    //Keith, Fixed
+//#define MY_ADDRESS 4    //Raj, Portable
+//#define MY_ADDRESS 5    //Raj, experimentation
+//#define MY_ADDRESS 6    //Raj, experimentation
+//#define MY_ADDRESS 7    //Ron, portable
+//#define MY_ADDRESS 8    //Keith, Portable
+//#define MY_ADDRESS 9    //Spare
 
+//
+//EXPERIMENTATION
+//
 //#define DEBUG  1 //comment this line out for production
 #ifdef DEBUG
   #define DEFAULT_FREQUENCY 915.0
