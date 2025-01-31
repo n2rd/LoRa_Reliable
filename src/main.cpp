@@ -10,16 +10,25 @@
 #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
 
 //version
-#define VERSION "20:05 30-1-2025"
+#define VERSION "15:01 31-1-2025"
 //
 // SETUP Parameters
 //
 #define ADDRESS_MAX 5 //use 1 for server, others are all clients
 #define SERVER_ADDRESS 1  
 #define MY_ADDRESS 1
-#define DEFAULT_FREQUENCY 905.2
-#define DEFAULT_POWER_INDEX 6     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
-#define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
+
+//#define DEBUG  1 //comment this line out for production
+#ifdef DEBUG
+  #define DEFAULT_FREQUENCY 915.0
+  #define DEFAULT_POWER_INDEX 0     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
+#else
+  #define DEFAULT_FREQUENCY 905.2
+  #define DEFAULT_POWER_INDEX 6     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
+#endif
+
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 
 // Pause between transmited packets in seconds.
@@ -185,7 +194,7 @@ void loop()
         both.printf("From %i: %s\n",from, (char*)buf);
         both.printf("RSSI %i   SNR %i flags: %i\n", rssi, snr, flags);
         // Send a reply back to the originator client
-        char* data_st = "SS -123 SNR +12 R Y"; 
+        char* data_st = "SS -123 SNR +12 RY"; 
         rssi = abs(rssi);
         data_st[4] = static_cast<char>('0' + rssi /100 % 10);
         data_st[5] = static_cast<char>('0' + rssi /10 % 10);
@@ -202,9 +211,9 @@ void loop()
 
         if (flags & 0x40) 
         { 
-          data_st[18] = 'Y';
+          data_st[17] = 'Y';
         } else {
-          data_st[18] = 'N';
+          data_st[17] = 'N';
         }
 
         if (!manager.sendtoWait((uint8_t *)data_st, 18, from))
@@ -242,6 +251,9 @@ void loop()
         if (manager.recvfromAckTimeout(buf, &len, 2000, &from))
         {
           both.printf("%i-> %s\n", from, (char*)buf);
+          int snr = driver.lastSNR();
+          int rssi = driver.lastRssi();
+          both.printf("%i <- RSSI %i   SNR %i\n", MY_ADDRESS, rssi, snr);
         } else {
           both.println("No return reply");
         }
