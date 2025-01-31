@@ -6,7 +6,7 @@
 #define USB_VID 0x303a
 #define USB_PID 0x820A
 
-static const uint8_t LED_BUILTIN = 37;
+static const uint8_t LED_BUILTIN = 25;
 #define BUILTIN_LED LED_BUILTIN  // backward compatibility
 #define LED_BUILTIN LED_BUILTIN  // allow testing #ifdef LED_BUILTIN
 
@@ -16,8 +16,8 @@ static const uint8_t BAT_VOLT = 1;
 static const uint8_t TX = 43;
 static const uint8_t RX = 44;
 
-static const uint8_t SDA = 18;
-static const uint8_t SCL = 17;
+static const uint8_t SDA = 21;
+static const uint8_t SCL = 22;
 
 #define WIRE1_PIN_DEFINED  //QWIIC
 static const uint8_t SDA1 = 10;
@@ -25,7 +25,7 @@ static const uint8_t SCL1 = 21;
 
 // SD Card SPI
 static const uint8_t SS = 13;
-static const uint8_t MOSI = 11;
+static const uint8_t MOSI = 15;
 static const uint8_t MISO = 2;
 static const uint8_t SCK = 14;
 
@@ -39,12 +39,12 @@ static const uint8_t SCK = 14;
 
 //Need to undef or comment out the LORA_xxxxx if they don't match the defines else where
 //#define LORA_BUSY 33
-#define LORA_DIO0 26  //IRQ
-#define LORA_DIO1 33
-#define LORA_DIO2 34
-#define LORA_DIO3 21
-#define LORA_DIO4 10
-#define LORA_DIO5 36
+#define LORA_DIO0 26  //IRQ for RxDone, TxDone, CadDone
+#define LORA_DIO1 33  //IRQ for RxTimeout,FhssChangeChannel, CadDetected
+#define LORA_DIO2 32  //IRQ for FhssChangeChannel
+#define LORA_DIO3 NC
+#define LORA_DIO4 NC
+#define LORA_DIO5 NC
 
 #define LORA_IRQ  LORA_DIO0
 #define LORA_BUSY LORA_DIO1
