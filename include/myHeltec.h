@@ -47,9 +47,9 @@
 #define RST_LoRa  GPIO_NUM_12
 #define BUSY_LoRa GPIO_NUM_13
 // Display pins
-#define SDA_OLED  GPIO_NUM_17
-#define SCL_OLED  GPIO_NUM_18
-#define RST_OLED  GPIO_NUM_21
+#define SDA_OLED  GPIO_NUM_21
+#define SCL_OLED  GPIO_NUM_22
+//#define RST_OLED  GPIO_NUM_21
 
 // #ifdef HELTEC_NO_RADIOLIB
 //   #define HELTEC_NO_RADIO_INSTANCE
@@ -239,7 +239,9 @@ void heltec_deep_sleep(int seconds = 0) {
   pinMode(SCK, INPUT);
   pinMode(SDA_OLED, INPUT);
   pinMode(SCL_OLED, INPUT);
+  #ifdef RST_OLED
   pinMode(RST_OLED, INPUT);
+  #endif
   // Set button wakeup if applicable
   esp_sleep_enable_ext0_wakeup(BUTTON, LOW);
   button.waitForRelease();
@@ -359,12 +361,14 @@ void heltec_display_power(bool on) {
         heltec_ve(true);
         delay(5);
       #endif
+      #ifdef RST_OLED
       pinMode(RST_OLED, OUTPUT);
       digitalWrite(RST_OLED, HIGH);
       delay(1);
       digitalWrite(RST_OLED, LOW);
       delay(20);
       digitalWrite(RST_OLED, HIGH);
+      #endif
     } else {
       #ifdef HELTEC_WIRELESS_STICK
         heltec_ve(false);
