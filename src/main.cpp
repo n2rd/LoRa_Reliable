@@ -15,8 +15,13 @@
 // SETUP Parameters
 //
 #define ADDRESS_MAX 5 //use 1 for server, others are all clients
-#define SERVER_ADDRESS 1  
+#define SERVER_ADDRESS 1
+#warning "Fix this after debugging done"
+#ifndef ARDUINO_LILYGO_T3_V1_6_1  
+#define MY_ADDRESS 3
+#else
 #define MY_ADDRESS 1
+#endif
 #define DEFAULT_FREQUENCY 905.2
 #define DEFAULT_POWER_INDEX 6     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
 #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
@@ -149,8 +154,10 @@ void DisplayFailures(int fail_count) {
 
 void setup() 
 {
+  #ifdef ARDUINO_LILYGO_T3_V1_6_1
   pinMode(LED_BUILTIN, OUTPUT);
   SPI.begin(LORA_SCK,LORA_MISO,LORA_MOSI,LORA_CS);
+  #endif
   Serial.begin(115200);
   while (!Serial) ; // Wait for serial port to be available
   delay(5000);
@@ -190,6 +197,7 @@ void setup()
   } else {
     both.printf("Client #%i at %.1f MHz\n", MY_ADDRESS, DEFAULT_FREQUENCY);
   }
+  both.printf("modulation_index= %d\n",modulation_index);
   both.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
   driver.setFrequency(DEFAULT_FREQUENCY);
   //default modulation, get details from PROGMEM
@@ -199,7 +207,7 @@ void setup()
   driver.setModemRegisters(&cfg);
   driver.setTxPower(power[power_index]);
   #define DEBUG_INCOMING_PACKETS
-  #ifdef DEBUG_INCOMING_PACKETS
+  #if defined(DEBUG_INCOMING_PACKETS) && defined(ARDUINO_LILYGO_T3_V1_6_1)
   driver.setPayloadCRC(false);
   driver.setPromiscuous(true);
   #endif
@@ -343,6 +351,7 @@ void check_button()
     //else show current value
     if (button_time > 2000 ) 
     {
+      Serial.printf("modulation_index= %d\n");
       both.printf("Current Modulation %i %s\n", MY_CONFIG_NAME[modulation_index]);
       both.println("Double press button to change\n");
     } else {
