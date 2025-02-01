@@ -36,3 +36,18 @@ LoRa settings that are used for Meshtastic
 
   A _long press_ (more than 1 sec long) puts the units into deep sleep, making it safe to change the antenna
   
+**Logging**
+
+Sent to serial port, in CSV format
+```
+/***  logging format ***
+*  server
+*     millis, from, counter, rssi, snr, send_report_back_status
+* 
+*  client
+*   successful
+*     millis, counter, rssi, snr, rssi_reported_by_server, snr_report 
+*   failed
+*     millis, counter, "failed"
+*/
+'''
