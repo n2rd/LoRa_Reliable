@@ -25,17 +25,20 @@
 // SETUP Parameters
 //
 #define ADDRESS_MAX 9 //use 1 for server, others are all clients
-#define SERVER_ADDRESS 1 //Do not change 
-#define MY_ADDRESS 1    //Raj Server
+#define SERVER_ADDRESS 1 //Do not change
+#ifdef ARDUINO_LILYGO_T3_V1_6_1  
+#define MY_ADDRESS 1    //LILYGO BOARD server
+#else
+//#define MY_ADDRESS 1    //Raj Server
 //#define MY_ADDRESS 2    //Ron, Fixed
-//#define MY_ADDRESS 3    //Keith, Fixed
+#define MY_ADDRESS 3    //Keith, Fixed
 //#define MY_ADDRESS 4    //Raj, Portable
 //#define MY_ADDRESS 5    //Raj, experimentation
 //#define MY_ADDRESS 6    //Raj, experimentation
 //#define MY_ADDRESS 7    //Ron, portable
 //#define MY_ADDRESS 8    //Keith, Portable
 //#define MY_ADDRESS 9    //Spare
-
+#endif
 //
 //EXPERIMENTATION
 //
@@ -347,7 +350,7 @@ void loop()
       } else {
         int retransmisison_count = manager.retransmissions();
         display.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
-        Serial.printf("%i, %i, Failed", millis(), counter);
+        Serial.printf("%i, %i, Failed\n", millis(), counter);
         DisplayFailures(Failure_Counter++);
       }
       counter++;
