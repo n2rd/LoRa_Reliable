@@ -91,7 +91,7 @@ RH_RF95 driver(LORA_CS, LORA_DIO0);
 // These are indexed by the values of ModemConfigChoice
 // Stored in flash (program) memory to save SRAM
 #ifndef ARDUINO_LILYGO_T3_V1_6_1
-PROGMEM static const RH_SX126x::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX 9] =
+PROGMEM static const RH_SX126x::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX] =
 {
     //  packetType, p1, p2, p3, p4, p5, p6, p7, p8
      // 0 Short Turbo
@@ -332,12 +332,13 @@ void loop()
   if (MY_ADDRESS > 1)  //serving as a client
   {  
     // Send a message to manager_server
-    if (millis() - tx_time > PAUSE * 1000) 
+    if ((millis() - tx_time) > (PAUSE * 1000)) 
     {
       tx_time = millis();
       data[0] = static_cast<uint8_t>(counter & 0xFF); //low byte
       data[1] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
       manager.resetRetransmissions();
+      Serial.printf("before manager.sendtowait line %d in %s\n",__LINE__,__FILE__);
       if (manager.sendtoWait((uint8_t *)data, 2, SERVER_ADDRESS))
       {
         int retransmisison_count = manager.retransmissions();
