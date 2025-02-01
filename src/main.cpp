@@ -10,10 +10,46 @@
 #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
 
 //version
-#define VERSION "16:25 29-1-2025"
-//
+#define VERSION "10:00 01-2-2025"  // 2 bytes packet payload, logging data as csv on serial port
+/***  logging format ***
+*  server
+*     millis, from, counter, rssi, snr, send_report_back_status
+* 
+*  client
+*   successful
+*     millis, counter, rssi, snr, rssi_reported_by_server, snr_report 
+*   failed
+*     millis, counter, "failed"
+*/
+
 // SETUP Parameters
 //
+#define ADDRESS_MAX 9 //use 1 for server, others are all clients
+#define SERVER_ADDRESS 1 //Do not change 
+#define MY_ADDRESS 1    //Raj Server
+//#define MY_ADDRESS 2    //Ron, Fixed
+//#define MY_ADDRESS 3    //Keith, Fixed
+//#define MY_ADDRESS 4    //Raj, Portable
+//#define MY_ADDRESS 5    //Raj, experimentation
+//#define MY_ADDRESS 6    //Raj, experimentation
+//#define MY_ADDRESS 7    //Ron, portable
+//#define MY_ADDRESS 8    //Keith, Portable
+//#define MY_ADDRESS 9    //Spare
+
+//
+//EXPERIMENTATION
+//
+//#define DEBUG  1 //comment this line out for production
+#ifdef DEBUG
+  #define DEFAULT_FREQUENCY 915.0
+  #define DEFAULT_POWER_INDEX 0     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
+#else
+  #define DEFAULT_FREQUENCY 905.2
+  #define DEFAULT_POWER_INDEX 6     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
+#endif
+
 #define ADDRESS_MAX 5 //use 1 for server, others are all clients
 #define SERVER_ADDRESS 1
 #warning "Fix this after debugging done"
@@ -130,7 +166,7 @@ uint8_t data[20];
 uint8_t buf[DRIVER_MAX_MESSAGE_LEN];
 
 //message management
-long counter = 0;
+uint16_t counter = 0;
 uint64_t tx_time = 0;
 
 //button presses
@@ -183,9 +219,9 @@ void setup()
   //start the radio
   if (manager.init()) 
   {
-    both.printf("V %s\n", VERSION); 
+    display.printf("V %s\n", VERSION); 
   } else {
-    both.println("Radio failed to initialize");
+    display.println("Radio failed to initialize");
     both.println("HALTING");
     while (1);
   }
@@ -193,12 +229,11 @@ void setup()
   power_index = DEFAULT_POWER_INDEX;
   modulation_index = DEFAULT_MODULATION_INDEX;
   if (MY_ADDRESS == 1) {
-    both.printf("Server %.1f MHz\n", DEFAULT_FREQUENCY);
+    display.printf("Server %.1f MHz\n", DEFAULT_FREQUENCY);
   } else {
-    both.printf("Client #%i at %.1f MHz\n", MY_ADDRESS, DEFAULT_FREQUENCY);
+    display.printf("Client #%i at %.1f MHz\n", MY_ADDRESS, DEFAULT_FREQUENCY);
   }
-  both.printf("modulation_index= %d\n",modulation_index);
-  both.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
+  display.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
   driver.setFrequency(DEFAULT_FREQUENCY);
   //default modulation, get details from PROGMEM
 
@@ -218,7 +253,7 @@ void setup()
 
   // Battery
   float vbat = heltec_vbat();
-  both.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));
+  display.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));
 //messages
 //   both.println("Single click to change power");
 //   both.println("Double click to change modulation");
@@ -260,16 +295,18 @@ void loop()
       {
         int snr = driver.lastSNR();
         int rssi = driver.lastRssi();
-        both.printf("From %i: %s\n",from, (char*)buf);
-        both.printf("RSSI: %i   SNR: %i\n", rssi, snr);
-        both.printf("to %i  id %i flags %i\n", to, id, flags);
-        // Send a reply back to the originator client
-        sprintf((char *)data, "RSSI %i SNR %i\n", rssi, snr);
-        //manager.sendtoWait(data, sizeof(data), from);
-        Serial.printf("Send a packet back to the sender %d from me %d  ",from,to);
-        Serial.printf("driver.mode = %d\n", driver.mode());
-        if (!manager.sendtoWait(data, sizeof(data), from))
-          Serial.println("sendtoWait failed");
+        display.printf("%i -> %i\n", from, (int)(buf[1]*256 + buf[0]));
+        display.printf("RSSI %i   SNR %i flags: %i\n", rssi, snr, flags);
+        rssi = abs(rssi);
+        data[0] = static_cast<uint8_t>(rssi);
+        data[1] = static_cast<uint8_t>(snr);
+        Serial.printf("%i, %i, %i, -%i, %i, ", millis(), from, (int)(buf[1]*256 + buf[0]), rssi, snr);
+        if (manager.sendtoWait(data, 2, from)) {
+          Serial.println("sent");
+        } else {
+          display.println("sendtoWait failed");
+          Serial.println("failed");
+        }
       }
       else {
         //We can get here because there was no packet received, it wasn't for us or was an ACK
@@ -284,29 +321,33 @@ void loop()
     if (millis() - tx_time > PAUSE * 1000) 
     {
       tx_time = millis();
-      sprintf((char *)data, "%i", counter);
-      //now let us reset transmission count
+      data[0] = static_cast<uint8_t>(counter & 0xFF); //low byte
+      data[1] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
       manager.resetRetransmissions();
-      both.printf("Sending %s\n", data);
-      if (manager.sendtoWait(data, sizeof(data), SERVER_ADDRESS))
+      if (manager.sendtoWait((uint8_t *)data, 2, SERVER_ADDRESS))
       {
         int retransmisison_count = manager.retransmissions();
-        both.printf("Sent %s (retrans %i)\n", data, retransmisison_count);
+        display.print("Sent ");
+        display.print((int)(data[1]*256 + data[0]));
+        display.printf(" retrans = %i\n", retransmisison_count);
+
         // Now wait for a reply from the server
         uint8_t len = sizeof(buf);
         uint8_t from;   
         if (manager.recvfromAckTimeout(buf, &len, 2000, &from))
         {
-          Serial.print("got reply from : 0x");
-          Serial.print(from, HEX);
-          Serial.print(": ");
-          Serial.println((char*)buf);
+          display.printf("1 -> RSSI -%i SNR %i\n", (int)buf[0], (int)buf[1]);
+          int snr = driver.lastSNR();
+          int rssi = driver.lastRssi();
+          display.printf("%i <- RSSI %i SNR %i\n", MY_ADDRESS, rssi, snr);
+          Serial.printf("%i, %i, -%i, %i, %i, %i\n", millis(), counter, (int)buf[0], (int)buf[1], rssi, snr);
         } else {
-          Serial.println("No reply, is rf95_reliable_datagram_server running?");
+          display.println("No return reply");
         }
       } else {
         int retransmisison_count = manager.retransmissions();
-        both.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
+        display.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
+        Serial.printf("%i, %i, Failed", millis(), counter);
         DisplayFailures(Failure_Counter++);
       }
       counter++;
