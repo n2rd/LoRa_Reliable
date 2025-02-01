@@ -260,7 +260,7 @@ void loop()
       } else {
         int retransmisison_count = manager.retransmissions();
         display.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
-        Serial.printf("%i, %i, Failed", millis(), counter);
+        Serial.printf("%i, %i, Failed\n", millis(), counter);
       }
       counter++;
     } //legal to transmit
