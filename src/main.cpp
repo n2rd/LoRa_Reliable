@@ -49,15 +49,11 @@
   #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
 #else
   #define DEFAULT_FREQUENCY 905.2
-  #define DEFAULT_POWER_INDEX 6     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+  #define DEFAULT_POWER_INDEX 4     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
   #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
 #endif
 
-#define ADDRESS_MAX 5 //use 1 for server, others are all clients
 #define SERVER_ADDRESS 1
-#define DEFAULT_FREQUENCY 905.2
-#define DEFAULT_POWER_INDEX 6     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
-#define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 
 // Pause between transmited packets in seconds.
@@ -91,10 +87,11 @@ RH_RF95 driver(LORA_CS, LORA_DIO0);
 // 7  Long Slow	     / 0.18 kbps	/ 12 / 4096	/ 4/8	        / 125 kHz	  / 158.5dB
 // 8  Very Long Slow / 0.09 kbps	/ 12 / 4096 /	4/8	        / 62.5 kHz	/ 161.5dB
 
+#define MODULATION_INDEX_MAX 9
 // These are indexed by the values of ModemConfigChoice
 // Stored in flash (program) memory to save SRAM
 #ifndef ARDUINO_LILYGO_T3_V1_6_1
-PROGMEM static const RH_SX126x::ModemConfig MY_MODEM_CONFIG_TABLE[] =
+PROGMEM static const RH_SX126x::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX 9] =
 {
     //  packetType, p1, p2, p3, p4, p5, p6, p7, p8
      // 0 Short Turbo
@@ -119,24 +116,31 @@ PROGMEM static const RH_SX126x::ModemConfig MY_MODEM_CONFIG_TABLE[] =
 #define MODEMCONFIGSZ sizeof(RH_SX126x::ModemConfig)
 #define DRIVER_MAX_MESSAGE_LEN RH_SX126x_MAX_MESSAGE_LEN
 #else
-PROGMEM static const RH_RF95::ModemConfig MY_MODEM_CONFIG_TABLE[] =
+PROGMEM static const RH_RF95::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX] =
 {
   /* RF95_REG_1D, RF95_REG_1E, RF95_REG_26 */ /* RegModCfg 6-64SF, 12-4096SF 11-2048SF 10-1024SF 9-512SF 8-256SF 7-128SF */
-  { 1 /* 4_5 */, 0, 0},
+  { 0x72, 0x74, 0x04}, /* */
   { 1, 0, 0},
   { 1, 0, 0},
   { 1, 0, 0},
   { 1, 0, 0},
   { 0b10000011, 0b10110100, 0b00000100}, /* Long Fast */
   { 4 /* 4_8 */, 0, 0},
-  { 4, 0, 0},
+  { 0b01111000, 0b11000100,  0b00001100},  /* Long Slow Bw125Cr48Sf4096 */
   { 4, 0, 0}
 };
+/* From RH95.cpp
+    //  1d,     1e,      26
+    { 0x72,   0x74,    0x04}, // Bw125Cr45Sf128 (the chip default), AGC enabled
+    { 0x92,   0x74,    0x04}, // Bw500Cr45Sf128, AGC enabled
+    { 0x48,   0x94,    0x04}, // Bw31_25Cr48Sf512, AGC enabled
+    { 0x78,   0xc4,    0x0c}, // Bw125Cr48Sf4096, AGC enabled
+    { 0x72,   0xb4,    0x04}, // Bw125Cr45Sf2048, AGC enabled
+ */   
 #define MODEMCONFIGSZ sizeof(RH_RF95::ModemConfig)
 #define DRIVER_MAX_MESSAGE_LEN RH_RF95_MAX_MESSAGE_LEN
 #endif
 
-#define MODULATION_INDEX_MAX 9
 static const String MY_CONFIG_NAME[MODULATION_INDEX_MAX] =
 {
 "Short Turbo", "Short Fast", "Short Slow", "Medium Fast", "Medium Slow", "Long Fast", "Long Moderate", "Long Slow", "Very Long Slow"
@@ -187,6 +191,11 @@ void DisplayUpperRight(int count) {
   display.display();
   display.setColor(INVERSE);
   display.display();
+}
+
+void toggleLED()
+{
+  digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
 }
 
 void setup() 
@@ -313,6 +322,10 @@ void loop()
         //We can get here because there was no packet received, it wasn't for us or was an ACK
         Serial.printf("manager.recvfromAck FAILED flags= %X at Line %d in %s\n", flags,__LINE__,__FILE__);
       }
+    }
+    else {
+      //toggleLED();
+      //delay(500);
     }
   }  //address 1 SERVER
 
