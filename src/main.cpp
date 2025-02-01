@@ -10,12 +10,22 @@
 #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
 
 //version
-#define VERSION "16:03 31-1-2025"
-//
+#define VERSION "10:00 01-2-2025"  // 2 bytes packet payload, logging data as csv on serial port
+/***  logging format ***
+*  server
+*     millis, from, counter, rssi, snr, send_report_back_status
+* 
+*  client
+*   successful
+*     millis, counter, rssi, snr, rssi_reported_by_server, snr_report 
+*   failed
+*     millis, counter, "failed"
+*/
+
 // SETUP Parameters
 //
 #define ADDRESS_MAX 9 //use 1 for server, others are all clients
-#define SERVER_ADDRESS 1  
+#define SERVER_ADDRESS 1 //Do not change 
 #define MY_ADDRESS 1    //Raj Server
 //#define MY_ADDRESS 2    //Ron, Fixed
 //#define MY_ADDRESS 3    //Keith, Fixed
@@ -118,7 +128,7 @@ uint8_t data[20];
 uint8_t buf[RH_SX126x_MAX_MESSAGE_LEN];
 
 //message management
-long counter = 0;
+uint16_t counter = 0;
 uint64_t tx_time = 0;
 
 //button presses
@@ -148,19 +158,19 @@ void setup()
   //start the radio
   if (manager.init()) 
   {
-    both.printf("V %s\n", VERSION); 
+    display.printf("V %s\n", VERSION); 
   } else {
-    both.println("Radio failed to initialize");
+    display.println("Radio failed to initialize");
   }
 
   power_index = DEFAULT_POWER_INDEX;
   modulation_index = DEFAULT_MODULATION_INDEX;
   if (MY_ADDRESS == 1) {
-    both.printf("Server %.1f MHz\n", DEFAULT_FREQUENCY);
+    display.printf("Server %.1f MHz\n", DEFAULT_FREQUENCY);
   } else {
-    both.printf("Client #%i at %.1f MHz\n", MY_ADDRESS, DEFAULT_FREQUENCY);
+    display.printf("Client #%i at %.1f MHz\n", MY_ADDRESS, DEFAULT_FREQUENCY);
   }
-  both.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
+  display.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
   driver.setFrequency(DEFAULT_FREQUENCY);
   //default modulation, get details from PROGMEM
   RH_SX126x::ModemConfig cfg;
@@ -175,7 +185,7 @@ void setup()
 
   // Battery
   float vbat = heltec_vbat();
-  both.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));
+  display.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));
 //messages
 //   both.println("Single click to change power");
 //   both.println("Double click to change modulation");
@@ -202,33 +212,18 @@ void loop()
       {
         int snr = driver.lastSNR();
         int rssi = driver.lastRssi();
-        both.printf("From %i: %s\n",from, (char*)buf);
-        both.printf("RSSI %i   SNR %i flags: %i\n", rssi, snr, flags);
-        // Send a reply back to the originator client
-        char* data_st = "SS -123 SNR +12 RY"; 
+        display.printf("%i -> %i\n", from, (int)(buf[1]*256 + buf[0]));
+        display.printf("RSSI %i   SNR %i flags: %i\n", rssi, snr, flags);
         rssi = abs(rssi);
-        data_st[4] = static_cast<char>('0' + rssi /100 % 10);
-        data_st[5] = static_cast<char>('0' + rssi /10 % 10);
-        data_st[6] = static_cast<char>('0' + rssi % 10);
-        if (snr >= 0) 
-        { 
-          data_st[12] = '+';
+        data[0] = static_cast<uint8_t>(rssi);
+        data[1] = static_cast<uint8_t>(snr);
+        Serial.printf("%i, %i, %i, -%i, %i, ", millis(), from, (int)(buf[1]*256 + buf[0]), rssi, snr);
+        if (manager.sendtoWait(data, 2, from)) {
+          Serial.println("sent");
         } else {
-          data_st[12] = '-';
+          display.println("sendtoWait failed");
+          Serial.println("failed");
         }
-        snr = abs(snr);
-        data_st[13] = static_cast<char>('0' + snr/10 % 10);
-        data_st[14] = static_cast<char>('0' + snr % 10);
-
-        if (flags & 0x40) 
-        { 
-          data_st[17] = 'Y';
-        } else {
-          data_st[17] = 'N';
-        }
-
-        if (!manager.sendtoWait((uint8_t *)data_st, 18, from))
-          Serial.println("sendtoWait failed");
       }
     }
   }  //address 1 SERVER
@@ -239,38 +234,33 @@ void loop()
     if (millis() - tx_time > PAUSE * 1000) 
     {
       tx_time = millis();
-      data[0] = 'C';
-      data[1] = '#';
-      data[2] = static_cast<char>('0' + counter / 100 % 10);
-      data[3] = static_cast<char>('0' + counter / 10 % 10); 
-      data[4] = static_cast<char>('0' + counter % 10);
-      //now let us reset transmission count
+      data[0] = static_cast<uint8_t>(counter & 0xFF); //low byte
+      data[1] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
       manager.resetRetransmissions();
-      if (manager.sendtoWait((uint8_t *)data, 5, SERVER_ADDRESS))
+      if (manager.sendtoWait((uint8_t *)data, 2, SERVER_ADDRESS))
       {
         int retransmisison_count = manager.retransmissions();
-        both.print("Sent ");
-        for(int i=0; i<5; i++) 
-        {
-          both.print(static_cast<char>(data[i]));
-        }
-        both.printf(" retrans = %i\n", retransmisison_count);
+        display.print("Sent ");
+        display.print((int)(data[1]*256 + data[0]));
+        display.printf(" retrans = %i\n", retransmisison_count);
 
         // Now wait for a reply from the server
         uint8_t len = sizeof(buf);
         uint8_t from;   
         if (manager.recvfromAckTimeout(buf, &len, 2000, &from))
         {
-          both.printf("%i-> %s\n", from, (char*)buf);
+          display.printf("1 -> RSSI -%i SNR %i\n", (int)buf[0], (int)buf[1]);
           int snr = driver.lastSNR();
           int rssi = driver.lastRssi();
-          both.printf("%i <- RSSI %i   SNR %i\n", MY_ADDRESS, rssi, snr);
+          display.printf("%i <- RSSI %i SNR %i\n", MY_ADDRESS, rssi, snr);
+          Serial.printf("%i, %i, -%i, %i, %i, %i\n", millis(), counter, (int)buf[0], (int)buf[1], rssi, snr);
         } else {
-          both.println("No return reply");
+          display.println("No return reply");
         }
       } else {
         int retransmisison_count = manager.retransmissions();
-        both.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
+        display.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
+        Serial.printf("%i, %i, Failed", millis(), counter);
       }
       counter++;
     } //legal to transmit
