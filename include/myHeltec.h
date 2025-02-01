@@ -47,9 +47,16 @@
 #define RST_LoRa  GPIO_NUM_12
 #define BUSY_LoRa GPIO_NUM_13
 // Display pins
+#ifndef ARDUINO_LILYGO_T3_V1_6_1
+#define SDA_OLED  GPIO_NUM_17
+#define SCL_OLED  GPIO_NUM_18
+#define RST_OLED  GPIO_NUM_21
+#else
 #define SDA_OLED  GPIO_NUM_21
 #define SCL_OLED  GPIO_NUM_22
 //#define RST_OLED  GPIO_NUM_21
+#endif
+
 
 // #ifdef HELTEC_NO_RADIOLIB
 //   #define HELTEC_NO_RADIO_INSTANCE
