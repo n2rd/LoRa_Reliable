@@ -55,12 +55,6 @@
 
 #define ADDRESS_MAX 5 //use 1 for server, others are all clients
 #define SERVER_ADDRESS 1
-#warning "Fix this after debugging done"
-#ifndef ARDUINO_LILYGO_T3_V1_6_1  
-#define MY_ADDRESS 3
-#else
-#define MY_ADDRESS 1
-#endif
 #define DEFAULT_FREQUENCY 905.2
 #define DEFAULT_POWER_INDEX 6     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
 #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
@@ -181,12 +175,16 @@ uint32_t double_button_time = 0.0;
 //
 void check_button();
 
-void DisplayFailures(int fail_count) {
+void DisplayUpperRight(int count) {
   char buf[10];
-  sprintf(buf,"%d", fail_count);
-  display.setColor(INVERSE);
+  memset(buf,32,sizeof(buf));
+  sprintf(buf+2,"%5d", count);
+  display.setColor(BLACK);
   display.fillRect((display.getWidth()) - 32, 0, 32, 14);
+  display.setColor(WHITE);
+  display.setColor(INVERSE);
   display.drawString((display.getWidth()) - 30, 0, buf);
+  display.display();
   display.setColor(INVERSE);
   display.display();
 }
@@ -279,7 +277,7 @@ void loop()
     if (driver.mode() != lastMode) {
       Serial.printf("driver.mode changed to %d\n",driver.mode());
       lastMode = driver.mode();
-      DisplayFailures(lastMode);
+      DisplayUpperRight(lastMode);
     }
     else {
       //Serial.println("Driver mode not changed");
@@ -351,8 +349,9 @@ void loop()
         int retransmisison_count = manager.retransmissions();
         display.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
         Serial.printf("%i, %i, Failed\n", millis(), counter);
-        DisplayFailures(Failure_Counter++);
+        //DisplayUpperRight(Failure_Counter++);
       }
+      DisplayUpperRight(counter);
       counter++;
     } //legal to transmit
   } // as a client
