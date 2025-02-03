@@ -1,66 +1,5 @@
 #include <Arduino.h>
-// sx1262_server.ino
-// -*- mode: C++ -*-
-// Example sketch showing how to create a simple messageing server
-// with the RH_SX126x class and a basic SX1262 module connected to an Arduino compatible processor
-// It is designed to work with the examples stm32wlx_client and sx1262_client.
-// Tested with G-Nice LoRa1262-915 and Teensy 3.1
-
-// Turns the 'PRG' button into the power button, long press is off 
-#define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
-
-//version
-#define VERSION "10:00 01-2-2025"  // 2 bytes packet payload, logging data as csv on serial port
-/***  logging format ***
-*  server
-*     millis, from, counter, rssi, snr, send_report_back_status
-* 
-*  client
-*   successful
-*     millis, counter, rssi, snr, rssi_reported_by_server, snr_report 
-*   failed
-*     millis, counter, "failed"
-*/
-
-// SETUP Parameters
-//
-#define ADDRESS_MAX 9 //use 1 for server, others are all clients
-#define SERVER_ADDRESS 1 //Do not change
-#ifdef ARDUINO_LILYGO_T3_V1_6_1  
-#define MY_ADDRESS 1    //LILYGO BOARD server
-#else
-//#define MY_ADDRESS 1    //Raj Server
-//#define MY_ADDRESS 2    //Ron, Fixed
-#define MY_ADDRESS 3    //Keith, Fixed
-//#define MY_ADDRESS 4    //Raj, Portable
-//#define MY_ADDRESS 5    //Raj, experimentation
-//#define MY_ADDRESS 6    //Raj, experimentation
-//#define MY_ADDRESS 7    //Ron, portable
-//#define MY_ADDRESS 8    //Keith, Portable
-//#define MY_ADDRESS 9    //Spare
-#endif
-//
-//EXPERIMENTATION
-//
-//#define DEBUG  1 //comment this line out for production
-#ifdef DEBUG
-  #define DEFAULT_FREQUENCY 915.0
-  #define DEFAULT_POWER_INDEX 0     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
-  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
-#else
-  #define DEFAULT_FREQUENCY 905.2
-  #define DEFAULT_POWER_INDEX 4     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
-  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
-#endif
-
-#define SERVER_ADDRESS 1
-#define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
-
-// Pause between transmited packets in seconds.
-#define PAUSE       20  // client, time between transmissions
-#define TIMEOUT     200  //for sendtoWait
-#define RETRIES     3     //for sendtoWait
-
+#include "myConfig.h"
 #include <SPI.h>
 
 #ifndef ARDUINO_LILYGO_T3_V1_6_1
@@ -72,6 +11,48 @@ RH_SX126x driver(8, 14, 13, 12); // NSS, DIO1, BUSY, NRESET
 RH_RF95 driver(LORA_CS, LORA_DIO0);
 #define DRIVER_TYPE RH_RF95
 #endif
+
+#include <RHReliableDatagram.h>
+
+
+// Turns the 'PRG' button into the power button, long press is off 
+#define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
+
+//version
+#define VERSION "10:00 03-2-2025"  // 2 bytes packet payload, logging data as csv on serial port
+/***  logging format ***
+*  server
+*     millis, from, counter, rssi, snr, send_report_back_status
+* 
+*  client
+*   successful
+*     millis, counter, rssi, snr, rssi_reported_by_server, snr_report 
+*   failed
+*     millis, counter, "failed"
+*/
+
+//
+//EXPERIMENTATION
+//
+//#define RAJ_DEBUG  1 //comment this line out for production
+#ifdef RAJ_DEBUG
+  #define DEFAULT_FREQUENCY 915.0
+  #define DEFAULT_POWER_INDEX 0     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
+#else
+  #define DEFAULT_FREQUENCY 905.2
+  #define DEFAULT_POWER_INDEX 4     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
+#endif
+
+#define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
+
+// Pause between transmited packets in seconds.
+#define PAUSE       20  // client, time between transmissions
+#define TIMEOUT     200  //for sendtoWait
+#define RETRIES     3     //for sendtoWait
+
+
 
 //
 // LoRa settings that are used for Meshtastic
@@ -118,6 +99,7 @@ PROGMEM static const RH_SX126x::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_IND
 #else
 PROGMEM static const RH_RF95::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX] =
 {
+  #warning Redo and finish this table !
   /* RF95_REG_1D, RF95_REG_1E, RF95_REG_26 */ /* RegModCfg 6-64SF, 12-4096SF 11-2048SF 10-1024SF 9-512SF 8-256SF 7-128SF */
   { 0x72, 0x74, 0x04}, /* */
   { 1, 0, 0},
@@ -129,14 +111,6 @@ PROGMEM static const RH_RF95::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_INDEX
   { 0b01111000, 0b11000100,  0b00001100},  /* Long Slow Bw125Cr48Sf4096 */
   { 4, 0, 0}
 };
-/* From RH95.cpp
-    //  1d,     1e,      26
-    { 0x72,   0x74,    0x04}, // Bw125Cr45Sf128 (the chip default), AGC enabled
-    { 0x92,   0x74,    0x04}, // Bw500Cr45Sf128, AGC enabled
-    { 0x48,   0x94,    0x04}, // Bw31_25Cr48Sf512, AGC enabled
-    { 0x78,   0xc4,    0x0c}, // Bw125Cr48Sf4096, AGC enabled
-    { 0x72,   0xb4,    0x04}, // Bw125Cr45Sf2048, AGC enabled
- */   
 #define MODEMCONFIGSZ sizeof(RH_RF95::ModemConfig)
 #define DRIVER_MAX_MESSAGE_LEN RH_RF95_MAX_MESSAGE_LEN
 #endif
@@ -151,16 +125,14 @@ int modulation_index = DEFAULT_MODULATION_INDEX;
 float power[POWER_INDEX_MAX] = {-9.0, -5.0, 0.0, 6.0, 12.0, 18.0, 22.0};
 int power_index = DEFAULT_POWER_INDEX;
 
+#warning "TBD: move heltec and TTGO specific stuff into 2 include files"
 #include "myHeltec.h"
-
-#include "RHReliableDatagram.h"
 
 RHReliableDatagram manager(driver, MY_ADDRESS);
 
-//send and receive data
-//uint8_t data[] = "And hello back to you";
-// transmit buffer
+// temporary transmit buffer
 uint8_t data[20];
+
 // Dont put this on the stack: 
 // it is fragile, you will break it if you touch it
 // do not rename, etc.,  if you mess with it, you won't get anything that is received
@@ -219,7 +191,8 @@ void setup()
   display.displayOn();
   display.setFont(ArialMT_Plain_16);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.drawString(display.getWidth() / 2, display.getHeight() / 2, "Lora_Reliable");
+  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)-16 /* font height */, "Lora_Reliable");
+  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)*2-16 /* font height */, VERSION);
   display.display();
   delay(3000);
   display.setFont(ArialMT_Plain_10);
@@ -227,10 +200,8 @@ void setup()
   display.cls();
 
   //start the radio
-  if (manager.init()) 
+  if (!manager.init()) 
   {
-    display.printf("V %s\n", VERSION); 
-  } else {
     display.println("Radio failed to initialize");
     both.println("HALTING");
     while (1);
@@ -238,6 +209,7 @@ void setup()
 
   power_index = DEFAULT_POWER_INDEX;
   modulation_index = DEFAULT_MODULATION_INDEX;
+
   if (MY_ADDRESS == 1) {
     display.printf("Server %.1f MHz\n", DEFAULT_FREQUENCY);
   } else {
@@ -253,6 +225,8 @@ void setup()
     driver.setModemRegisters(&cfg);
   }
 #else
+//TBD: Pull this from a table that matches the heltec boards Spreading factor, Bandwidth and Symbol Rate
+//This is LONG_FAST
   driver.setSignalBandwidth(250000);
   driver.setSpreadingFactor(11);
   driver.setCodingRate4(5);
@@ -266,7 +240,11 @@ void setup()
   //You can optionally require this module to wait until Channel Activity
   // Detection shows no activity on the channel before transmitting by setting
   // the CAD timeout to non-zero:
+#ifdef ARDUINO_LILYGO_T3_V1_6_1
   driver.setCADTimeout(DEFAULT_CAD_TIMEOUT);  //Carrier Activity Detect Timeout 
+#else
+// This doesn't work on the heltec SX1262 driver yet
+#endif
 
   // Battery
   float vbat = heltec_vbat();
