@@ -246,20 +246,27 @@ void setup()
   display.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
   driver.setFrequency(DEFAULT_FREQUENCY);
   //default modulation, get details from PROGMEM
-
-  DRIVER_TYPE::ModemConfig cfg;
-  memcpy_P(&cfg, &MY_MODEM_CONFIG_TABLE[modulation_index], MODEMCONFIGSZ);
-  driver.setModemRegisters(&cfg);
+ #ifndef ARDUINO_LILYGO_T3_V1_6_1
+  {
+    DRIVER_TYPE::ModemConfig cfg;
+    memcpy_P(&cfg, &MY_MODEM_CONFIG_TABLE[modulation_index], MODEMCONFIGSZ);
+    driver.setModemRegisters(&cfg);
+  }
+#else
+  driver.setSignalBandwidth(250000);
+  driver.setSpreadingFactor(11);
+  driver.setCodingRate4(5);
+#endif
   driver.setTxPower(power[power_index]);
   #define DEBUG_INCOMING_PACKETS
   #if defined(DEBUG_INCOMING_PACKETS) && defined(ARDUINO_LILYGO_T3_V1_6_1)
-  driver.setPayloadCRC(false);
-  driver.setPromiscuous(true);
+  driver.setPayloadCRC(true);
+  //driver.setPromiscuous(true);
   #endif
   //You can optionally require this module to wait until Channel Activity
   // Detection shows no activity on the channel before transmitting by setting
   // the CAD timeout to non-zero:
-//  driver.setCADTimeout(DEFAULT_CAD_TIMEOUT);  //Carrier Activity Detect Timeout 
+  driver.setCADTimeout(DEFAULT_CAD_TIMEOUT);  //Carrier Activity Detect Timeout 
 
   // Battery
   float vbat = heltec_vbat();
@@ -310,22 +317,20 @@ void loop()
         rssi = abs(rssi);
         data[0] = static_cast<uint8_t>(rssi);
         data[1] = static_cast<uint8_t>(snr);
-        Serial.printf("%i, %i, %i, -%i, %i, ", millis(), from, (int)(buf[1]*256 + buf[0]), rssi, snr);
-        if (manager.sendtoWait(data, 2, from)) {
-          Serial.println("sent");
-        } else {
-          display.println("sendtoWait failed");
-          Serial.println("failed");
+        Serial.printf("%i, %i, %i, -%i, %i, %d\n", millis(), from, (int)(buf[1]*256 + buf[0]), rssi, snr, manager.retransmissions());
+        manager.resetRetransmissions();
+        if (!manager.sendtoWait(data, 2, from)) {
+          //display.println("sendtoWait failed");
+          Serial.printf("sendtoWait to %d failed in %s %d\n", from,__FILE__,__LINE__);
+          DisplayUpperRight(++Failure_Counter);
         }
+        else
+          DisplayUpperRight(Failure_Counter);
       }
       else {
         //We can get here because there was no packet received, it wasn't for us or was an ACK
         Serial.printf("manager.recvfromAck FAILED flags= %X at Line %d in %s\n", flags,__LINE__,__FILE__);
       }
-    }
-    else {
-      //toggleLED();
-      //delay(500);
     }
   }  //address 1 SERVER
 
@@ -362,7 +367,7 @@ void loop()
       } else {
         int retransmisison_count = manager.retransmissions();
         display.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
-        Serial.printf("%i, %i, Failed\n", millis(), counter);
+        Serial.printf("%i, %i, sendtoWait Failed %i retries\n", millis(), counter,retransmisison_count);
         //DisplayUpperRight(Failure_Counter++);
       }
       DisplayUpperRight(counter);
