@@ -10,14 +10,16 @@
  * mode, and more.
  */
 
-//#ifndef heltec_h
-//#define heltec_h
+#ifndef myheltec_h
+#define myheltec_h
 
+#ifndef ARDUINO_LILYGO_T3_V1_6_1
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
   #include "driver/temperature_sensor.h"
 #else
   #include "driver/temp_sensor.h"
 #endif
+#endif //!defined(ARDUINO_LILYGO_T3_V1_6_1)
 
 // 'PRG' Button
 #define BUTTON    GPIO_NUM_0
@@ -45,9 +47,16 @@
 #define RST_LoRa  GPIO_NUM_12
 #define BUSY_LoRa GPIO_NUM_13
 // Display pins
+#ifndef ARDUINO_LILYGO_T3_V1_6_1
 #define SDA_OLED  GPIO_NUM_17
 #define SCL_OLED  GPIO_NUM_18
 #define RST_OLED  GPIO_NUM_21
+#else
+#define SDA_OLED  GPIO_NUM_21
+#define SCL_OLED  GPIO_NUM_22
+//#define RST_OLED  GPIO_NUM_21
+#endif
+
 
 // #ifdef HELTEC_NO_RADIOLIB
 //   #define HELTEC_NO_RADIO_INSTANCE
@@ -134,6 +143,7 @@ PrintSplitter both(Serial, display);
  * @param state The state of the VEXT pin (true = enable, false = disable).
  */
 void heltec_ve(bool state) {
+#ifndef ARDUINO_LILYGO_T3_V1_6_1
   if (state) {
     pinMode(VEXT, OUTPUT);
     digitalWrite(VEXT, LOW);
@@ -141,8 +151,11 @@ void heltec_ve(bool state) {
     // pulled up, no need to drive it
     pinMode(VEXT, INPUT);
   }
+#endif //!defined(ARDUINO_LILYGO_T3_V1_6_1)
 }
 
+
+#ifndef ARDUINO_LILYGO_T3_V1_6_1
 /**
  * @brief Measures the battery voltage.
  *
@@ -162,7 +175,11 @@ float heltec_vbat() {
   pinMode(VBAT_CTRL, INPUT);
   return vbat;
 }
-
+#else //defined(ARDUINO_LILYGO_T3_V1_6_1)
+float heltec_vbat() {
+  return 0.0;
+}
+#endif //!defined(ARDUINO_LILYGO_T3_V1_6_1)
 /**
  * @brief Controls the LED brightness based on the given percentage.
  *
@@ -229,7 +246,9 @@ void heltec_deep_sleep(int seconds = 0) {
   pinMode(SCK, INPUT);
   pinMode(SDA_OLED, INPUT);
   pinMode(SCL_OLED, INPUT);
+  #ifdef RST_OLED
   pinMode(RST_OLED, INPUT);
+  #endif
   // Set button wakeup if applicable
   esp_sleep_enable_ext0_wakeup(BUTTON, LOW);
   button.waitForRelease();
@@ -254,6 +273,7 @@ void heltec_deep_sleep(int seconds = 0) {
  * @return The battery percentage (0-100).
  */
 int heltec_battery_percent(float vbat = -1) {
+#ifndef ARDUINO_LILYGO_T3_V1_6_1
   if (vbat == -1) {
     vbat = heltec_vbat();
   }
@@ -263,6 +283,7 @@ int heltec_battery_percent(float vbat = -1) {
       return 100 - n;
     }
   }
+#endif //!defined(ARDUINO_LILYGO_T3_V1_6_1)  
   return 0;
 }
 
@@ -293,7 +314,7 @@ bool heltec_wakeup_was_timer() {
 */
 float heltec_temperature() {
   float result = 0;
-
+#ifndef ARDUINO_LILYGO_T3_V1_6_1
   // If temperature for given n below this value,
   // then this is the best measurement we have.
   int cutoffs[5] = { -30, -10, 80, 100, 2500 };
@@ -335,7 +356,7 @@ float heltec_temperature() {
     }
 
   #endif
-
+#endif //!defined(ARDUINO_LILYGO_T3_V1_6_1)
   return result;
 }
 
@@ -347,12 +368,14 @@ void heltec_display_power(bool on) {
         heltec_ve(true);
         delay(5);
       #endif
+      #ifdef RST_OLED
       pinMode(RST_OLED, OUTPUT);
       digitalWrite(RST_OLED, HIGH);
       delay(1);
       digitalWrite(RST_OLED, LOW);
       delay(20);
       digitalWrite(RST_OLED, HIGH);
+      #endif
     } else {
       #ifdef HELTEC_WIRELESS_STICK
         heltec_ve(false);
@@ -424,4 +447,4 @@ void heltec_delay(int ms) {
     }
   }
 }
-
+#endif //!defined(myheltec_h)
