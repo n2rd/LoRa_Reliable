@@ -1,15 +1,12 @@
 #include <Arduino.h>
 #include "myConfig.h"
 #include <SPI.h>
+#include "PrintSplitter.h"
 
 #ifndef ARDUINO_LILYGO_T3_V1_6_1
-#include <RH_SX126x.h>
-RH_SX126x driver(8, 14, 13, 12); // NSS, DIO1, BUSY, NRESET
-#define DRIVER_TYPE RH_SX126x
+#include  "myHeltec.h"
 #else
-#include <RH_RF95.h>
-RH_RF95 driver(LORA_CS, LORA_DIO0);
-#define DRIVER_TYPE RH_RF95
+#include "myLilyGoT3.h"
 #endif
 
 #include <RHReliableDatagram.h>
@@ -19,7 +16,7 @@ RH_RF95 driver(LORA_CS, LORA_DIO0);
 #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
 
 //version
-#define VERSION "10:00 03-2-2025"  // 2 bytes packet payload, logging data as csv on serial port
+#define VERSION "12:20 03-4-2025"  // 2 bytes packet payload, logging data as csv on serial port
 /***  logging format ***
 *  server
 *     millis, from, counter, rssi, snr, send_report_back_status
@@ -133,6 +130,8 @@ int power_index = DEFAULT_POWER_INDEX;
 
 #warning "TBD: move heltec and TTGO specific stuff into 2 include files"
 #include "myHeltec.h"
+
+PrintSplitter both(Serial, display);
 
 RHReliableDatagram manager(driver, MY_ADDRESS);
 
