@@ -39,9 +39,15 @@ RH_RF95 driver(LORA_CS, LORA_DIO0);
   #define DEFAULT_FREQUENCY 915.0
   #define DEFAULT_POWER_INDEX 0     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
   #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
-#else
+#endif
+
+#ifndef DEFAULT_FREQUENCY
   #define DEFAULT_FREQUENCY 905.2
+#endif
+#ifndef DEFAULT_POWER_INDEX
   #define DEFAULT_POWER_INDEX 4     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+#endif
+#ifndef DEFAULT_MODULATION_INDEX
   #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
 #endif
 
