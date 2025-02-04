@@ -27,5 +27,9 @@
 
 
 // Other configuration on a per unit basis will be here
+//uncomment the folowing defines to override the defaults in main.cpp
+//#define DEFAULT_FREQUENCY 905.2 //RF Frequency in Mhz
+//#define DEFAULT_MODULATION_INDEX 5 //LongFast. see table in main.cpp to adjust
+//#define DEFAULT_POWER_INDEX 4     //see power table in main.cpp, index 0 is -9dBm, index 6 is +22dBm max 
 
 #endif
