@@ -14,6 +14,21 @@ RH_RF95 driver(LORA_CS, LORA_DIO0);
 
 #include <RHReliableDatagram.h>
 
+#if USE_WIFI >0
+#if defined(ESP32)
+  #include <WiFi.h>
+  #include <WiFiClient.h>
+#include <ElegantOTA.h>
+#if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
+  #include <ESPAsyncWebServer.h>
+  AsyncWebServer server(80);
+#else
+  #include <WebServer.h>
+  WebServer server(80);
+#endif
+#endif //defined(ESP32)
+#endif //USE_WIFI > 0
+
 
 // Turns the 'PRG' button into the power button, long press is off 
 #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
@@ -157,6 +172,135 @@ uint32_t double_button_time = 0.0;
 //
 void check_button();
 
+//////////////////////// OTA testing stuff /////////////////////////
+#if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
+/////// Async Version ///////
+unsigned long ota_progress_millis = 0;
+
+void onOTAStart() {
+  // Log when OTA has started
+  Serial.println("OTA update started!");
+  // <Add your own code here>
+}
+
+void onOTAProgress(size_t current, size_t final) {
+  // Log every 1 second
+  if (millis() - ota_progress_millis > 1000) {
+    ota_progress_millis = millis();
+    Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
+  }
+}
+
+void onOTAEnd(bool success) {
+  // Log when OTA has finished
+  if (success) {
+    Serial.println("OTA update finished successfully!");
+  } else {
+    Serial.println("There was an error during OTA update!");
+  }
+  // <Add your own code here>
+}
+
+void ota_setup(void) {
+  WiFi.mode(WIFI_STA);
+  WiFi.setHostname("Lora_Reliable");
+  WiFi.begin(WIFI_SSID, WIFI_PASSWD);
+
+  // Wait for connection
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(WIFI_SSID);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Hi! This is Lora_reliable. ASYNC");
+  });
+
+  ElegantOTA.begin(&server);    // Start ElegantOTA
+  // ElegantOTA callbacks
+  ElegantOTA.onStart(onOTAStart);
+  ElegantOTA.onProgress(onOTAProgress);
+  ElegantOTA.onEnd(onOTAEnd);
+
+  server.begin();
+  Serial.println("HTTP server started");
+}
+
+void ota_loop(void) {
+  ElegantOTA.loop();
+}
+
+#else
+/////// Blocking Version ///////
+unsigned long ota_progress_millis = 0;
+
+void onOTAStart() {
+  // Log when OTA has started
+  Serial.println("OTA update started!");
+  // <Add your own code here>
+}
+
+void onOTAProgress(size_t current, size_t final) {
+  // Log every 1 second
+  if (millis() - ota_progress_millis > 1000) {
+    ota_progress_millis = millis();
+    Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
+  }
+}
+
+void onOTAEnd(bool success) {
+  // Log when OTA has finished
+  if (success) {
+    Serial.println("OTA update finished successfully!");
+  } else {
+    Serial.println("There was an error during OTA update!");
+  }
+  // <Add your own code here>
+}
+
+void ota_setup(void) {
+  Serial.begin(115200);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWD);
+  Serial.println("");
+
+  // Wait for connection
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(WIFI_SSID);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  server.on("/", []() {
+    server.send(200, "text/plain", "Hi! This is Lora_Reliable. BLOCKING");
+  });
+
+  ElegantOTA.begin(&server);    // Start ElegantOTA
+  // ElegantOTA callbacks
+  ElegantOTA.onStart(onOTAStart);
+  ElegantOTA.onProgress(onOTAProgress);
+  ElegantOTA.onEnd(onOTAEnd);
+
+  server.begin();
+  Serial.println("HTTP server started");
+}
+
+void ota_loop(void) {
+  server.handleClient();
+  ElegantOTA.loop();
+}
+#endif
+//////////////////////////////////////////////////////////////////// 
+
 void DisplayUpperRight(int count) {
   char buf[10];
   memset(buf,32,sizeof(buf));
@@ -185,7 +329,7 @@ void setup()
   Serial.begin(115200);
   while (!Serial) ; // Wait for serial port to be available
   delay(5000);
-
+  ota_setup();
   //display init
   #ifndef ARDUINO_LILYGO_T3_V1_6_1
   heltec_display_power(true);
@@ -269,7 +413,7 @@ void loop()
 {
   //first check the buttons
   check_button();
-
+  ota_loop();
   //now operate in different roles
   if (MY_ADDRESS == 1)  //serving as a server
   {
