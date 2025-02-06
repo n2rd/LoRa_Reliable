@@ -220,11 +220,15 @@ void ota_setup(void) {
     request->send(200, "text/plain", "Hi! This is Lora_reliable. ASYNC");
   });
 
+  // https://docs.elegantota.pro/getting-started/installation
   ElegantOTA.begin(&server);    // Start ElegantOTA
   // ElegantOTA callbacks
   ElegantOTA.onStart(onOTAStart);
   ElegantOTA.onProgress(onOTAProgress);
   ElegantOTA.onEnd(onOTAEnd);
+  //ElegantOTA.setFWVersion("0.1.0"); //In Pro version only
+  //ElegantOTA.setID("my_device_001"); //In Pro version only
+  ElegantOTA.setAuth("Lora","Reliable");
 
   server.begin();
   Serial.println("HTTP server started");
