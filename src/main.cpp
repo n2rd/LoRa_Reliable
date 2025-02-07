@@ -1,22 +1,26 @@
-#include <Arduino.h>
-#include "myConfig.h"
-#include <SPI.h>
-#include "PrintSplitter.h"
+#include "main.h"
 
-#ifndef ARDUINO_LILYGO_T3_V1_6_1
-#include  "myHeltec.h"
+#ifdef ARDUINO_LILYGO_T3_V1_6_1
+  #include "myLilyGoT3.h"
 #else
-#include "myLilyGoT3.h"
+  // Turns the 'PRG' button into the power button, long press is off 
+  #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
+  #include "myHeltec.h"
 #endif
 
-#include <RHReliableDatagram.h>
+#if defined(USE_WIFI) && (USE_WIFI >0)
+  #if defined(ESP32)
+    #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
+      AsyncWebServer server(80);
+    #else
+      WebServer server(80);
+    #endif
+  #endif //defined(ESP32)
+#endif //deefined(USE_WIFI) && (USE_WIFI > 0)
 
 
-// Turns the 'PRG' button into the power button, long press is off 
-#define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
 
-//version
-#define VERSION "12:20 03-4-2025"  // 2 bytes packet payload, logging data as csv on serial port
+// 2 bytes packet payload, logging data as csv on serial port
 /***  logging format ***
 *  server
 *     millis, from, counter, rssi, snr, send_report_back_status
@@ -98,23 +102,58 @@ PROGMEM static const RH_SX126x::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_IND
     { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_4096, RH_SX126x_LORA_BW_62_5, RH_SX126x_LORA_CR_4_8, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
 };
 #define MODEMCONFIGSZ sizeof(RH_SX126x::ModemConfig)
+
+void setModemConfig(uint8_t index) {
+  if (index > MODULATION_INDEX_MAX)
+    index = MODULATION_INDEX_MAX - 1;
+    DRIVER_TYPE::ModemConfig cfg;
+    #warning "Remove commented lines later"
+    //memcpy_P(&cfg, &MY_MODEM_CONFIG_TABLE[modulation_index], MODEMCONFIGSZ);
+    //driver.setModemRegisters(&cfg);
+    driver.setModemRegisters(&MY_MODEM_CONFIG_TABLE[index]);
+}
+
+
 #define DRIVER_MAX_MESSAGE_LEN RH_SX126x_MAX_MESSAGE_LEN
-#else
-PROGMEM static const RH_RF95::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX] =
-{
-  #warning Redo and finish this table !
-  /* RF95_REG_1D, RF95_REG_1E, RF95_REG_26 */ /* RegModCfg 6-64SF, 12-4096SF 11-2048SF 10-1024SF 9-512SF 8-256SF 7-128SF */
-  { 0x72, 0x74, 0x04}, /* */
-  { 1, 0, 0},
-  { 1, 0, 0},
-  { 1, 0, 0},
-  { 1, 0, 0},
-  { 0b10000011, 0b10110100, 0b00000100}, /* Long Fast */
-  { 4 /* 4_8 */, 0, 0},
-  { 0b01111000, 0b11000100,  0b00001100},  /* Long Slow Bw125Cr48Sf4096 */
-  { 4, 0, 0}
+
+#else //LILLYGO_T3 RF95 aka SX127x chips
+typedef struct modem_config_struct {
+  long bandwidth;
+  uint8_t spreadingFactor;
+  uint8_t codingRate4Denominator;
+} MYMODEM_CONFIG_TABLE;
+
+enum SF {
+  SF_64 = 6,
+  SF_128 = 7,
+  SF_256 = 8,
+  SF_512 = 9,
+  SF_1024 = 10,
+  SF_2048 = 11,
+  SF_4096 = 12
 };
-#define MODEMCONFIGSZ sizeof(RH_RF95::ModemConfig)
+
+PROGMEM static const MYMODEM_CONFIG_TABLE TTGO_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX] = 
+{
+  { 500000, SF_128, 5}, //0 Short Turbo
+  { 250000, SF_128, 5}, //1 Short Fast
+  { 250000, SF_256, 5}, //2 Short Slow
+  { 250000, SF_512, 5}, //3 Medium Fast
+  { 250000, SF_1024, 5}, //4 Medium Slow
+  { 250000, 11, 5}, // 5 LongFast
+  { 125000, 11, 8}, //6 Long Moderate
+  { 125000, SF_4096, 8}, //7 Long Slow
+  { 062500, SF_4096,8}  //8 Very Long Slow
+};
+
+void setModemConfig(uint8_t index) {
+  if (index > MODULATION_INDEX_MAX)
+    index = MODULATION_INDEX_MAX - 1;
+  driver.setSignalBandwidth(TTGO_MODEM_CONFIG_TABLE[index].bandwidth);
+  driver.setSpreadingFactor(TTGO_MODEM_CONFIG_TABLE[index].spreadingFactor);
+  driver.setCodingRate4(TTGO_MODEM_CONFIG_TABLE[index].codingRate4Denominator);
+}
+
 #define DRIVER_MAX_MESSAGE_LEN RH_RF95_MAX_MESSAGE_LEN
 #endif
 
@@ -127,9 +166,6 @@ int modulation_index = DEFAULT_MODULATION_INDEX;
 #define POWER_INDEX_MAX 7
 float power[POWER_INDEX_MAX] = {-9.0, -5.0, 0.0, 6.0, 12.0, 18.0, 22.0};
 int power_index = DEFAULT_POWER_INDEX;
-
-#warning "TBD: move heltec and TTGO specific stuff into 2 include files"
-#include "myHeltec.h"
 
 PrintSplitter both(Serial, display);
 
@@ -155,6 +191,8 @@ uint32_t double_button_time = 0.0;
 // funtion declarations
 //
 void check_button();
+
+
 
 void DisplayUpperRight(int count) {
   char buf[10];
@@ -184,7 +222,7 @@ void setup()
   Serial.begin(115200);
   while (!Serial) ; // Wait for serial port to be available
   delay(5000);
-
+  ota_setup();
   //display init
   #ifndef ARDUINO_LILYGO_T3_V1_6_1
   heltec_display_power(true);
@@ -239,13 +277,13 @@ void setup()
   driver.setTxPower(power[power_index]);
   #define DEBUG_INCOMING_PACKETS
   #if defined(DEBUG_INCOMING_PACKETS) && defined(ARDUINO_LILYGO_T3_V1_6_1)
-  driver.setPayloadCRC(true);
   //driver.setPromiscuous(true);
   #endif
   //You can optionally require this module to wait until Channel Activity
   // Detection shows no activity on the channel before transmitting by setting
   // the CAD timeout to non-zero:
 #ifdef ARDUINO_LILYGO_T3_V1_6_1
+  driver.setPayloadCRC(true);
   driver.setCADTimeout(DEFAULT_CAD_TIMEOUT);  //Carrier Activity Detect Timeout 
 #else
 // This doesn't work on the heltec SX1262 driver yet
@@ -268,7 +306,7 @@ void loop()
 {
   //first check the buttons
   check_button();
-
+  ota_loop();
   //now operate in different roles
   if (MY_ADDRESS == 1)  //serving as a server
   {
@@ -401,9 +439,7 @@ void check_button()
       both.println("Double press button to change\n");
     } else {
       modulation_index = (modulation_index + 1) % MODULATION_INDEX_MAX;
-      DRIVER_TYPE::ModemConfig cfg;
-      memcpy_P(&cfg, &MY_MODEM_CONFIG_TABLE[modulation_index], MODEMCONFIGSZ);
-      driver.setModemRegisters(&cfg);
+      setModemConfig(modulation_index);
       both.printf("Current Modulation %i %s\n", MY_CONFIG_NAME[modulation_index]);
     }
   }

@@ -3,9 +3,9 @@
 
 //Template for creating per unit configuration
 
-#define USE_WIFI   0    //Change to 1 to enable WIFI
-#define WIFI_SSID "XXXXX"
-#define WIFI_PASSWD "XZZZZZ"
+#define USE_WIFI   1    //Change to 1 to enable WIFI
+#define WIFI_SSID "ssid"
+#define WIFI_PASSWD "passwd"
 
 //#define MYADDRESS   3   //Set your unit ID here
 
