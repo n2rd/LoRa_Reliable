@@ -33,6 +33,7 @@ void onOTAEnd(bool success) {
 }
 
 void ota_setup(void) {
+  #warning "Move Wifi code out into its own place. as OTA might be off but want wifi on
   WiFi.mode(WIFI_STA);
   WiFi.setHostname("Lora_Reliable");
   WiFi.begin(WIFI_SSID, WIFI_PASSWD);
@@ -42,6 +43,10 @@ void ota_setup(void) {
     delay(500);
     Serial.print(".");
   }
+  // Not sure these are needed --- should investigate what they do exactly
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
+
   Serial.println("");
   Serial.print("Connected to ");
   Serial.println(WIFI_SSID);
