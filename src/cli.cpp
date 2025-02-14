@@ -186,6 +186,18 @@ if (command[0] == '\\') {
         Serial.printf("Power index 0<=n<=6         \P <n>\n");
         Serial.printf("Radio ID                    \R <n>\n");
         Serial.printf("Commands case insensitive and blanks ignored\n");
+
+        telnet.printf("Caallsign                   \C <callsign>\n");
+        telnet.printf("Frequency                   \F <Frequency in MHz>\n");
+        telnet.printf("GPS State                   \G <off>|<on>\n");
+        telnet.printf("Help Text                   \H\n");
+        telnet.printf("TX Interval (seconds)       \I <n>\n");
+        telnet.printf("Position                    \L <latitude >,<longitude>\n");
+        telnet.printf("Modulation index 0<=n<=8    \M <n>\n");
+        telnet.printf("Power index 0<=n<=6         \P <n>\n");
+        telnet.printf("Radio ID                    \R <n>\n");
+        telnet.printf("Commands case insensitive and blanks ignored\n");
+
         break;
 
         //      Interval (transmit)----------------------------------------------------
