@@ -223,6 +223,7 @@ void setup()
   while (!Serial) ; // Wait for serial port to be available
   delay(5000);
   ota_setup();
+  telnet_setup();
   //display init
   #ifndef ARDUINO_LILYGO_T3_V1_6_1
   heltec_display_power(true);
@@ -307,6 +308,7 @@ void loop()
   //first check the buttons
   check_button();
   ota_loop();
+  telnet_loop();
   //now operate in different roles
   if (MY_ADDRESS == 1)  //serving as a server
   {
