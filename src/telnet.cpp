@@ -57,7 +57,7 @@ void onTelnetInput(String str)
 {
     if (telnet.isLineModeSet()) {
         // checks" for a certain command
-        #warning "call cli(str....) here"
+        int result=cli_execute(str.c_str());
         #if 0
         if (str == "ping") {
             telnet.println("> pong"); 

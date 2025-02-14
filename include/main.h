@@ -7,6 +7,7 @@
 #include "PrintSplitter.h"
 #include "OTA.h"
 #include "telnet.h"
+#include "cli.h"
 
 #ifndef ARDUINO_LILYGO_T3_V1_6_1
 #include  "myHeltec.h"
