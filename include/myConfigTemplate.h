@@ -32,4 +32,20 @@
 //#define DEFAULT_MODULATION_INDEX 5 //LongFast. see table in main.cpp to adjust
 //#define DEFAULT_POWER_INDEX 4     //see power table in main.cpp, index 0 is -9dBm, index 6 is +22dBm max 
 
+#define HAS_ENCODER 0
+#if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
+    //
+    // need to define ENCODER PINS HERE
+    //
+#endif
+
+#define HAS_GPS 0
+#define HAS_HARDWARE_ETHERNET_PORT 0
+#if defined(HAS_HARDWARE_ETHERNET_PORT) && (HAS_HARDWARE_ETHERNET_PORT == 1)
+    #define GPS_METHOD_SPI
+    //#define GPS_METHOND_UART
+#endif
+
+
+
 #endif
