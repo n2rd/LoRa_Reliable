@@ -127,21 +127,27 @@ if (command[0] == '\\') {
     case 'B':
         if (strcmp(command, "OFF") == 0) {
             gps_state = false;
-            Serial.printf("OK, Beacon state = %d", gps_state);
+            Serial.printf("OK, Beacon state = %d\n", gps_state);
+            telnet.printf("OK, Beacon state = %d\r\n", gps_state);
         }
         else if (strcmp(command, "ON") == 0) {
             gps_state = true;
-            Serial.printf("OK, Beacon state = %d", gps_state);
+            Serial.printf("OK, Beacon state = %d\n", gps_state);
+            telnet.printf("OK, Beacon state = %d\r\n", gps_state);
         }
-        else
+        else {
             Serial.printf("NG, Beacon state must be 'OFF' or 'ON'\n");
+            telnet.printf("NG, Beacon state must be 'OFF' or 'ON'\r\n");
+        }
 
         break;
 
         //      Call Sign--------------------------------------------------------------
     case 'C':
-        strcpy(callsign, command);
+        strcpy(callsign, command); 
         Serial.printf("OK, Call sign = %s\n", callsign);
+        telnet.printf("OK, Call sign = %s\r\n", callsign);
+       
         break;
 
         //      Frequency--------------------------------------------------------------
@@ -151,9 +157,11 @@ if (command[0] == '\\') {
         if (flt_input >= 0 && flt_input <= 1000) {
             frequency = flt_input;
             Serial.printf("OK, Frequency = %6.3f\n", frequency);
+            telnet.printf("OK, Frequency = %6.3f\r\n", frequency);
         }
         else {
             Serial.printf("NG, Transmit interval must be between >=???? and <=????\n");
+            telnet.printf("NG, Transmit interval must be between >=???? and <=????\r\n");
         }
 
         break;
@@ -163,14 +171,18 @@ if (command[0] == '\\') {
     case 'G':
         if (strcmp(command, "OFF") == 0) {
             gps_state = false;
-            Serial.printf("OK, GPS state = %d", gps_state);
-        }
+            Serial.printf("OK, GPS state = %d\n", gps_state);
+            telnet.printf("OK, GPS state = %d\r\n", gps_state);
+         }
         else if (strcmp(command, "ON") == 0) {
             gps_state = true;
-            Serial.printf("OK, GPS state = %d", gps_state);
+            Serial.printf("OK, GPS state = %d\n", gps_state);
+            telnet.printf("OK, GPS state = %d\r\n", gps_state);
         }
-        else
+        else {
             Serial.printf("NG, GPS state must be 'OFF' or 'ON'\n");
+            telnet.printf("NG, GPS state must be 'OFF' or 'ON'\r\n");
+        }
 
         break;
 
@@ -187,16 +199,16 @@ if (command[0] == '\\') {
         Serial.printf("Radio ID                    \R <n>\n");
         Serial.printf("Commands case insensitive and blanks ignored\n");
 
-        telnet.printf("Caallsign                   \C <callsign>\n");
-        telnet.printf("Frequency                   \F <Frequency in MHz>\n");
-        telnet.printf("GPS State                   \G <off>|<on>\n");
-        telnet.printf("Help Text                   \H\n");
-        telnet.printf("TX Interval (seconds)       \I <n>\n");
-        telnet.printf("Position                    \L <latitude >,<longitude>\n");
-        telnet.printf("Modulation index 0<=n<=8    \M <n>\n");
-        telnet.printf("Power index 0<=n<=6         \P <n>\n");
-        telnet.printf("Radio ID                    \R <n>\n");
-        telnet.printf("Commands case insensitive and blanks ignored\n");
+        telnet.printf("Caallsign                   \C <callsign>\r\n");
+        telnet.printf("Frequency                   \F <Frequency in MHz>\r\n");
+        telnet.printf("GPS State                   \G <off>|<on>\r\n");
+        telnet.printf("Help Text                   \H\r\n");
+        telnet.printf("TX Interval (seconds)       \I <n>\r\n");
+        telnet.printf("Position                    \L <latitude >,<longitude>\r\n");
+        telnet.printf("Modulation index 0<=n<=8    \M <n>\r\n");
+        telnet.printf("Power index 0<=n<=6         \P <n>\r\n");
+        telnet.printf("Radio ID                    \R <n>\r\n");
+        telnet.printf("Commands case insensitive and blanks ignored\r\n");
 
         break;
 
@@ -207,9 +219,11 @@ if (command[0] == '\\') {
         if (int_input >= 0 && int_input <= 8) {
             tx_interval = int_input;
             Serial.printf("OK, Transmit interval = %u\n", tx_interval);
+            telnet.printf("OK, Transmit interval = %u\r\n", tx_interval);
         }
         else {
             Serial.printf("NG, Transmit interval must be >=???? and <=????\n");
+            telnet.printf("NG, Transmit interval must be >=???? and <=????\r\n");
         }
         break;
 
@@ -231,6 +245,7 @@ if (command[0] == '\\') {
                     }
                     else {
                         Serial.printf("NG, Internal longitude buffer exceeded\n");
+                        telnet.printf("NG, Internal longitude buffer exceeded\r\n");
                         return 1;
                     }
                 }
@@ -241,6 +256,7 @@ if (command[0] == '\\') {
                     }
                     else {
                         Serial.printf("NG, Internal latitude buffer exceeded\n");
+                        telnet.printf("NG, Internal latitude buffer exceeded\r\n");
                         return 1;
                     }
                 }
@@ -255,6 +271,7 @@ if (command[0] == '\\') {
 
         if (!location_comma_found) {
             Serial.printf("NG, Location requires comma separation between Lat & Lon\n");
+            telnet.printf("NG, Location requires comma separation between Lat & Lon\r\n");
             return 1;
         }
         lon_value = atof(lon_str);
@@ -262,13 +279,17 @@ if (command[0] == '\\') {
 
         if (abs(lon_value) > 180) {
             Serial.printf("NG, Longitude must be between -180 and 180\n");
+            telnet.printf("NG, Longitude must be between -180 and 180\r\n");
             return 1;
         }
         if (abs(lat_value) > 90) {
             Serial.printf("NG, Longitude must be between -90 and 90\n");
+            telnet.printf("NG, Longitude must be between -90 and 90\r\n");
             return 1;
         }
         Serial.printf("OK, Latitude = % f; Longitude = %f\n", lat_value, lon_value);
+        telnet.printf("OK, Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
+
         break;
 
 //      Modulation-------------------------------------------------------------
@@ -277,9 +298,11 @@ if (command[0] == '\\') {
             if (int_input >= 0 && int_input <= 8) {
                 modulation_index = int_input;
                 Serial.printf("OK, Modulation_index = %u\n", modulation_index);
+                telnet.printf("OK, Modulation_index = %u\r\n", modulation_index);
             }
             else {
                 Serial.printf("NG, Modulation index must be >=0 and <=8\n");
+                telnet.printf("NG, Modulation index must be >=0 and <=8\r\n");
             }
             break;
 
@@ -289,9 +312,11 @@ if (command[0] == '\\') {
             if (int_input >= 0 && int_input <= 6) {
                 power_index = int_input;
                 Serial.printf("OK, Power_index = %u\n", power_index);
+                telnet.printf("OK, Power_index = %u\r\n", power_index);
             }
             else {
                 Serial.printf("NG, Power index must be >=0 and <=6\n");
+                telnet.printf("NG, Power index must be >=0 and <=6\r\n");
             }
             break;
 
@@ -299,6 +324,7 @@ if (command[0] == '\\') {
         case 'Q':
             int_input = atoi(command);
             Serial.printf("OK, Quitting Telnet session\n");
+            telnet.printf("OK, Quitting Telnet session\r\n");
 
             break;
 
@@ -308,9 +334,11 @@ if (command[0] == '\\') {
             if (int_input >= 0 && int_input <= 10) {
                 radio_id = int_input;
                 Serial.printf("OK, Radio ID = %u\n", radio_id);
+                telnet.printf("OK, Radio ID = %u\r\n", radio_id);
             }
             else {
                 Serial.printf("NG, Radio ID must be >=0 and <=??????\n");
+                telnet.printf("NG, Radio ID must be >=0 and <=??????\r\n");
             }
 
             break;
@@ -320,24 +348,29 @@ if (command[0] == '\\') {
         case 'S':
             if (strcmp(command, "OFF") == 0) {
                 gps_state = false;
-                Serial.printf("OK, Serial USB output state = %d", gps_state);
+                Serial.printf("OK, Serial USB output state = %d\n", gps_state);
+                telnet.printf("OK, Serial USB output state = %d\r\n", gps_state);
             }
             else if (strcmp(command, "ON") == 0) {
                 gps_state = true;
-                Serial.printf("OK, Serial USB output state = %d", gps_state);
+                Serial.printf("OK, Serial USB output state = %d\n", gps_state);
+                telnet.printf("OK, Serial USB output state = %d\r\n", gps_state);
             }
             else
                 Serial.printf("NG, Serial USB output state must be 'OFF' or 'ON'\n");
+                telnet.printf("NG, Serial USB output state must be 'OFF' or 'ON'\r\n");
 
             break;
 
             //      Invalid Command--------------------------------------------------------
         default:
             Serial.printf("NG, Unrecognized command %c [C, F, G, H, I, L, M, P, R]\n", cmd_code);
+            telnet.printf("NG, Unrecognized command %c [C, F, G, H, I, L, M, P, R]\r\n", cmd_code);
         }
     }
     else {
         Serial.printf("NG, Leading backslash missing\n");
+        telnet.printf("NG, Leading backslash missing\r\n");
         return 1;
     }
 
