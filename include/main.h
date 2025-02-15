@@ -9,6 +9,7 @@
 #include "telnet.h"
 #include "preferences.h"
 #include "cli.h"
+#include "csv.h"
 
 #ifndef ARDUINO_LILYGO_T3_V1_6_1
 #include  "myHeltec.h"
