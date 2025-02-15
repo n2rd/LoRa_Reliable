@@ -28,7 +28,6 @@ void onTelnetConnect(String ip)
 
     telnet.println("\nWelcome " + telnet.getIP());
     telnet.println("(Use ^] + q  to disconnect.)");
-    #warning "Spin up CLI here"
 }
 
 void onTelnetDisconnect(String ip)
