@@ -157,7 +157,7 @@ void setModemConfig(uint8_t index) {
 #define DRIVER_MAX_MESSAGE_LEN RH_RF95_MAX_MESSAGE_LEN
 #endif
 
-static const String MY_CONFIG_NAME[MODULATION_INDEX_MAX] =
+static const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX] =
 {
 "Short Turbo", "Short Fast", "Short Slow", "Medium Fast", "Medium Slow", "Long Fast", "Long Moderate", "Long Slow", "Very Long Slow"
 };

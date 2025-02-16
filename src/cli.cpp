@@ -46,9 +46,10 @@ int power_index = DEFAULT_POWER_INDEX;
         power_index = (power_index + 1) % POWER_INDEX_MAX;
       driver.setTxPower(power[power_index]);
 
-  driver.setSignalBandwidth(TTGO_MODEM_CONFIG_TABLE[index].bandwidth);
-  driver.setSpreadingFactor(TTGO_MODEM_CONFIG_TABLE[index].spreadingFactor);
-  driver.setCodingRate4(TTGO_MODEM_CONFIG_TABLE[index].codingRate4Denominator);
+      modulation_index = (modulation_index + 1) % MODULATION_INDEX_MAX;
+      setModemConfig(modulation_index);
+ 
+
 
     driver.setFrequency(DEFAULT_FREQUENCY);
 
@@ -89,9 +90,9 @@ CLI Command set
     Radio Address           /A                                              Default = 0
     Beacon                  /B <OFF|ON>                                     Default = on
     Callsign				/C <call>
-    Frequency               /F <n>                                          Defailt = 905.2
+    Frequency index         /F <n>                                          Default = 905.2
                                     n= Frequency in MHz 3.g., 905.2, 
-    GPS                     /G <OFF|ON>                                     Defailt = ON
+    GPS                     /G <OFF|ON>                                     Default = ON
                                     
     Help                    /H
     Transmission interval   /I <n>  n= number of seconds between            Default = 30
@@ -100,7 +101,7 @@ CLI Command set
     Location (fixed)        /L <n,m>                                        Default = 43.0351893,-76.1805654
                                     n= station latitude  (e.g.,  43.0103786)
                                     m= station longitude (e.g., -76.2850347)
-	Modulation				/M <n>                                          Default = 7
+	Modulation index		/M <n>                                          Default = 7
                                     n=0 Short Turbo
                                     n=1 Short Fast
                                     n=2 Short Slow
@@ -110,7 +111,7 @@ CLI Command set
                                     n=6 Long Moderate
                                     n=7 Long Slow
                                     n=8 Very Long Slow
-    Power                   /P <n>                                          Default = 6
+    Power index             /P <n>                                          Default = 6
                                     n=0  -9.0 dBm
                                     n=1  -5.0 dBm
                                     n=2  +0.0 dBm
@@ -119,7 +120,6 @@ CLI Command set
                                     n=5 +18.0 dBm
                                     n=6 +22.0 dBm
     Quit (Telnet)           /Q
-    Radio Type              /T                                              Default = 1
     Serial USB Output       /S <OFF|ON>                                     Default = on
     Radio Type              /T <n>                                          Default = 2
                                     n=0 Server (client/server operation)
@@ -127,15 +127,19 @@ CLI Command set
                                     n=2 Peer (peer to peer operation)
 */
 
-
 #include "main.h"
-#if 0
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <string.h>
-#endif
+
+
+// These need to move elsewhere=======================================
+#warning "These need to move elsewhere"
+#define POWER_INDEX_MAX 7
+extern float power[POWER_INDEX_MAX];
+#define MODULATION_INDEX_MAX 9
+extern const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX];
+extern void setModemConfig(uint8_t i);                             //need to fix
+//====================================================================
+
+
 
 void upcase(char* str) {
 
@@ -164,15 +168,16 @@ void removeBlanks(char* str) {
 int cli_execute(const char* command_arg) {
     //temporary variables pending integration into ui.h
     char callsign[10];
-    float frequency;
+    float frequency; //depricated
+    int frequency_index;
     bool gps_state;
     float lat_value, lon_value;
     int modulation_index;
     int power_index;
     int tx_interval;
     int radio_id;
-    #define POWER_INDEX_MAX 7
-    float power[POWER_INDEX_MAX] = {-9.0, -5.0, 0.0, 6.0, 12.0, 18.0, 22.0};
+
+
     //
 
 char command[50];
@@ -247,15 +252,15 @@ if (command[0] == '/') {
         //      Frequency--------------------------------------------------------------
 
     case 'F':
-        flt_input = atof(command);
-        if (flt_input >= 0 && flt_input <= 1000) {
-            frequency = flt_input;
-            Serial.printf("OK:Frequency = %6.3f\n", frequency);
-            telnet.printf("OK:Frequency = %6.3f\r\n", frequency);
+        int_input = atoi(command);
+        if (int_input >= 0 && int_input <= 1000) {
+            frequency = int_input;
+            Serial.printf("OK:Frequency = %s\n", frequency);
+            telnet.printf("OK:Frequency = %s\r\n", frequency);
         }
         else {
-            Serial.printf("NG:Transmit interval must be between >=???? and <=????\n");
-            telnet.printf("NG:Transmit interval must be between >=???? and <=????\r\n");
+            Serial.printf("NG:Frequency index must be between >=0 and <=????\n");
+            telnet.printf("NG:Frequnecy index must be between >=0 and <=????\r\n");
         }
 
         break;
@@ -397,9 +402,11 @@ if (command[0] == '/') {
             int_input = atoi(command);
             if (int_input >= 0 && int_input <= 8) {
                 modulation_index = int_input;
+                modulation_index = (modulation_index + 1) % MODULATION_INDEX_MAX;
+                setModemConfig(modulation_index);                             //need to fix
                 Serial.printf("OK:Modulation_index = %u\n", modulation_index);
                 telnet.printf("OK:Modulation_index = %u\r\n", modulation_index);
-            }
+                          }
             else {
                 Serial.printf("NG:Modulation index must be >=0 and <=8\n");
                 telnet.printf("NG:Modulation index must be >=0 and <=8\r\n");
