@@ -45,9 +45,9 @@ void output(char leadingChar, char *tag, char *data)
 {
     //output leadingChar,tag,data
     if (telnet.isConnected())
-        telnet.printf("%c,%s,%s",leadingChar,tag,data);
+        telnet.printf("%c,%s,%s\n",leadingChar,tag,data);
     if (Serial.availableForWrite())
-        Serial.printf("%c,%s,%s",leadingChar,tag,data);
+        Serial.printf("%c,%s,%s\n",leadingChar,tag,data);
 }
 /*----------------------------------------------------*/
 void CsvClass::info(char *tag, char *data)
