@@ -1,23 +1,32 @@
 #ifndef MAIN_H
 #define MAIN_H
-#include "version.h"
+// include standard libs from Espressif ESP32 IDF first
 #include <Arduino.h>
-#include "myConfig.h"
+#include "HardwareSerial.h"
+#include "Preferences.h"
+
+//includes from libraries
+#include <RHReliableDatagram.h>
 #include <SPI.h>
-#include "PrintSplitter.h"
 #include "OTA.h"
 #include "telnet.h"
-#include "preferences.h"
+
+//includes from this project
+#include "version.h"
+#include "myConfig.h"
+#include "PrintSplitter.h"
 #include "cli.h"
 #include "csv.h"
+#include "parameters.h"
 
+//conditional includes, definitions and declarations
 #ifndef ARDUINO_LILYGO_T3_V1_6_1
-#include  "myHeltec.h"
+  // Turns the 'PRG' button into the power button, long press is off 
+  #define HELTEC_DEFAULT_POWER_BUTTON   // must be before #include myHeltec.h"
+  #include "myHeltec.h"
 #else
 #include "myLilyGoT3.h"
 #endif
-
-#include <RHReliableDatagram.h>
 
 #if USE_WIFI >0
     #if defined(ESP32)
@@ -34,6 +43,32 @@
     #endif //defined(ESP32)
 #endif //USE_WIFI > 0
 
+//
+// definitions and declarations
+//
+
+// Pause between transmited packets in seconds.
+#define PAUSE       20  // client, time between transmissions in seconds
+
+// Timeout for sendtoWait in milliseconds
+#define TIMEOUT     200  //for sendtoWait
+#define RETRIES     3     //for sendtoWait
+#ifdef HAS_GPS
+//#define GPS_TIMEOUT 60  //time in seconds for gps acquisition
+//function declarations for gps.cpp
+void gps_setup();
+bool get_gps_location(double &lat, double &lng, double &alt, double &hdop); 
+uint16_t encode_grid4(String locator); 
+void decode_grid4(uint16_t grid4, char *grid); 
+#endif
+
 extern PrintSplitter both;
+//
+// functions defined in main.cpp
+//
+void check_button();
+void setup_radio_parameter(int item, int index);
+void DisplayUpperRight(int count); 
+void toggleLED();
 
 #endif //MAIN_H

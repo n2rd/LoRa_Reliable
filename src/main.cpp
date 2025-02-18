@@ -1,178 +1,20 @@
 #include "main.h"
 
-#ifdef ARDUINO_LILYGO_T3_V1_6_1
-  #include "myLilyGoT3.h"
-#else
-  // Turns the 'PRG' button into the power button, long press is off 
-  #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
-  #include "myHeltec.h"
-#endif
-
-#if defined(USE_WIFI) && (USE_WIFI >0)
-  #if defined(ESP32)
-    #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
-      AsyncWebServer server(80);
-    #else
-      WebServer server(80);
-    #endif
-  #endif //defined(ESP32)
-#endif //deefined(USE_WIFI) && (USE_WIFI > 0)
-
-
-
-// 2 bytes packet payload, logging data as csv on serial port
-/***  logging format ***
-*  server
-*     millis, from, counter, rssi, snr, send_report_back_status
-* 
-*  client
-*   successful
-*     millis, counter, rssi, snr, rssi_reported_by_server, snr_report 
-*   failed
-*     millis, counter, "failed"
-*/
+//
+// SETTING UP BASIC RADIO PARAMETERS
+//
+//to set the frequency, power, and modulation index
+//  first check the nvram and use those values
+//  if not set, use the defaults
 
 //
-//EXPERIMENTATION
+//  global variables
 //
-//#define RAJ_DEBUG  1 //comment this line out for production
-#ifdef RAJ_DEBUG
-  #define DEFAULT_FREQUENCY 915.0
-  #define DEFAULT_POWER_INDEX 0     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
-  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
-#endif
-
-#ifndef DEFAULT_FREQUENCY
-  #define DEFAULT_FREQUENCY 905.2
-#endif
-#ifndef DEFAULT_POWER_INDEX
-  #define DEFAULT_POWER_INDEX 4     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
-#endif
-#ifndef DEFAULT_MODULATION_INDEX
-  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
-#endif
-
-#define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
-
-// Pause between transmited packets in seconds.
-#define PAUSE       20  // client, time between transmissions
-#define TIMEOUT     200  //for sendtoWait
-#define RETRIES     3     //for sendtoWait
-
-
-
-//
-// LoRa settings that are used for Meshtastic
-//
-// No Channel Name	 / Data-Rate	/ SF/ Symb	/ Coding Rate	/ Bandwidth	/ Link Budget
-// 0  Short Turbo	   / 21.88 kbps /	7 / 128	  / 4/5	        / 500 kHz	  / 140dB
-// 1  Short Fast	   / 10.94 kbps / 7 / 128	  / 4/5	        / 250 kHz	  / 143dB
-// 2  Short Slow	   / 6.25 kbps	/ 8 / 256	  / 4/5	        / 250 kHz	  / 145.5dB
-// 3  Medium Fast	   / 3.52 kbps	/ 9 / 512	  / 4/5	        / 250 kHz	  / 148dB
-// 4  Medium Slow	   / 1.95 kbps	/ 10 / 1024	/ 4/5	        / 250 kHz	  / 150.5dB
-// 5  Long Fast	     / 1.07 kbps	/ 11 / 2048	/ 4/5	        / 250 kHz	  / 153dB
-// 6  Long Moderate  / 0.34 kbps	/ 11 / 2048	/ 4/8	        / 125 kHz	  / 156dB
-// 7  Long Slow	     / 0.18 kbps	/ 12 / 4096	/ 4/8	        / 125 kHz	  / 158.5dB
-// 8  Very Long Slow / 0.09 kbps	/ 12 / 4096 /	4/8	        / 62.5 kHz	/ 161.5dB
-
-#define MODULATION_INDEX_MAX 9
-// These are indexed by the values of ModemConfigChoice
-// Stored in flash (program) memory to save SRAM
-#ifndef ARDUINO_LILYGO_T3_V1_6_1
-PROGMEM static const RH_SX126x::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX] =
-{
-    //  packetType, p1, p2, p3, p4, p5, p6, p7, p8
-     // 0 Short Turbo
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_128, RH_SX126x_LORA_BW_500_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 1 Short Fast
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_128, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 2 Short Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_256, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 3 Medium Fast
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_512, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 4 Medium Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_1024, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 5 Long Fast
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_2048, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 6 Long Moderate
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_2048, RH_SX126x_LORA_BW_125_0, RH_SX126x_LORA_CR_4_8, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 7 Long Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_4096, RH_SX126x_LORA_BW_125_0, RH_SX126x_LORA_CR_4_8, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 8 Very Long Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_4096, RH_SX126x_LORA_BW_62_5, RH_SX126x_LORA_CR_4_8, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-};
-#define MODEMCONFIGSZ sizeof(RH_SX126x::ModemConfig)
-
-void setModemConfig(uint8_t index) {
-  if (index > MODULATION_INDEX_MAX)
-    index = MODULATION_INDEX_MAX - 1;
-    DRIVER_TYPE::ModemConfig cfg;
-    #warning "Remove commented lines later"
-    //memcpy_P(&cfg, &MY_MODEM_CONFIG_TABLE[modulation_index], MODEMCONFIGSZ);
-    //driver.setModemRegisters(&cfg);
-    driver.setModemRegisters(&MY_MODEM_CONFIG_TABLE[index]);
-}
-
-
-#define DRIVER_MAX_MESSAGE_LEN RH_SX126x_MAX_MESSAGE_LEN
-
-#else //LILLYGO_T3 RF95 aka SX127x chips
-typedef struct modem_config_struct {
-  long bandwidth;
-  uint8_t spreadingFactor;
-  uint8_t codingRate4Denominator;
-} MYMODEM_CONFIG_TABLE;
-
-enum SF {
-  SF_64 = 6,
-  SF_128 = 7,
-  SF_256 = 8,
-  SF_512 = 9,
-  SF_1024 = 10,
-  SF_2048 = 11,
-  SF_4096 = 12
-};
-
-PROGMEM static const MYMODEM_CONFIG_TABLE TTGO_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX] = 
-{
-  { 500000, SF_128, 5}, //0 Short Turbo
-  { 250000, SF_128, 5}, //1 Short Fast
-  { 250000, SF_256, 5}, //2 Short Slow
-  { 250000, SF_512, 5}, //3 Medium Fast
-  { 250000, SF_1024, 5}, //4 Medium Slow
-  { 250000, 11, 5}, // 5 LongFast
-  { 125000, 11, 8}, //6 Long Moderate
-  { 125000, SF_4096, 8}, //7 Long Slow
-  { 062500, SF_4096,8}  //8 Very Long Slow
-};
-
-void setModemConfig(uint8_t index) {
-  if (index > MODULATION_INDEX_MAX)
-    index = MODULATION_INDEX_MAX - 1;
-  driver.setSignalBandwidth(TTGO_MODEM_CONFIG_TABLE[index].bandwidth);
-  driver.setSpreadingFactor(TTGO_MODEM_CONFIG_TABLE[index].spreadingFactor);
-  driver.setCodingRate4(TTGO_MODEM_CONFIG_TABLE[index].codingRate4Denominator);
-}
-
-#define DRIVER_MAX_MESSAGE_LEN RH_RF95_MAX_MESSAGE_LEN
-#endif
-
-static const String MY_CONFIG_NAME[MODULATION_INDEX_MAX] =
-{
-"Short Turbo", "Short Fast", "Short Slow", "Medium Fast", "Medium Slow", "Long Fast", "Long Moderate", "Long Slow", "Very Long Slow"
-};
-int modulation_index = DEFAULT_MODULATION_INDEX;
-
-#define POWER_INDEX_MAX 7
-float power[POWER_INDEX_MAX] = {-9.0, -5.0, 0.0, 6.0, 12.0, 18.0, 22.0};
-int power_index = DEFAULT_POWER_INDEX;
-
-PrintSplitter both(Serial, display);
-
-RHReliableDatagram manager(driver, MY_ADDRESS);
-
-// temporary transmit buffer
-uint8_t data[20];
+bool menu_active = false;  //do not show radio messages on display when menu is active
+bool tx_lock = false;  //do not transmit if true
+bool short_pause = false; //halve the PAUSE time it if true
+int tx_interval = PAUSE; //time in seconds between transmissions
+uint8_t data[20]; // temporary transmit buffer
 
 // Dont put this on the stack: 
 // it is fragile, you will break it if you touch it
@@ -187,43 +29,37 @@ uint64_t tx_time = 0;
 uint32_t single_button_time = 0.0;
 uint32_t double_button_time = 0.0;
 
-//
-// funtion declarations
-//
-void check_button();
+#if defined(USE_WIFI) && (USE_WIFI >0)
+  #if defined(ESP32)
+    #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
+      AsyncWebServer server(80);
+    #else
+      WebServer server(80);
+    #endif
+  #endif //defined(ESP32)
+#endif //deefined(USE_WIFI) && (USE_WIFI > 0)
 
-
-
-void DisplayUpperRight(int count) {
-  char buf[10];
-  memset(buf,32,sizeof(buf));
-  sprintf(buf+2,"%5d", count);
-  display.setColor(BLACK);
-  display.fillRect((display.getWidth()) - 32, 0, 32, 14);
-  display.setColor(WHITE);
-  display.setColor(INVERSE);
-  display.drawString((display.getWidth()) - 30, 0, buf);
-  display.display();
-  display.setColor(INVERSE);
-  display.display();
-}
-
-void toggleLED()
-{
-  digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
-}
+RHReliableDatagram manager(driver, MY_ADDRESS);
+PrintSplitter both(Serial, display);
 
 void setup() 
 {
+  //firtst thing start serial so you can see what is going on
+  Serial.begin(115200);
+  while (!Serial) ; // Wait for serial port to be available
+  delay(5000); //delay to allow serial monitor to start
+  
+  //now set up the parameters so we know what we are doing
+  parameters_init();
+
   #ifdef ARDUINO_LILYGO_T3_V1_6_1
   pinMode(LED_BUILTIN, OUTPUT);
   SPI.begin(LORA_SCK,LORA_MISO,LORA_MOSI,LORA_CS);
   #endif
-  Serial.begin(115200);
-  while (!Serial) ; // Wait for serial port to be available
-  delay(5000);
+
   ota_setup();
   telnet_setup();
+
   //display init
   #ifndef ARDUINO_LILYGO_T3_V1_6_1
   heltec_display_power(true);
@@ -242,6 +78,16 @@ void setup()
   display.setFont(ArialMT_Plain_10);
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
+
+  #ifdef HAS_ENCODER
+  rotary_setup();
+  menu(0);
+  #endif
+  
+  #ifdef HAS_GPS
+  gps_setup();
+  #endif
+
 
   //start the radio
   if (!manager.init()) 
@@ -307,6 +153,7 @@ void loop()
 {
   //first check the buttons
   check_button();
+	rotary_loop();
   ota_loop();
   telnet_loop();
   //now operate in different roles
@@ -316,7 +163,7 @@ void loop()
     if (driver.mode() != lastMode) {
       Serial.printf("driver.mode changed to %d\n",driver.mode());
       lastMode = driver.mode();
-      DisplayUpperRight(lastMode);
+      if (!menu_active) DisplayUpperRight(lastMode);
     }
     else {
       //Serial.println("Driver mode not changed");
@@ -335,8 +182,8 @@ void loop()
       {
         int snr = driver.lastSNR();
         int rssi = driver.lastRssi();
-        display.printf("%i -> %i\n", from, (int)(buf[1]*256 + buf[0]));
-        display.printf("RSSI %i   SNR %i flags: %i\n", rssi, snr, flags);
+        if (!menu_active) display.printf("%i -> %i\n", from, (int)(buf[1]*256 + buf[0]));
+        if (!menu_active) display.printf("RSSI %i   SNR %i flags: %i\n", rssi, snr, flags);
         rssi = abs(rssi);
         data[0] = static_cast<uint8_t>(rssi);
         data[1] = static_cast<uint8_t>(snr);
@@ -345,10 +192,10 @@ void loop()
         if (!manager.sendtoWait(data, 2, from)) {
           //display.println("sendtoWait failed");
           Serial.printf("sendtoWait to %d failed in %s %d\n", from,__FILE__,__LINE__);
-          DisplayUpperRight(++Failure_Counter);
+          if (!menu_active) DisplayUpperRight(++Failure_Counter);
         }
         else
-          DisplayUpperRight(Failure_Counter);
+          if (!menu_active) DisplayUpperRight(Failure_Counter);
       }
       else {
         //We can get here because there was no packet received, it wasn't for us or was an ACK
@@ -370,35 +217,34 @@ void loop()
       if (manager.sendtoWait((uint8_t *)data, 2, SERVER_ADDRESS))
       {
         int retransmisison_count = manager.retransmissions();
-        display.print("Sent ");
-        display.print((int)(data[1]*256 + data[0]));
-        display.printf(" retrans = %i\n", retransmisison_count);
+        if (!menu_active) display.print("Sent ");
+        if (!menu_active) display.print((int)(data[1]*256 + data[0]));
+        if (!menu_active) display.printf(" retrans = %i\n", retransmisison_count);
 
         // Now wait for a reply from the server
         uint8_t len = sizeof(buf);
         uint8_t from;   
         if (manager.recvfromAckTimeout(buf, &len, 2000, &from))
         {
-          display.printf("1 -> RSSI -%i SNR %i\n", (int)buf[0], (int)buf[1]);
+          if (!menu_active) display.printf("1 -> RSSI -%i SNR %i\n", (int)buf[0], (int)buf[1]);
           int snr = driver.lastSNR();
           int rssi = driver.lastRssi();
-          display.printf("%i <- RSSI %i SNR %i\n", MY_ADDRESS, rssi, snr);
+          if (!menu_active) display.printf("%i <- RSSI %i SNR %i\n", MY_ADDRESS, rssi, snr);
           Serial.printf("%i, %i, -%i, %i, %i, %i\n", millis(), counter, (int)buf[0], (int)buf[1], rssi, snr);
         } else {
-          display.println("No return reply");
+          if (!menu_active) display.println("No return reply");
         }
       } else {
         int retransmisison_count = manager.retransmissions();
-        display.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
+        if (!menu_active) display.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
         Serial.printf("%i, %i, sendtoWait Failed %i retries\n", millis(), counter,retransmisison_count);
         //DisplayUpperRight(Failure_Counter++);
       }
-      DisplayUpperRight(counter);
+      if (!menu_active) DisplayUpperRight(counter);
       counter++;
     } //legal to transmit
   } // as a client
 } //loop
-
 
 void check_button() 
 {
@@ -454,4 +300,75 @@ void check_button()
     // Deep sleep (has wait for release so we don't wake up immediately)
     heltec_deep_sleep();
   }
+}
+
+//now for individual parameter activation on the radio
+// these are designed to used for initial radio setup and later modification by menu and the cli
+//  they are not written to nvram, that is a separate function
+void setup_radio_parameter(int item, int index) {
+  //it appears that you do not have to shutdown the radio to change these parameters
+  switch (item) {
+    case CALLSIGN:
+      // to be done, will use encoding like wsjtx to create a compact hash
+      // that will be added to each data packet after we move to the amateur service
+      break;
+    case FREQUENCY_INDEX:
+      driver.setFrequency(frequency_index_to_frequency(index));
+      break;
+    case GPS_STATE:
+      gps_toggle(index);
+      break;
+    case TX_LOCK:
+      if (index==1) tx_lock = true;
+      else tx_lock = false;
+      break;
+    case SHORT_PAUSE:
+      if (index==1) short_pause = true;
+      else tx_lock = false;
+      break;
+    case MODULATION_INDEX:
+      #ifndef ARDUINO_LILYGO_T3_V1_6_1
+       driver.setModemRegisters(&MY_MODEM_CONFIG_TABLE[index]);
+      #else
+       driver.setSignalBandwidth(TTGO_MODEM_CONFIG_TABLE[index].bandwidth);
+       driver.setSpreadingFactor(TTGO_MODEM_CONFIG_TABLE[index].spreadingFactor);
+       driver.setCodingRate4(TTGO_MODEM_CONFIG_TABLE[index].codingRate4Denominator);
+       #endif
+      break;
+    case POWER_INDEX:
+      driver.setTxPower(power[index]);
+      break;
+    case TX_INTERVAL:
+      if (TX_INTERVAL==1) {
+        tx_interval = PAUSE/2;
+      } else {
+        tx_interval = PAUSE;
+      }
+      break;
+    case ADDRESS:
+      //need to change address and reset the radio
+      break;
+    default:
+      return false;
+  }
+  return true;
+}
+
+void DisplayUpperRight(int count) {
+  char buf[10];
+  memset(buf,32,sizeof(buf));
+  sprintf(buf+2,"%5d", count);
+  display.setColor(BLACK);
+  display.fillRect((display.getWidth()) - 32, 0, 32, 14);
+  display.setColor(WHITE);
+  display.setColor(INVERSE);
+  display.drawString((display.getWidth()) - 30, 0, buf);
+  display.display();
+  display.setColor(INVERSE);
+  display.display();
+}
+
+void toggleLED()
+{
+  digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
 }

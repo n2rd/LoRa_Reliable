@@ -2,7 +2,8 @@
 #include <Arduino.h>
 #include "myHeltec.h"
 
-SSD1306Wire display(0x3c, SDA_OLED, SCL_OLED, DISPLAY_GEOMETRY);
+// Remove the following line
+// extern SSD1306Wire display(0x3c, SDA_OLED, SCL_OLED, DISPLAY_GEOMETRY);
 HotButton button(BUTTON);
 RH_SX126x driver(8, 14, 13, 12); // NSS, DIO1, BUSY, NRESET
 

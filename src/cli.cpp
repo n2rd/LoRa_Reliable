@@ -188,26 +188,26 @@ if (command[0] == '\\') {
 
         //      Help-------------------------------------------------------------------
     case 'H':
-        Serial.printf("Caallsign                   \C <callsign>\n");
-        Serial.printf("Frequency                   \F <Frequency in MHz>\n");
-        Serial.printf("GPS State                   \G <off>|<on>\n");
-        Serial.printf("Help Text                   \H\n");
-        Serial.printf("TX Interval (seconds)       \I <n>\n");
-        Serial.printf("Position                    \L <latitude >,<longitude>\n");
-        Serial.printf("Modulation index 0<=n<=8    \M <n>\n");
-        Serial.printf("Power index 0<=n<=6         \P <n>\n");
-        Serial.printf("Radio ID                    \R <n>\n");
+        Serial.printf("Callsign                   \\C <callsign>\n");
+        Serial.printf("Frequency                   \\F <Frequency in MHz>\n");
+        Serial.printf("GPS State                   \\G <off>|<on>\n");
+        Serial.printf("Help Text                   \\H\n");
+        Serial.printf("TX Interval (seconds)       \\I <n>\n");
+        Serial.printf("Position                    \\L <latitude >,<longitude>\n");
+        Serial.printf("Modulation index 0<=n<=8    \\M <n>\n");
+        Serial.printf("Power index 0<=n<=6         \\P <n>\n");
+        Serial.printf("Radio ID                    \\R <n>\n");
         Serial.printf("Commands case insensitive and blanks ignored\n");
 
-        telnet.printf("Caallsign                   \C <callsign>\r\n");
-        telnet.printf("Frequency                   \F <Frequency in MHz>\r\n");
-        telnet.printf("GPS State                   \G <off>|<on>\r\n");
-        telnet.printf("Help Text                   \H\r\n");
-        telnet.printf("TX Interval (seconds)       \I <n>\r\n");
-        telnet.printf("Position                    \L <latitude >,<longitude>\r\n");
-        telnet.printf("Modulation index 0<=n<=8    \M <n>\r\n");
-        telnet.printf("Power index 0<=n<=6         \P <n>\r\n");
-        telnet.printf("Radio ID                    \R <n>\r\n");
+        telnet.printf("Callsign                   \\C <callsign>\r\n");
+        telnet.printf("Frequency                   \\F <Frequency in MHz>\r\n");
+        telnet.printf("GPS State                   \\G <off>|<on>\r\n");
+        telnet.printf("Help Text                   \\H\r\n");
+        telnet.printf("TX Interval (seconds)       \\I <n>\r\n");
+        telnet.printf("Position                    \\L <latitude >,<longitude>\r\n");
+        telnet.printf("Modulation index 0<=n<=8    \\M <n>\r\n");
+        telnet.printf("Power index 0<=n<=6         \\P <n>\r\n");
+        telnet.printf("Radio ID                    \\R <n>\r\n");
         telnet.printf("Commands case insensitive and blanks ignored\r\n");
 
         break;

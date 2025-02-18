@@ -1,5 +1,16 @@
 #include "main.h"
 
+/***  logging format ***
+*  server
+*     millis, from, counter, rssi, snr, send_report_back_status
+* 
+*  client
+*   successful
+*     millis, counter, rssi, snr, rssi_reported_by_server, snr_report 
+*   failed
+*     millis, counter, "failed"
+*/
+
 ESPTelnet telnet;
 
 const uint16_t  port = 23;

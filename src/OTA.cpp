@@ -33,7 +33,7 @@ void onOTAEnd(bool success) {
 }
 
 void ota_setup(void) {
-  #warning "Move Wifi code out into its own place. as OTA might be off but want wifi on
+  #warning "Move Wifi code out into its own place. as OTA might be off but want wifi on"
   WiFi.mode(WIFI_STA);
   WiFi.setHostname("Lora_Reliable");
   WiFi.begin(WIFI_SSID, WIFI_PASSWD);
