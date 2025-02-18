@@ -1,56 +1,38 @@
 #include <Arduino.h>
-// sx1262_server.ino
-// -*- mode: C++ -*-
-// Example sketch showing how to create a simple messageing server
-// with the RH_SX126x class and a basic SX1262 module connected to an Arduino compatible processor
-// It is designed to work with the examples stm32wlx_client and sx1262_client.
-// Tested with G-Nice LoRa1262-915 and Teensy 3.1
+// Example sketch showing how to create a simple peer to peer messaging network, single hop
+// with acknowledgements to RF95_reliable_datagram_client and server
+// Contributed by Charles-Henri Hallard based on sample RF95_reliable_datagram_client and server
+// and RF95_reliable_datagram_client and server by Mike Poublon
+// and ropg for the unofficial Heltec library
 
 // Turns the 'PRG' button into the power button, long press is off 
-#define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
+#define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <myHeltec.h>"
 
 //version
-#define VERSION "10:00 01-2-2025"  // 2 bytes packet payload, logging data as csv on serial port
-/***  logging format ***
-*  server
-*     millis, from, counter, rssi, snr, send_report_back_status
-* 
-*  client
-*   successful
-*     millis, counter, rssi, snr, rssi_reported_by_server, snr_report 
-*   failed
-*     millis, counter, "failed"
-*/
+#define VERSION __DATE__  " "  __TIME__
 
 // SETUP Parameters
 //
 #define ADDRESS_MAX 9 //use 1 for server, others are all clients
-#define SERVER_ADDRESS 1 //Do not change 
-#define MY_ADDRESS 1    //Raj Server
-//#define MY_ADDRESS 2    //Ron, Fixed
-//#define MY_ADDRESS 3    //Keith, Fixed
-//#define MY_ADDRESS 4    //Raj, Portable
-//#define MY_ADDRESS 5    //Raj, experimentation
-//#define MY_ADDRESS 6    //Raj, experimentation
-//#define MY_ADDRESS 7    //Ron, portable
-//#define MY_ADDRESS 8    //Keith, Portable
-//#define MY_ADDRESS 9    //Spare
+//#define MY_ADDRESS 1      //Raj
+//#define MY_ADDRESS 2    //Raj
+//#define MY_ADDRESS 3    //Keith
+//#define MY_ADDRESS 4    //Keith
+//#define MY_ADDRESS 5    //Ron
+//#define MY_ADDRESS 6    //Ron
+//#define MY_ADDRESS 7     //open
+#define MY_ADDRESS 8    //open
+//#define MY_ADDRESS 9    //open
 
 //
-//EXPERIMENTATION
+//Peer to Peer Messaging
 //
 //#define DEBUG  1 //comment this line out for production
-#ifdef DEBUG
-  #define DEFAULT_FREQUENCY 915.0
-  #define DEFAULT_POWER_INDEX 0     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
-  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
-#else
-  #define DEFAULT_FREQUENCY 905.2
-  #define DEFAULT_POWER_INDEX 6     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
-  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
-#endif
+#define DEFAULT_FREQUENCY 905.2
+#define DEFAULT_POWER_INDEX 2     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+#define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
 
-#define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
+//#define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 
 // Pause between transmited packets in seconds.
 #define PAUSE       20  // client, time between transmissions
@@ -61,6 +43,8 @@
 #include <RH_SX126x.h>
 
 RH_SX126x driver(8, 14, 13, 12); // NSS, DIO1, BUSY, NRESET
+
+#include "myHeltec.h" //must come after driver declaration
 
 //
 // LoRa settings that are used for Meshtastic
@@ -112,11 +96,9 @@ int modulation_index = DEFAULT_MODULATION_INDEX;
 float power[POWER_INDEX_MAX] = {-9.0, -5.0, 0.0, 6.0, 12.0, 18.0, 22.0};
 int power_index = DEFAULT_POWER_INDEX;
 
-#include "myHeltec.h"
+#include "RHDatagram.h"
 
-#include "RHReliableDatagram.h"
-
-RHReliableDatagram manager(driver, MY_ADDRESS);
+RHDatagram manager(driver, MY_ADDRESS);
 
 //send and receive data
 //uint8_t data[] = "And hello back to you";
@@ -130,6 +112,7 @@ uint8_t buf[RH_SX126x_MAX_MESSAGE_LEN];
 //message management
 uint16_t counter = 0;
 uint64_t tx_time = 0;
+uint16_t random_delay;
 
 //button presses
 uint32_t single_button_time = 0.0;
@@ -163,16 +146,11 @@ void setup()
     display.println("Radio failed to initialize");
   }
 
-  power_index = DEFAULT_POWER_INDEX;
-  modulation_index = DEFAULT_MODULATION_INDEX;
-  if (MY_ADDRESS == 1) {
-    display.printf("Server %.1f MHz\n", DEFAULT_FREQUENCY);
-  } else {
-    display.printf("Client #%i at %.1f MHz\n", MY_ADDRESS, DEFAULT_FREQUENCY);
-  }
+  display.printf("Unit #%i at %.1f MHz\n", MY_ADDRESS, DEFAULT_FREQUENCY);
   display.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
+
   driver.setFrequency(DEFAULT_FREQUENCY);
-  //default modulation, get details from PROGMEM
+  
   RH_SX126x::ModemConfig cfg;
   memcpy_P(&cfg, &MY_MODEM_CONFIG_TABLE[modulation_index], sizeof(RH_SX126x::ModemConfig));
   driver.setModemRegisters(&cfg);
@@ -186,10 +164,9 @@ void setup()
   // Battery
   float vbat = heltec_vbat();
   display.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));
-//messages
-//   both.println("Single click to change power");
-//   both.println("Double click to change modulation");
-//lets query it all back from the receiver
+
+  //random delay for the next transmisson
+  random_delay = esp_random() & 0x0FFF;
 }
 
 void loop()
@@ -197,74 +174,46 @@ void loop()
   //first check the buttons
   check_button();
 
-  //now operate in different roles
-  if (MY_ADDRESS == 1)  //serving as a server
-  {
-    if (manager.available())  //message has come in
+  //default mode is listening to others
+  if (manager.available())  //message has come in
     {
-      // Wait for a message addressed to us from the client
       uint8_t len = sizeof(buf);
       uint8_t from;
       uint8_t to;
       uint8_t id;
       uint8_t flags;
-      if (manager.recvfromAck(buf, &len, &from, &to, &id, &flags))
-      {
-        int snr = driver.lastSNR();
-        int rssi = driver.lastRssi();
-        display.printf("%i -> %i\n", from, (int)(buf[1]*256 + buf[0]));
-        display.printf("RSSI %i   SNR %i flags: %i\n", rssi, snr, flags);
-        rssi = abs(rssi);
-        data[0] = static_cast<uint8_t>(rssi);
-        data[1] = static_cast<uint8_t>(snr);
-        Serial.printf("%i, %i, %i, -%i, %i, ", millis(), from, (int)(buf[1]*256 + buf[0]), rssi, snr);
-        if (manager.sendtoWait(data, 2, from)) {
-          Serial.println("sent");
-        } else {
-          display.println("sendtoWait failed");
-          Serial.println("failed");
-        }
-      }
-    }
-  }  //address 1 SERVER
-
-  if (MY_ADDRESS > 1)  //serving as a client
-  {  
-    // Send a message to manager_server
-    if (millis() - tx_time > PAUSE * 1000) 
-    {
-      tx_time = millis();
-      data[0] = static_cast<uint8_t>(counter & 0xFF); //low byte
-      data[1] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
-      manager.resetRetransmissions();
-      if (manager.sendtoWait((uint8_t *)data, 2, SERVER_ADDRESS))
-      {
-        int retransmisison_count = manager.retransmissions();
-        display.print("Sent ");
-        display.print((int)(data[1]*256 + data[0]));
-        display.printf(" retrans = %i\n", retransmisison_count);
-
-        // Now wait for a reply from the server
-        uint8_t len = sizeof(buf);
-        uint8_t from;   
-        if (manager.recvfromAckTimeout(buf, &len, 2000, &from))
-        {
-          display.printf("1 -> RSSI -%i SNR %i\n", (int)buf[0], (int)buf[1]);
+      if (manager.recvfrom(buf, &len, &from, &to, &id, &flags)) {
+        if (to == RH_BROADCAST_ADDRESS) {
+          //we have a broadcast message
+          //display the message
           int snr = driver.lastSNR();
           int rssi = driver.lastRssi();
-          display.printf("%i <- RSSI %i SNR %i\n", MY_ADDRESS, rssi, snr);
-          Serial.printf("%i, %i, -%i, %i, %i, %i\n", millis(), counter, (int)buf[0], (int)buf[1], rssi, snr);
+          both.printf("Broadcast from %i #%i\n", from, (int)(buf[1]*256 + buf[0]));
+          //both.printf("%iB #%i ", from, (int)(buf[1]*256 + buf[0]));
+          both.printf("RSSI %i  SNR %i\n", rssi, snr);
+          //send reply back to sender
+          rssi = abs(rssi);
+          data[0] = static_cast<uint8_t>(rssi);
+          data[1] = static_cast<uint8_t>(snr);
+          manager.sendto(data, 2, from);
         } else {
-          display.println("No return reply");
+          //we have a signal report for us
+          both.printf("Signal report from %i\n", from);
+          both.printf("RSSI -%i SNR %i\n", (int)buf[0], (int)buf[1]);
         }
-      } else {
-        int retransmisison_count = manager.retransmissions();
-        display.printf("%s sendtoWait failed %i retries\n", data, retransmisison_count);
-        Serial.printf("%i, %i, Failed\n", millis(), counter);
-      }
-      counter++;
-    } //legal to transmit
-  } // as a client
+      } //received a message
+    } //message waiting
+  // every PAUSE seconds and a random delay between 0 and 4,096ms, send a broadcast message to all units
+  if (millis() - tx_time > PAUSE * 1000 + random_delay) {
+     tx_time = millis();
+     data[0] = static_cast<uint8_t>(counter & 0xFF); //low byte
+     data[1] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
+     manager.sendto((uint8_t *)data, 2, RH_BROADCAST_ADDRESS);
+     both.printf("Broadcast #%i\n", counter);
+     //for the next transmission, pick the random delay
+     uint16_t random_delay = esp_random() & 0x0FFF;  //12 bits, 0 to 4096 ms additional delay 
+     counter++;
+   } //legal to transmit
 } //loop
 
 
