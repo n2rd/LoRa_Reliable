@@ -511,7 +511,7 @@ if (command[0] == '/') {
             }
             break;
 
-    //      Quit Telnet session----------------------------------------
+    //  Quit Telnet session----------------------------------------
         case 'Q':
             Serial.printf("OK:Quitting Telnet session\r\n");
             telnet.printf("OK:Quitting Telnet session\r\n");
