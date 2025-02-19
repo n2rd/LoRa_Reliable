@@ -337,6 +337,7 @@ if (command[0] == '/') {
         cli_process_int(parameter_query, "Radio Address", command, 0, 20 , & radio_address);
         if (current_int_value != radio_address) {
             //change radio address in the radio, save to RAM and NVRAM
+            //preferences.putInt("address", pAddress);
         }
         break;
 
@@ -347,6 +348,7 @@ if (command[0] == '/') {
         cli_process_bool(parameter_query, "Beacon", command, & beacon_state);
         if (current_int_value != beacon_state){
             //change beacon state in the radio, save to RAM and NVRAM
+            //preferences.putUInt("tx_lock", beacon_state);
         }
         break;
      
@@ -358,6 +360,7 @@ if (command[0] == '/') {
         telnet.printf("OK:Call sign = %s\r\n", callsign);
         if (current_str_value != callsign) {
             //Change callsign in the radio, save to RAM and NVRAM
+            //preferences.putString("callsign", callsign);
         }
         break;
 
@@ -368,6 +371,7 @@ if (command[0] == '/') {
         cli_process_index_float_value_unit(parameter_query, "Frequency Index", command, 0, 100, frequency_array , "MHz",  &frequency_index);
         if (current_int_value != frequency_index) {
             //change frequency in the radio, save to RAM and NVRAM
+            //preferences.putInt("freqIndex", frequency_index);
             driver.setFrequency(frequency_array[frequency_index]);
         }
         break;
@@ -379,6 +383,7 @@ if (command[0] == '/') {
         cli_process_bool(parameter_query, "GPS", command, & gps_state);
         if (current_int_value != gps_state) {
             //change GPS state in the radio, save to RAM and NVRAM
+            //preferences.putUInt("gps_state", gps_state);
         }
         break;
 
@@ -421,6 +426,7 @@ if (command[0] == '/') {
         cli_process_int(parameter_query, "TX Interval", command, 10, 600 , & tx_interval);
         if (current_int_value != tx_interval) {
             //Change transmit inveral in the radio, save to RAM and NVRAM
+            //preferences.putUInt("tx_interval", tx_interval);
         }
         break;
 
@@ -486,6 +492,10 @@ if (command[0] == '/') {
         }
         if ((current_lat_value != lat_value) || (current_lon_value != lon_value)) {
                 //Save lat/lon pair to RAM and NVRAM
+                //preferences.putFloat("lat_value", lat_value);
+                //preferences.putFloat("lon_value", lon_value);
+
+
         }
         Serial.printf("OK:Latitude = % f; Longitude = %f\n"  , lat_value, lon_value);
         telnet.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
@@ -498,6 +508,7 @@ if (command[0] == '/') {
             cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, 8, modulation_array,  &modulation_index);
             if (current_int_value != modulation_index) {
                 //Change modulation index in the radio, save to RAM and NVRAM
+                //preferences.putInt("modIndex", modulation_index);
             }
             break;
 
@@ -507,6 +518,7 @@ if (command[0] == '/') {
             cli_process_index_float_value_unit(parameter_query, "Power Index", command, 0, 6, power , "dBm",  &power_index);
             if (current_int_value != power_index) {
                 //Change power index in the radio, save to RAM and NVRAM
+                //preferences.putInt("powerIndex", power_index);
                 driver.setTxPower(power[power_index]);
             }
             break;
@@ -533,6 +545,7 @@ if (command[0] == '/') {
             cli_process_int(parameter_query, "Radio Type", command, 0, 2 , & radio_type);
             if (current_int_value != radio_type) {
                 //Change radio type in the radio, save to RAM and NVRAM
+                //preferences.putInt("type", radio_type);
             }
              break;
 
