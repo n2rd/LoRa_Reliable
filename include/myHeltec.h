@@ -194,7 +194,7 @@ extern float power[POWER_INDEX_MAX];
 
 #define DRIVER_MAX_MESSAGE_LEN RH_SX126x_MAX_MESSAGE_LEN
 
-#define HAS_GPS 1
+//#define HAS_GPS 1
 #if defined(HAS_GPS) && (HAS_GPS ==1)
 #define GPS_ON_PIN GPIO_NUM_46
 #define GPS_RX_PIN GPIO_NUM_47  //connected to GPS TX pad
