@@ -151,6 +151,11 @@ static const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX] =
 char modulation_array[9][20] = {"Short Turbo", "Short Fast", "Short Slow", "Medium Fast", "Medium Slow", "Long Fast", "Long Moderate", "Long Slow", "Very Long Slow"};
 float frequency_array[] = {902.125,902.375,902.625,902.875,903.125,903.375,903.625,903.875,904.125,904.375,904.625,904.875,905.125,905.375,905.625,905.875,906.125,906.375,906.625,906.875,907.125,907.375,907.625,907.875,908.125,908.375,908.625,908.875,909.125,909.375,909.625,909.875,910.125,910.375,910.625,910.875,911.125,911.375,911.625,911.875,912.125,912.375,912.625,912.875,913.125,913.375,913.625,913.875,914.125,914.375,914.625,914.875,915.125,915.375,915.625,915.875,916.125,916.375,916.625,916.875,917.125,917.375,917.625,917.875,918.125,918.375,918.625,918.875,919.125,919.375,919.625,919.875,920.125,920.375,920.625,920.875,921.125,921.375,921.625,921.875,922.125,922.375,922.625,922.875,923.125,923.375,923.625,923.875,924.125,924.375,924.625,924.875,925.125,925.375,925.625,925.875,926.125,926.375,926.625,926.875,927.125,927.375,927.625,927.875};
 
+//000    	001    	002    	003    	004    	005    	006    	007    	008    	009    	010    	011    	012    	013    	014    	015    	016    	017    	018    	019    	020    	021    	022    	023    	024    	025    	026    	027    	028    	029    	030    	031    	032    	033    	034    	035    	036    	037    	038    	039    	040    	041    	042    	043    	044    	045    	046    	047    	048    	049    	050    	051    	052    	053    	054    	055    	056    	057    	058    	059    	060    	061    	062    	063    	064    	065    	066    	067    	068    	069    	070    	071    	072    	073    	074    	075    	076    	077    	078    	079    	080    	081    	082    	083    	084    	085    	086    	087    	088    	089    	090    	091    	092    	093    	094    	095    	096    	097    	098    	099    	100    	101    	102    	103    
+//902.125	902.375	902.625	902.875	903.125	903.375	903.625	903.875	904.125	904.375	904.625	904.875	905.125	905.375	905.625	905.875	906.125	906.375	906.625	906.875	907.125	907.375	907.625	907.875	908.125	908.375	908.625	908.875	909.125	909.375	909.625	909.875	910.125	910.375	910.625	910.875	911.125	911.375	911.625	911.875	912.125	912.375	912.625	912.875	913.125	913.375	913.625	913.875	914.125	914.375	914.625	914.875	915.125	915.375	915.625	915.875	916.125	916.375	916.625	916.875	917.125	917.375	917.625	917.875	918.125	918.375	918.625	918.875	919.125	919.375	919.625	919.875	920.125	920.375	920.625	920.875	921.125	921.375	921.625	921.875	922.125	922.375	922.625	922.875	923.125	923.375	923.625	923.875	924.125	924.375	924.625	924.875	925.125	925.375	925.625	925.875	926.125	926.375	926.625	926.875	927.125	927.375	927.625	927.875
+
+//
+
 void upcase(char* str) {
 
     int i;
@@ -281,6 +286,8 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
 
 
 int cli_execute(const char* command_arg) {
+    Preferences preferences;  //esp32 preferences
+
     //temporary variables pending integration into ui.h
     static char  callsign[10];
     static float frequency; //depricated
@@ -335,7 +342,7 @@ if (command[0] == '/') {
         cli_process_int(parameter_query, "Radio Address", command, 0, 20 , & radio_address);
         if (current_int_value != radio_address) {
             //change radio address in the radio, save to RAM and NVRAM
-            //preferences.putInt("address", pAddress);
+            preferences.putInt("address", radio_address);
         }
         break;
 
@@ -346,19 +353,25 @@ if (command[0] == '/') {
         cli_process_bool(parameter_query, "Beacon", command, & beacon_state);
         if (current_int_value != beacon_state){
             //change beacon state in the radio, save to RAM and NVRAM
-            //preferences.putUInt("tx_lock", beacon_state);
+            preferences.putUInt("tx_lock", beacon_state);
         }
         break;
      
 //      Call Sign--------------------------------------------------------------
     case 'C':
-        strcpy(callsign, command); 
-        strcpy(current_str_value,callsign);
-        Serial.printf("OK:Call sign = %s\r\n"  , callsign);
-        telnet.printf("OK:Call sign = %s\r\n", callsign);
-        if (current_str_value != callsign) {
-            //Change callsign in the radio, save to RAM and NVRAM
-            //preferences.putString("callsign", callsign);
+        if (parameter_query) {
+            Serial.printf("OK:Call sign = %s\r\n", callsign);
+            telnet.printf("OK:Call sign = %s\r\n", callsign);
+        }
+        else {
+            strcpy(callsign, command); 
+            strcpy(current_str_value,callsign);
+            Serial.printf("OK:Call sign = %s\r\n", callsign);
+            telnet.printf("OK:Call sign = %s\r\n", callsign);
+            if (current_str_value != callsign) {
+                //Change callsign in the radio, save to RAM and NVRAM
+                preferences.putString("callsign", callsign);
+            }    
         }
         break;
 
@@ -369,7 +382,7 @@ if (command[0] == '/') {
         cli_process_index_float_value_unit(parameter_query, "Frequency Index", command, 0, 100, frequency_array , "MHz",  &frequency_index);
         if (current_int_value != frequency_index) {
             //change frequency in the radio, save to RAM and NVRAM
-            //preferences.putInt("freqIndex", frequency_index);
+            preferences.putInt("freqIndex", frequency_index);
             driver.setFrequency(frequency_array[frequency_index]);
         }
         break;
@@ -381,7 +394,7 @@ if (command[0] == '/') {
         cli_process_bool(parameter_query, "GPS", command, & gps_state);
         if (current_int_value != gps_state) {
             //change GPS state in the radio, save to RAM and NVRAM
-            //preferences.putUInt("gps_state", gps_state);
+            preferences.putUInt("gps_state", gps_state);
         }
         break;
 
@@ -424,7 +437,7 @@ if (command[0] == '/') {
         cli_process_int(parameter_query, "TX Interval", command, 10, 600 , & tx_interval);
         if (current_int_value != tx_interval) {
             //Change transmit inveral in the radio, save to RAM and NVRAM
-            //preferences.putUInt("tx_interval", tx_interval);
+            preferences.putUInt("tx_interval", tx_interval);
         }
         break;
 
@@ -490,8 +503,8 @@ if (command[0] == '/') {
         }
         if ((current_lat_value != lat_value) || (current_lon_value != lon_value)) {
                 //Save lat/lon pair to RAM and NVRAM
-                //preferences.putFloat("lat_value", lat_value);
-                //preferences.putFloat("lon_value", lon_value);
+                preferences.putFloat("lat_value", lat_value);
+                preferences.putFloat("lon_value", lon_value);
 
 
         }
@@ -506,7 +519,7 @@ if (command[0] == '/') {
             cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, 8, modulation_array,  &modulation_index);
             if (current_int_value != modulation_index) {
                 //Change modulation index in the radio, save to RAM and NVRAM
-                //preferences.putInt("modIndex", modulation_index);
+                preferences.putInt("modIndex", modulation_index);
             }
             break;
 
@@ -516,7 +529,7 @@ if (command[0] == '/') {
             cli_process_index_float_value_unit(parameter_query, "Power Index", command, 0, 6, power , "dBm",  &power_index);
             if (current_int_value != power_index) {
                 //Change power index in the radio, save to RAM and NVRAM
-                //preferences.putInt("powerIndex", power_index);
+                preferences.putInt("powerIndex", power_index);
                 driver.setTxPower(power[power_index]);
             }
             break;
@@ -543,7 +556,7 @@ if (command[0] == '/') {
             cli_process_int(parameter_query, "Radio Type", command, 0, 2 , & radio_type);
             if (current_int_value != radio_type) {
                 //Change radio type in the radio, save to RAM and NVRAM
-                //preferences.putInt("type", radio_type);
+                preferences.putInt("type", radio_type);
             }
              break;
 
