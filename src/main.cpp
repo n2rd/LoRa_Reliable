@@ -43,8 +43,8 @@
 #define TIMEOUT     200  //for sendtoWait
 #define RETRIES     3     //for sendtoWait
 
-int modulation_index = DEFAULT_MODULATION_INDEX;
-int power_index = DEFAULT_POWER_INDEX;
+int modulation_index = PARMS.parameters.modulation_index;
+int power_index = PARMS.parameters.power_index;
 
 PrintSplitter both(Serial, display);
 
@@ -70,8 +70,6 @@ uint32_t double_button_time = 0.0;
 // funtion declarations
 //
 void check_button();
-
-
 
 void DisplayUpperRight(int count) {
   char buf[10];
@@ -134,12 +132,12 @@ void setup()
   modulation_index = DEFAULT_MODULATION_INDEX;
 
   if (MY_ADDRESS == 1) {
-    display.printf("Server %.1f MHz\n", PARMS.frequency_index_to_frequency(DEFAULT_FREQUENCY_INDEX));
+    display.printf("Server %.1f MHz\n", PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
   } else {
-    display.printf("Client #%i at %.1f MHz\n", DEFAULT_ADDRESS, PARMS.frequency_index_to_frequency(DEFAULT_FREQUENCY_INDEX));
+    display.printf("Client #%i at %.1f MHz\n", DEFAULT_ADDRESS, PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
   }
   display.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
-  driver.setFrequency(PARMS.frequency_index_to_frequency(DEFAULT_FREQUENCY_INDEX));
+  driver.setFrequency(PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
   setModemConfig(modulation_index); //SF Bandwith etc
   driver.setTxPower(power[power_index]);
   //#define DEBUG_INCOMING_PACKETS
