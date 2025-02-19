@@ -23,5 +23,20 @@ extern RH_RF95 driver;
 #define heltec_battery_percent(X) 0
 #define heltec_deep_sleep(X) esp_deep_sleep(0)
 
+#define MODULATION_INDEX_MAX 9
+void setModemConfig(uint8_t index);
+extern const char* MY_CONFIG_NAME[];
+
+#define POWER_INDEX_MAX 7
+extern float power[POWER_INDEX_MAX];
+
+#define DRIVER_MAX_MESSAGE_LEN RH_RF95_MAX_MESSAGE_LEN
+
+#define HAS_GPS 0
+#if defined(HAS_GPS) && (HAS_GPS ==1)
+#define GPS_ON_PIN  1
+#define GPS_RX_PIN  2
+#define GPS_TX_PIN  3
+#endif  //HAS_GPS && HAS_GPS==1
 
 #endif //!defined(myLilyGoT3_h)

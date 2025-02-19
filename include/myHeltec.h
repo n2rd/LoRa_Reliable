@@ -184,5 +184,22 @@ void heltec_loop();
  */
 void heltec_delay(int ms);
 
+#define MODULATION_INDEX_MAX 9
+void setModemConfig(uint8_t index);
+extern const char* MY_CONFIG_NAME[];
+
+#define POWER_INDEX_MAX 7
+extern float power[POWER_INDEX_MAX];
+ 
+
+#define DRIVER_MAX_MESSAGE_LEN RH_SX126x_MAX_MESSAGE_LEN
+
+#define HAS_GPS 1
+#if defined(HAS_GPS) && (HAS_GPS ==1)
+#define GPS_ON_PIN GPIO_NUM_46
+#define GPS_RX_PIN GPIO_NUM_47  //connected to GPS TX pad
+#define GPS_TX_PIN GPIO_NUM_48  //connected to GPS RX pad
+#endif //HAS_GPS & HAS_GPS==1
+
 #endif //!defined(ARDUINO_LILYGO_T3_V1_6_1)
 #endif //!defined(myheltec_h)

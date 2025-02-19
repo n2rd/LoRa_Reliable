@@ -25,7 +25,21 @@
 //#define MY_ADDRESS 9    //Spare
 #endif
 
-
+#define DEFAULT_CALLSIGN    "xxxxxxx"
+#define DEFAULT_FREQUENCY_INDEX    
+#define DEFAULT_GPS_STATE    
+#define DEFAULT_TX_LOCK    
+#define DEFAULT_SHORT_PAUSE    
+#define DEFAULT_LAT_VALUE    
+#define DEFAULT_LON_VALUE    
+#define DEFAULT_GRID4    
+#define DEFAULT_GRID5    
+#define DEFAULT_GRID6    
+#define DEFAULT_MODULATION_INDEX    
+#define DEFAULT_POWER_INDEX    
+#define DEFAULT_TX_INTERVAL   
+#define DEFAULT_ADDRESS    
+  
 // Other configuration on a per unit basis will be here
 //uncomment the folowing defines to override the defaults in main.cpp
 //#define DEFAULT_FREQUENCY 905.2 //RF Frequency in Mhz

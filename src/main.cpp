@@ -35,22 +35,6 @@
 //
 //EXPERIMENTATION
 //
-//#define RAJ_DEBUG  1 //comment this line out for production
-#ifdef RAJ_DEBUG
-  #define DEFAULT_FREQUENCY 915.0
-  #define DEFAULT_POWER_INDEX 0     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
-  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
-#endif
-
-#ifndef DEFAULT_FREQUENCY
-  #define DEFAULT_FREQUENCY 905.2
-#endif
-#ifndef DEFAULT_POWER_INDEX
-  #define DEFAULT_POWER_INDEX 4     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
-#endif
-#ifndef DEFAULT_MODULATION_INDEX
-  #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
-#endif
 
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 
@@ -59,112 +43,7 @@
 #define TIMEOUT     200  //for sendtoWait
 #define RETRIES     3     //for sendtoWait
 
-
-
-//
-// LoRa settings that are used for Meshtastic
-//
-// No Channel Name	 / Data-Rate	/ SF/ Symb	/ Coding Rate	/ Bandwidth	/ Link Budget
-// 0  Short Turbo	   / 21.88 kbps /	7 / 128	  / 4/5	        / 500 kHz	  / 140dB
-// 1  Short Fast	   / 10.94 kbps / 7 / 128	  / 4/5	        / 250 kHz	  / 143dB
-// 2  Short Slow	   / 6.25 kbps	/ 8 / 256	  / 4/5	        / 250 kHz	  / 145.5dB
-// 3  Medium Fast	   / 3.52 kbps	/ 9 / 512	  / 4/5	        / 250 kHz	  / 148dB
-// 4  Medium Slow	   / 1.95 kbps	/ 10 / 1024	/ 4/5	        / 250 kHz	  / 150.5dB
-// 5  Long Fast	     / 1.07 kbps	/ 11 / 2048	/ 4/5	        / 250 kHz	  / 153dB
-// 6  Long Moderate  / 0.34 kbps	/ 11 / 2048	/ 4/8	        / 125 kHz	  / 156dB
-// 7  Long Slow	     / 0.18 kbps	/ 12 / 4096	/ 4/8	        / 125 kHz	  / 158.5dB
-// 8  Very Long Slow / 0.09 kbps	/ 12 / 4096 /	4/8	        / 62.5 kHz	/ 161.5dB
-
-#define MODULATION_INDEX_MAX 9
-// These are indexed by the values of ModemConfigChoice
-// Stored in flash (program) memory to save SRAM
-#ifndef ARDUINO_LILYGO_T3_V1_6_1
-PROGMEM static const RH_SX126x::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX] =
-{
-    //  packetType, p1, p2, p3, p4, p5, p6, p7, p8
-     // 0 Short Turbo
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_128, RH_SX126x_LORA_BW_500_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 1 Short Fast
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_128, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 2 Short Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_256, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 3 Medium Fast
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_512, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 4 Medium Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_1024, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 5 Long Fast
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_2048, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 6 Long Moderate
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_2048, RH_SX126x_LORA_BW_125_0, RH_SX126x_LORA_CR_4_8, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 7 Long Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_4096, RH_SX126x_LORA_BW_125_0, RH_SX126x_LORA_CR_4_8, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 8 Very Long Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_4096, RH_SX126x_LORA_BW_62_5, RH_SX126x_LORA_CR_4_8, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-};
-#define MODEMCONFIGSZ sizeof(RH_SX126x::ModemConfig)
-
-void setModemConfig(uint8_t index) {
-  if (index > MODULATION_INDEX_MAX)
-    index = MODULATION_INDEX_MAX - 1;
-    DRIVER_TYPE::ModemConfig cfg;
-    #warning "Remove commented lines later"
-    //memcpy_P(&cfg, &MY_MODEM_CONFIG_TABLE[modulation_index], MODEMCONFIGSZ);
-    //driver.setModemRegisters(&cfg);
-    driver.setModemRegisters(&MY_MODEM_CONFIG_TABLE[index]);
-}
-
-
-#define DRIVER_MAX_MESSAGE_LEN RH_SX126x_MAX_MESSAGE_LEN
-
-#else //LILLYGO_T3 RF95 aka SX127x chips
-typedef struct modem_config_struct {
-  long bandwidth;
-  uint8_t spreadingFactor;
-  uint8_t codingRate4Denominator;
-} MYMODEM_CONFIG_TABLE;
-
-enum SF {
-  SF_64 = 6,
-  SF_128 = 7,
-  SF_256 = 8,
-  SF_512 = 9,
-  SF_1024 = 10,
-  SF_2048 = 11,
-  SF_4096 = 12
-};
-
-PROGMEM static const MYMODEM_CONFIG_TABLE TTGO_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX] = 
-{
-  { 500000, SF_128, 5}, //0 Short Turbo
-  { 250000, SF_128, 5}, //1 Short Fast
-  { 250000, SF_256, 5}, //2 Short Slow
-  { 250000, SF_512, 5}, //3 Medium Fast
-  { 250000, SF_1024, 5}, //4 Medium Slow
-  { 250000, 11, 5}, // 5 LongFast
-  { 125000, 11, 8}, //6 Long Moderate
-  { 125000, SF_4096, 8}, //7 Long Slow
-  { 062500, SF_4096,8}  //8 Very Long Slow
-};
-
-void setModemConfig(uint8_t index) {
-  if (index > MODULATION_INDEX_MAX)
-    index = MODULATION_INDEX_MAX - 1;
-  driver.setSignalBandwidth(TTGO_MODEM_CONFIG_TABLE[index].bandwidth);
-  driver.setSpreadingFactor(TTGO_MODEM_CONFIG_TABLE[index].spreadingFactor);
-  driver.setCodingRate4(TTGO_MODEM_CONFIG_TABLE[index].codingRate4Denominator);
-}
-
-#define DRIVER_MAX_MESSAGE_LEN RH_RF95_MAX_MESSAGE_LEN
-#endif
-
-static const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX] =
-{
-"Short Turbo", "Short Fast", "Short Slow", "Medium Fast", "Medium Slow", "Long Fast", "Long Moderate", "Long Slow", "Very Long Slow"
-};
 int modulation_index = DEFAULT_MODULATION_INDEX;
-
-#define POWER_INDEX_MAX 7
-float power[POWER_INDEX_MAX] = {-9.0, -5.0, 0.0, 6.0, 12.0, 18.0, 22.0};
 int power_index = DEFAULT_POWER_INDEX;
 
 PrintSplitter both(Serial, display);
@@ -255,30 +134,17 @@ void setup()
   modulation_index = DEFAULT_MODULATION_INDEX;
 
   if (MY_ADDRESS == 1) {
-    display.printf("Server %.1f MHz\n", DEFAULT_FREQUENCY);
+    display.printf("Server %.1f MHz\n", frequency_index_to_frequency(DEFAULT_FREQUENCY_INDEX));
   } else {
-    display.printf("Client #%i at %.1f MHz\n", MY_ADDRESS, DEFAULT_FREQUENCY);
+    display.printf("Client #%i at %.1f MHz\n", DEFAULT_ADDRESS, frequency_index_to_frequency(DEFAULT_FREQUENCY_INDEX));
   }
   display.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
-  driver.setFrequency(DEFAULT_FREQUENCY);
-  //default modulation, get details from PROGMEM
- #ifndef ARDUINO_LILYGO_T3_V1_6_1
-  {
-    DRIVER_TYPE::ModemConfig cfg;
-    memcpy_P(&cfg, &MY_MODEM_CONFIG_TABLE[modulation_index], MODEMCONFIGSZ);
-    driver.setModemRegisters(&cfg);
-  }
-#else
-//TBD: Pull this from a table that matches the heltec boards Spreading factor, Bandwidth and Symbol Rate
-//This is LONG_FAST
-  driver.setSignalBandwidth(250000);
-  driver.setSpreadingFactor(11);
-  driver.setCodingRate4(5);
-#endif
+  driver.setFrequency(frequency_index_to_frequency(DEFAULT_FREQUENCY_INDEX));
+  setModemConfig(modulation_index); //SF Bandwith etc
   driver.setTxPower(power[power_index]);
-  #define DEBUG_INCOMING_PACKETS
+  //#define DEBUG_INCOMING_PACKETS
   #if defined(DEBUG_INCOMING_PACKETS) && defined(ARDUINO_LILYGO_T3_V1_6_1)
-  //driver.setPromiscuous(true);
+  driver.setPromiscuous(true);
   #endif
   //You can optionally require this module to wait until Channel Activity
   // Detection shows no activity on the channel before transmitting by setting

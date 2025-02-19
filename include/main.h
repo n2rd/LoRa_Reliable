@@ -4,18 +4,20 @@
 #include <Arduino.h>
 #include "myConfig.h"
 #include <SPI.h>
-#include "PrintSplitter.h"
-#include "OTA.h"
-#include "telnet.h"
-#include "preferences.h"
-#include "cli.h"
-#include "csv.h"
+#include <preferences.h>
 
 #ifndef ARDUINO_LILYGO_T3_V1_6_1
 #include  "myHeltec.h"
 #else
 #include "myLilyGoT3.h"
 #endif
+
+#include "parameters.h"
+#include "PrintSplitter.h"
+#include "OTA.h"
+#include "telnet.h"
+#include "cli.h"
+#include "csv.h"
 
 #include <RHReliableDatagram.h>
 

@@ -1,0 +1,123 @@
+#include "Preferences.h"
+#include "myConfig.h"
+#include "parameters.h"
+
+Preferences preferences;  //esp32 preferences
+PARAMETERS parameters;    //parameters for the radio
+
+//
+//@brief parameter initialization from nv ram if it exits else use defaults
+//
+void parameters_init(){
+  //each parameter is tested individually to see if it exists in the preferences 
+  //  so if there are changes in the parameters they will be picked up
+  // if the preferences do not exist, the default is written to the preferences nvram
+  preferences.begin("LoRa", RW_MODE);  //R/W needed to create it if it does not exist  
+  if (preferences.isKey("callsign")) {
+        strcpy(parameters.callsign, preferences.getString("callsign").c_str());
+  } else { //use defaults and write to nvram
+        strcpy(parameters.callsign, DEFAULT_CALLSIGN);
+        preferences.putString("callsign", parameters.callsign);
+  }
+  if (preferences.isKey("frequency_index")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.frequency_index = preferences.getUInt("frequency_index");
+  } else { //use defaults and write to nvram
+        parameters.frequency_index = DEFAULT_FREQUENCY_INDEX;
+        preferences.putUInt("frequency_index", parameters.frequency_index);
+  }
+  if (preferences.isKey("gps_state")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.gps_state = preferences.getUInt("gps_state");
+  } else { //use defaults and write to nvram
+        parameters.gps_state = DEFAULT_GPS_STATE;
+        preferences.putUInt("gps_state", parameters.gps_state);
+  }
+  if (preferences.isKey("tx_lock")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.tx_lock = preferences.getUInt("tx_lock");
+  } else { //use defaults and write to nvram
+        parameters.tx_lock = DEFAULT_TX_LOCK;
+        preferences.putUInt("tx_lock", parameters.tx_lock);
+  } 
+  if (preferences.isKey("short_pause")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.short_pause = preferences.getUInt("short_pause");
+  } else { //use defaults and write to nvram
+        parameters.short_pause = DEFAULT_SHORT_PAUSE;
+        preferences.putUInt("short_pause", parameters.short_pause);
+  } 
+  if (preferences.isKey("lat_value")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.lat_value = preferences.getFloat("lat_value");
+  } else { //use defaults and write to nvram
+        parameters.lat_value = DEFAULT_LAT_VALUE;
+        preferences.putFloat("lat_value", parameters.lat_value);
+  }
+  if (preferences.isKey("lon_value")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.lon_value = preferences.getFloat("lon_value");
+  } else { //use defaults and write to nvram
+        parameters.lon_value = DEFAULT_LON_VALUE;
+        preferences.putFloat("lon_value", parameters.lon_value);
+  }
+  if (preferences.isKey("grid4")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.grid4 = preferences.getUInt("grid4");
+  } else { //use defaults and write to nvram
+        parameters.grid4 = DEFAULT_GRID4;
+        preferences.putUInt("grid4", parameters.grid4);
+  }
+  if (preferences.isKey("grid5")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.grid5 = preferences.getChar("grid5");
+  } else { //use defaults and write to nvram
+        parameters.grid5 = DEFAULT_GRID5;
+        preferences.putChar("grid5", parameters.grid5);
+  }
+  if (preferences.isKey("grid6")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.grid6 = preferences.getChar("grid6");
+  } else { //use defaults and write to nvram
+        parameters.grid6 = DEFAULT_GRID6;
+        preferences.putChar("grid6", parameters.grid6);
+  }
+  if (preferences.isKey("modulation_index")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.modulation_index = preferences.getUInt("modulation_index");
+  } else { //use defaults and write to nvram
+        parameters.modulation_index = DEFAULT_MODULATION_INDEX;
+        preferences.putUInt("modulation_index", parameters.modulation_index);
+  }
+  if (preferences.isKey("power_index")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.power_index = preferences.getUInt("power_index");
+  } else { //use defaults and write to nvram
+        parameters.power_index = DEFAULT_POWER_INDEX;
+        preferences.putUInt("power_index", parameters.power_index);
+  }
+  if (preferences.isKey("tx_interval")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.tx_interval = preferences.getUInt("tx_interval");
+  } else { //use defaults and write to nvram
+        parameters.tx_interval = DEFAULT_TX_INTERVAL;
+        preferences.putUInt("tx_interval", parameters.tx_interval);
+  }
+  if (preferences.isKey("address")) {
+        // Preferences exist, read from it and put into mypreferences
+        parameters.address = preferences.getUInt("address");
+  } else { //use defaults and write to nvram
+        parameters.address = DEFAULT_ADDRESS;
+        preferences.putUInt("address", parameters.address);
+  }
+}
+
+//
+//now for some bridge functions that turn indexes into useful values
+//
+
+//set the center frequency in MHz from the index
+float frequency_index_to_frequency(uint8_t index) {
+  return 902.125 + 0.25 * index;
+}
+

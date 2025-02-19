@@ -132,11 +132,11 @@ CLI Command set
 
 // These need to move elsewhere=======================================
 #warning "These need to move elsewhere"
-#define POWER_INDEX_MAX 7
-extern float power[POWER_INDEX_MAX];
-#define MODULATION_INDEX_MAX 9
-extern const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX];
-extern void setModemConfig(uint8_t i);                             //need to fix
+//#define POWER_INDEX_MAX 7
+//extern float power[POWER_INDEX_MAX];
+//#define MODULATION_INDEX_MAX 9
+//extern const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX];
+//extern void setModemConfig(uint8_t i);                             //need to fix
 //====================================================================
 
 
