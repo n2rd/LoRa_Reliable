@@ -132,11 +132,11 @@ void setup()
   modulation_index = DEFAULT_MODULATION_INDEX;
 
   if (PARMS.parameters.address == 1) {
-    display.printf("Server %.1f MHz\n", PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
+    display.printf("Server %.3f MHz\n", PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
   } else {
-    display.printf("Client #%i at %.1f MHz\n", DEFAULT_ADDRESS, PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
+    display.printf("Client #%i at %.3f MHz\n", DEFAULT_ADDRESS, PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
   }
-  display.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
+  display.printf("%s %.3f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
   driver.setFrequency(PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
   setModemConfig(modulation_index); //SF Bandwith etc
   driver.setTxPower(power[power_index]);
@@ -282,12 +282,12 @@ void check_button()
     //else show current value
     if (button_time > 2000 ) 
     {
-      both.printf("Current Power %.1fdBm\n", power[power_index]);
+      both.printf("Current Power %.3fdBm\n", power[power_index]);
       both.println("Single press button to change\n");
     } else {
       power_index = (power_index + 1) % POWER_INDEX_MAX;
       driver.setTxPower(power[power_index]);
-      both.printf("New Power %.1fdBm\n", power[power_index]);
+      both.printf("New Power %.3fdBm\n", power[power_index]);
     }
   }
  
