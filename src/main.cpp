@@ -30,7 +30,7 @@
 //
 //#define DEBUG  1 //comment this line out for production
 #define DEFAULT_FREQUENCY 905.2
-#define DEFAULT_POWER_INDEX 2     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+#define DEFAULT_POWER_INDEX 6     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
 #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
 
 //#define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
@@ -271,7 +271,7 @@ void loop()
 //random delay generator
 uint64_t random_delay_generator(uint64_t max) //max must be a power of 2
 {
-  return esp_random() & max;  //8192 ms max
+  return esp_random() & max;  //delay in ms; max must be a power of 2
 }
 
 void check_button() 
