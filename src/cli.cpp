@@ -115,6 +115,25 @@ bool is_numeric(const char* string) {
     return true;
   }
 
+  bool is_float(const char* string) {
+    int period_counter;
+    const int string_len = strlen(string);
+    period_counter = 0;
+    for(int i = 0; i < string_len; ++i) {
+        if(!isdigit(string[i])) {
+            if (string[i] != '.') {
+                return false;
+            }
+            else {
+                period_counter++;
+                if (period_counter>1) return false;
+            }
+        }   
+    }
+    return true;
+  }
+ 
+
   void cli_process_bool(int parameter_query, const char* param_name, char* param_command, bool* param_value ) {
     #define PRINTF_OK_BOOL "OK:%s = %s\r\n"
     #define PRINTF_NG_BOOL "NG:%s must be 'OFF' or 'ON'\r\n"
@@ -214,21 +233,19 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
 
 int cli_execute(const char* command_arg) {
 
-    //temporary variables pending integration into ui.h
-    static char  callsign[10];
-    static float frequency; //depricated
-    static int   frequency_index;
-    static bool  tx_lock_state;
-    static bool  gps_state;
-    static float lat_value, lon_value;
-    static int   modulation_index;
-    static int   power_index;
-    static int   tx_interval;
-    static int   radio_address;
-    static int   radio_type;
-    static bool  serial_usb_state;
+static char  callsign[10];
+static float frequency; //depricated
+static int   frequency_index;
+static bool  tx_lock_state;
+static bool  gps_state;
+static float lat_value, lon_value;
+static int   modulation_index;
+static int   power_index;
+static int   tx_interval;
+static int   radio_address;
+static int   radio_type;
+static bool  serial_usb_state;
  
-    //
 
 #include "Preferences.h"
 
@@ -446,6 +463,11 @@ if (command[0] == '/') {
             if (!location_comma_found) {
                 Serial.printf("NG:Location requires comma separation between Lat & Lon\r\n");
                 telnet.printf("NG:Location requires comma separation between Lat & Lon\r\n");
+                return 1;
+            }
+            if (!(is_float(lon_str) && is_float(lat_str))) {
+                Serial.printf("NG:Latitude andLongitude must be valid floating point numbers\r\n");
+                telnet.printf("NG:Latitude andLongitude must be valid floating point numbers\r\n");
                 return 1;
             }
             lon_value = atof(lon_str);
