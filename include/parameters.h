@@ -98,11 +98,11 @@ class ParametersClass {
 
     PARAMETERS parameters; //parameters for the radio
 
-    size_t putString(char *key, char *value);
-    size_t putUInt8(char *key, uint8_t byte );
-    size_t putUInt16(char *key, uint16_t word );
-    size_t putChar(char *key, char value);
-    size_t putFloat(char *key, float value);
+    size_t putString(const char *key, char *value);
+    size_t putUInt8(const char *key, uint8_t byte );
+    size_t putUInt16(const char *key, uint16_t word );
+    size_t putChar(const char *key, char value);
+    size_t putFloat(const char *key, float value);
   private:
     Preferences preferences;
     void init();

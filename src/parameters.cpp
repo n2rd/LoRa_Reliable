@@ -124,19 +124,19 @@ uint8_t ParametersClass::frequency_to_frequency_index(float frequency) {
   return (frequency - 902.125) / 0.25;
 }
 
-size_t ParametersClass::putString(char *key, char *value) {
+size_t ParametersClass::putString(const char *key, char *value) {
       return preferences.putString(key,value);
 }
-size_t ParametersClass::putUInt8(char *key, uint8_t byte ) {
+size_t ParametersClass::putUInt8(const char *key, uint8_t byte ) {
       return preferences.putUInt(key, byte);
 }
-size_t ParametersClass::putUInt16(char *key, uint16_t word ) {
+size_t ParametersClass::putUInt16(const char *key, uint16_t word ) {
       return preferences.putUInt(key, word);
 }
-size_t ParametersClass::putChar(char *key, char value) {
+size_t ParametersClass::putChar(const char *key, char value) {
       return preferences.putChar(key, value);
 }
-size_t ParametersClass::putFloat(char *key, float value) {
+size_t ParametersClass::putFloat(const char *key, float value) {
       return preferences.putFloat(key, value);
 }
 
