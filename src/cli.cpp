@@ -1,78 +1,4 @@
 /*
-
-========================Definition snipits from Raj's code
-
-PROGMEM static const RH_SX126x::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_INDEX_MAX] =
-{
-    //  packetType, p1, p2, p3, p4, p5, p6, p7, p8
-     // 0 Short Turbo
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_128, RH_SX126x_LORA_BW_500_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 1 Short Fast
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_128, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 2 Short Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_256, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 3 Medium Fast
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_512, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 4 Medium Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_1024, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 5 Long Fast
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_2048, RH_SX126x_LORA_BW_250_0, RH_SX126x_LORA_CR_4_5, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 6 Long Moderate
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_2048, RH_SX126x_LORA_BW_125_0, RH_SX126x_LORA_CR_4_8, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 7 Long Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_4096, RH_SX126x_LORA_BW_125_0, RH_SX126x_LORA_CR_4_8, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-    // 8 Very Long Slow
-    { RH_SX126x::PacketTypeLoRa, RH_SX126x_LORA_SF_4096, RH_SX126x_LORA_BW_62_5, RH_SX126x_LORA_CR_4_8, RH_SX126x_LORA_LOW_DATA_RATE_OPTIMIZE_OFF, 0, 0, 0, 0},
-};
-
-enum SF {
-  SF_64 = 6,
-  SF_128 = 7,
-  SF_256 = 8,
-  SF_512 = 9,
-  SF_1024 = 10,
-  SF_2048 = 11,
-  SF_4096 = 12
-};
-
-
-=======================Code snippits from Raj's code
-#define POWER_INDEX_MAX 7
-float power[POWER_INDEX_MAX] = {-9.0, -5.0, 0.0, 6.0, 12.0, 18.0, 22.0};
-int power_index = DEFAULT_POWER_INDEX;
-
-  driver.setTxPower(power[power_index]);
-
-        power_index = (power_index + 1) % POWER_INDEX_MAX;
-      driver.setTxPower(power[power_index]);
-
-      modulation_index = (modulation_index + 1) % MODULATION_INDEX_MAX;
-      setModemConfig(modulation_index);
- 
-
-
-    driver.setFrequency(DEFAULT_FREQUENCY);
-
-  driver.setSignalBandwidth(250000);
-  driver.setSpreadingFactor(11);
-  driver.setCodingRate4(5);
-
-
-  ============================== From Raj's email of 2/15 @ 0950
-  //preferences do not exist, initialize
-     preferences.putUInt("address", 0);
-     preferences.putInt("powerIndex", 0);  //lowest power, -9dBm for safety
-     preferences.putInt("modIndex", 2);    //long-fast
-     preferences.putInt("freqIndex", 5);   //915.0 Mhz
-     preferences.putInt("gpsIndex", 0);    //off
-     preferences.putString("call", "N2RD");
-     preferences.putInt("interval", 30);   //time in seconds between transmissions
-     preferences.putFloat("lat", 43.1);    //if no fix or no gps, may be set by cli
-     preferences.putFloat("lng", -77.5);   //if no fix or no gps, may be set by cli
-     preferences.putInt("radioType", 2);   //0 server, 1 client, 2 peer to peer
-================================================
-
-
 CLI syntax:
     Commands are case insensitive
     Embedded spaces ignored
@@ -88,9 +14,10 @@ Required commands
 CLI Command set
 
     Radio Address           /A                                              Default = 0
-    Beacon                  /B <OFF|ON>                                     Default = on
+    Beacon Disable and      /B <OFF|ON>                                     Default = OFF
+    TX Lockout
     Callsign				/C <call>
-    Display                 /D
+    Default Config          /D
     Frequency index         /F <n>                                          Default = 905.2
                                     n= Frequency in MHz 3.g., 905.2, 
     GPS                     /G <OFF|ON>                                     Default = ON
@@ -366,7 +293,6 @@ if (command[0] == '/') {
      
 //      Call Sign--------------------------------------------------------------
     case 'C':
-<<<<<<< Updated upstream
         if (parameter_query) {
             Serial.printf("OK:Call sign = %s\r\n", callsign);
             telnet.printf("OK:Call sign = %s\r\n", callsign);
@@ -380,15 +306,6 @@ if (command[0] == '/') {
                 //Change callsign in the radio, save to RAM and NVRAM
                 preferences.putString("callsign", callsign);
             }    
-=======
-        strcpy(callsign, command); 
-        strcpy(current_str_value,callsign);
-        Serial.printf("OK:Call sign = %s\r\n"  , callsign);
-        telnet.printf("OK:Call sign = %s\r\n", callsign);
-        if (current_str_value != callsign) {
-            //Change callsign in the radio, save to RAM and NVRAM
-            preferences.putString("callsign", callsign);
->>>>>>> Stashed changes
         }
         break;
 //      Reset radio to default state-------------------------------------------
@@ -534,7 +451,7 @@ if (command[0] == '/') {
 
 
         }
-        Serial.printf("OK:Latitude = % f; Longitude = %f\n"  , lat_value, lon_value);
+        Serial.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
         telnet.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
 
         break;
@@ -546,10 +463,7 @@ if (command[0] == '/') {
             if (current_int_value != modulation_index) {
                 //Change modulation index in the radio, save to RAM and NVRAM
                 preferences.putInt("modIndex", modulation_index);
-<<<<<<< Updated upstream
-=======
                 setModemConfig(modulation_index); //SF Bandwith etc
->>>>>>> Stashed changes
             }
             break;
 
