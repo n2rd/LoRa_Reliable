@@ -90,8 +90,24 @@ typedef struct ParametersStruct {
 # warning "The next 2 lines don't seem to be used"
 //#define MODULATION_LABELS {"Short Fast", "Short Slow", "Medium Fast", "Medium Slow", "Long Fast", "Long Moderate", "Long Slow", "Very Long Slow"}
 //static const String modulation_labels[MODULATION_INDEX_MAX+1] = MODULATION_LABELS;
+class ParametersClass {
+  public:
+    ParametersClass() { init(); }
+    float frequency_index_to_frequency(uint8_t index);
+    uint8_t frequency_to_frequency_index(float frequency); 
 
-// Function declarations
-void parameters_init();
-float frequency_index_to_frequency(uint8_t index); 
+    PARAMETERS parameters; //parameters for the radio
+
+    size_t putString(char *key, char *value);
+    size_t putUInt8(char *key, uint8_t byte );
+    size_t putUInt16(char *key, uint16_t word );
+    size_t putChar(char *key, char value);
+    size_t putFloat(char *key, float value);
+  private:
+    Preferences preferences;
+    void init();
+};
+
+extern ParametersClass PARMS;
+
 #endif //PARAMETERS_H

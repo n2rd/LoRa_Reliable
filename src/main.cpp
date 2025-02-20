@@ -43,12 +43,12 @@
 #define TIMEOUT     200  //for sendtoWait
 #define RETRIES     3     //for sendtoWait
 
-int modulation_index = DEFAULT_MODULATION_INDEX;
-int power_index = DEFAULT_POWER_INDEX;
+int modulation_index = PARMS.parameters.modulation_index;
+int power_index = PARMS.parameters.power_index;
 
 PrintSplitter both(Serial, display);
 
-RHReliableDatagram manager(driver, MY_ADDRESS);
+RHReliableDatagram manager(driver, PARMS.parameters.address);
 
 // temporary transmit buffer
 uint8_t data[20];
@@ -70,8 +70,6 @@ uint32_t double_button_time = 0.0;
 // funtion declarations
 //
 void check_button();
-
-
 
 void DisplayUpperRight(int count) {
   char buf[10];
@@ -133,13 +131,13 @@ void setup()
   power_index = DEFAULT_POWER_INDEX;
   modulation_index = DEFAULT_MODULATION_INDEX;
 
-  if (MY_ADDRESS == 1) {
-    display.printf("Server %.1f MHz\n", frequency_index_to_frequency(DEFAULT_FREQUENCY_INDEX));
+  if (PARMS.parameters.address == 1) {
+    display.printf("Server %.3f MHz\n", PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
   } else {
-    display.printf("Client #%i at %.1f MHz\n", DEFAULT_ADDRESS, frequency_index_to_frequency(DEFAULT_FREQUENCY_INDEX));
+    display.printf("Client #%i at %.3f MHz\n", DEFAULT_ADDRESS, PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
   }
-  display.printf("%s %.1f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
-  driver.setFrequency(frequency_index_to_frequency(DEFAULT_FREQUENCY_INDEX));
+  display.printf("%s %.3f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
+  driver.setFrequency(PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
   setModemConfig(modulation_index); //SF Bandwith etc
   driver.setTxPower(power[power_index]);
   //#define DEBUG_INCOMING_PACKETS
@@ -176,7 +174,7 @@ void loop()
   ota_loop();
   telnet_loop();
   //now operate in different roles
-  if (MY_ADDRESS == 1)  //serving as a server
+  if (PARMS.parameters.address == 1)  //serving as a server
   {
     driver.setModeRx();
     if (driver.mode() != lastMode) {
@@ -223,7 +221,7 @@ void loop()
     }
   }  //address 1 SERVER
 
-  if (MY_ADDRESS > 1)  //serving as a client
+  if (PARMS.parameters.address > 1)  //serving as a client
   {  
     // Send a message to manager_server
     if ((millis() - tx_time) > (PAUSE * 1000)) 
@@ -233,7 +231,7 @@ void loop()
       data[1] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
       manager.resetRetransmissions();
       Serial.printf("before manager.sendtowait line %d in %s\n",__LINE__,__FILE__);
-      if (manager.sendtoWait((uint8_t *)data, 2, SERVER_ADDRESS))
+      if (manager.sendtoWait((uint8_t *)data, 2, 1))
       {
         int retransmisison_count = manager.retransmissions();
         display.print("Sent ");
@@ -248,7 +246,7 @@ void loop()
           display.printf("1 -> RSSI -%i SNR %i\n", (int)buf[0], (int)buf[1]);
           int snr = driver.lastSNR();
           int rssi = driver.lastRssi();
-          display.printf("%i <- RSSI %i SNR %i\n", MY_ADDRESS, rssi, snr);
+          display.printf("%i <- RSSI %i SNR %i\n", PARMS.parameters.address, rssi, snr);
           Serial.printf("%i, %i, -%i, %i, %i, %i\n", millis(), counter, (int)buf[0], (int)buf[1], rssi, snr);
         } else {
           display.println("No return reply");
@@ -284,12 +282,12 @@ void check_button()
     //else show current value
     if (button_time > 2000 ) 
     {
-      both.printf("Current Power %.1fdBm\n", power[power_index]);
+      both.printf("Current Power %.3fdBm\n", power[power_index]);
       both.println("Single press button to change\n");
     } else {
       power_index = (power_index + 1) % POWER_INDEX_MAX;
       driver.setTxPower(power[power_index]);
-      both.printf("New Power %.1fdBm\n", power[power_index]);
+      both.printf("New Power %.3fdBm\n", power[power_index]);
     }
   }
  

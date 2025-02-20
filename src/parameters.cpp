@@ -2,13 +2,11 @@
 #include "myConfig.h"
 #include "parameters.h"
 
-Preferences preferences;  //esp32 preferences
-PARAMETERS parameters;    //parameters for the radio
-
+ParametersClass PARMS;
 //
 //@brief parameter initialization from nv ram if it exits else use defaults
 //
-void parameters_init(){
+void ParametersClass::init(){
   //each parameter is tested individually to see if it exists in the preferences 
   //  so if there are changes in the parameters they will be picked up
   // if the preferences do not exist, the default is written to the preferences nvram
@@ -117,7 +115,28 @@ void parameters_init(){
 //
 
 //set the center frequency in MHz from the index
-float frequency_index_to_frequency(uint8_t index) {
+float ParametersClass::frequency_index_to_frequency(uint8_t index) {
   return 902.125 + 0.25 * index;
+}
+
+//get the center frequency in MHz from the index
+uint8_t ParametersClass::frequency_to_frequency_index(float frequency) {
+  return (frequency - 902.125) / 0.25;
+}
+
+size_t ParametersClass::putString(char *key, char *value) {
+      return preferences.putString(key,value);
+}
+size_t ParametersClass::putUInt8(char *key, uint8_t byte ) {
+      return preferences.putUInt(key, byte);
+}
+size_t ParametersClass::putUInt16(char *key, uint16_t word ) {
+      return preferences.putUInt(key, word);
+}
+size_t ParametersClass::putChar(char *key, char value) {
+      return preferences.putChar(key, value);
+}
+size_t ParametersClass::putFloat(char *key, float value) {
+      return preferences.putFloat(key, value);
 }
 
