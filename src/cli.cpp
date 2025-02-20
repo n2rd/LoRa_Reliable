@@ -213,7 +213,6 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
 
 
 int cli_execute(const char* command_arg) {
-    Preferences preferences;  //esp32 preferences
 
     //temporary variables pending integration into ui.h
     static char  callsign[10];
@@ -233,8 +232,7 @@ int cli_execute(const char* command_arg) {
 
 #include "Preferences.h"
 
-Preferences preferences;
-  
+ 
 
 char command[50];
 char cmd_code;
@@ -268,26 +266,24 @@ if (command[0] == '/') {
 
     switch (cmd_code) {
 
-//      Radio Address----------------------------------------------------------
+//      Radio Address----------------------------------------------
     case 'A':
         current_int_value = radio_address;
         cli_process_int(parameter_query, "Radio Address", command, 0, 20 , & radio_address);
         if (current_int_value != radio_address) {
             //change radio address in the radio, save to RAM and NVRAM
-            preferences.putInt("address", radio_address);
+            PARMS.putUInt8("address", radio_address);
         }
         break;
 
-//      Beacon disable (TX Lockout) Off/On-------------------------------------
-//      OFF = 0 = TX Enabled (default)
-//      ON  = 1 = TX Disabled
+//      Beacon Off/On-------------------------------------------------------------
 
     case 'B':
         current_int_value = beacon_state;    
         cli_process_bool(parameter_query, "Beacon", command, & beacon_state);
         if (current_int_value != beacon_state){
             //change beacon state in the radio, save to RAM and NVRAM
-            preferences.putUInt("tx_lock", beacon_state);
+            PARMS.putUInt8("tx_lock", beacon_state);
         }
         break;
      
@@ -304,7 +300,7 @@ if (command[0] == '/') {
             telnet.printf("OK:Call sign = %s\r\n", callsign);
             if (current_str_value != callsign) {
                 //Change callsign in the radio, save to RAM and NVRAM
-                preferences.putString("callsign", callsign);
+                PARMS.putString("callsign", callsign);
             }    
         }
         break;
@@ -314,15 +310,14 @@ if (command[0] == '/') {
 
        break;
 
-
 //      Frequency--------------------------------------------------------------
     case 'F':
         current_int_value = frequency_index;
         cli_process_index_float_value_unit(parameter_query, "Frequency Index", command, 0, 100, frequency_array , "MHz",  &frequency_index);
         if (current_int_value != frequency_index) {
             //change frequency in the radio, save to RAM and NVRAM
-            preferences.putInt("freqIndex", frequency_index);
-            driver.setFrequency(frequency_array[frequency_index]);
+            PARMS.putUInt8("freqIndex", frequency_index);
+             driver.setFrequency(frequency_array[frequency_index]);
         }
         break;
 
@@ -333,12 +328,26 @@ if (command[0] == '/') {
         cli_process_bool(parameter_query, "GPS", command, & gps_state);
         if (current_int_value != gps_state) {
             //change GPS state in the radio, save to RAM and NVRAM
-            preferences.putUInt("gps_state", gps_state);
+            PARMS.putUInt8("gps_state", gps_state);
         }
         break;
 
 //      Help-------------------------------------------------------------------
     case 'H':
+        Serial.printf("Radio Address                /A <n>\r\n");
+        Serial.printf("Beacon Disable (TX Lockout)  B <off>|<on>\r\n");
+        Serial.printf("Caallsign                    /C <callsign>\r\n");
+        Serial.printf("Reset radio to default state /D\r\n");        
+        Serial.printf("Frequency                    /F <Frequency in MHz>\r\n");
+        Serial.printf("GPS State                    /G <off>|<on>\r\n");
+        Serial.printf("Help Text                    /H\r\n");
+        Serial.printf("TX Interval (seconds)        /I <n>\r\n");
+        Serial.printf("Position                     /L <latitude >,<longitude>\r\n");
+        Serial.printf("Modulation index 0<=n<=8     /M <n>\r\n");
+        Serial.printf("Power index 0<=n<=6          /P <n>\r\n");
+        Serial.printf("USB Serial Output            /S <off>|<on>\r\n");
+        Serial.printf("Radio Type                   /T <n>\r\n");
+        Serial.printf("Write no NVRAM               /W\r\n");
         Serial.printf("Radio Address                /A <n>\r\n");
         Serial.printf("Beacon Disable (TX Lockout)  B <off>|<on>\r\n");
         Serial.printf("Caallsign                    /C <callsign>\r\n");
@@ -369,6 +378,20 @@ if (command[0] == '/') {
         telnet.printf("USB Serial output            /S <off>|<on>\r\n");
         telnet.printf("Radio Type                   /T <n>\r\n");
         telnet.printf("Write no NVRAM               /W\r\n");
+        telnet.printf("Radio Address                /A <n>\r\n");
+        telnet.printf("Beacon Disable (TX Lockout)  /B <off>|<on>\r\n");
+        telnet.printf("Caallsign                    /C <callsign>\r\n");
+        Serial.printf("Reset radio to default state /D\r\n");        
+        telnet.printf("Frequency                    /F <Frequency in MHz>\r\n");
+        telnet.printf("GPS State                    /G <off>|<on>\r\n");
+        telnet.printf("Help Text                    /H\r\n");
+        telnet.printf("TX Interval (seconds)        /I <n>\r\n");
+        telnet.printf("Position                     /L <latitude >,<longitude>\r\n");
+        telnet.printf("Modulation index 0<=n<=8     /M <n>\r\n");
+        telnet.printf("Power index 0<=n<=6          /P <n>\r\n");
+        telnet.printf("USB Serial output            /S <off>|<on>\r\n");
+        telnet.printf("Radio Type                   /T <n>\r\n");
+        telnet.printf("Write no NVRAM               /W\r\n");
         telnet.printf("Commands case insensitive and blanks ignored\r\n");
 
         break;
@@ -380,7 +403,7 @@ if (command[0] == '/') {
         cli_process_int(parameter_query, "TX Interval", command, 10, 600 , & tx_interval);
         if (current_int_value != tx_interval) {
             //Change transmit inveral in the radio, save to RAM and NVRAM
-            preferences.putUInt("tx_interval", tx_interval);
+            PARMS.putUInt8("tx_interval", tx_interval);
         }
         break;
 
@@ -446,8 +469,10 @@ if (command[0] == '/') {
         }
         if ((current_lat_value != lat_value) || (current_lon_value != lon_value)) {
                 //Save lat/lon pair to RAM and NVRAM
-                preferences.putFloat("lat_value", lat_value);
-                preferences.putFloat("lon_value", lon_value);
+                PARMS.putFloat("lat_value", lat_value);
+                PARMS.putFloat("lon_value", lon_value);
+                PARMS.putFloat("lat_value", lat_value);
+                PARMS.putFloat("lon_value", lon_value);
 
 
         }
@@ -462,7 +487,9 @@ if (command[0] == '/') {
             cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, 8, modulation_array,  &modulation_index);
             if (current_int_value != modulation_index) {
                 //Change modulation index in the radio, save to RAM and NVRAM
-                preferences.putInt("modIndex", modulation_index);
+                PARMS.putUInt8("modIndex", modulation_index);
+                setModemConfig(modulation_index); //SF Bandwith etc
+                PARMS.putUInt8("modIndex", modulation_index);
                 setModemConfig(modulation_index); //SF Bandwith etc
             }
             break;
@@ -473,7 +500,7 @@ if (command[0] == '/') {
             cli_process_index_float_value_unit(parameter_query, "Power Index", command, 0, 6, power , "dBm",  &power_index);
             if (current_int_value != power_index) {
                 //Change power index in the radio, save to RAM and NVRAM
-                preferences.putInt("powerIndex", power_index);
+                PARMS.putUInt8("powerIndex", power_index);
                 driver.setTxPower(power[power_index]);
             }
             break;
@@ -500,7 +527,8 @@ if (command[0] == '/') {
             cli_process_int(parameter_query, "Radio Type", command, 0, 2 , & radio_type);
             if (current_int_value != radio_type) {
                 //Change radio type in the radio, save to RAM and NVRAM
-                preferences.putInt("type", radio_type);
+                PARMS.putUInt8("type", radio_type);
+                PARMS.putUInt8("type", radio_type);
             }
              break;
 
@@ -508,7 +536,7 @@ if (command[0] == '/') {
         case 'W':
         
             break;
-
+    
 //      Invalid Command--------------------------------------------------------
         default:
             Serial.printf("NG:Unrecognized command %c [C, F, G, H, I, L, M, P, R]\r\n"  , cmd_code);
