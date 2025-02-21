@@ -18,7 +18,7 @@ uint8_t data[20];
 // Dont put this on the stack: 
 // it is fragile, you will break it if you touch it
 // do not rename, etc.,  if you mess with it, you won't get anything that is received
-uint8_t buf[RH_SX126x_MAX_MESSAGE_LEN];
+uint8_t buf[DRIVER_MAX_MESSAGE_LEN];
 
 //message management
 uint16_t counter = 0;
@@ -35,7 +35,7 @@ uint32_t double_button_time = 0.0;
 typedef struct {
   uint8_t to;
   uint8_t len;
-  uint8_t data[RH_SX126x_MAX_MESSAGE_LEN];
+  uint8_t data[DRIVER_MAX_MESSAGE_LEN];
 } message_t;
 
 ArduinoQueue<message_t> transmit_queue(MAX_QUEUE);
@@ -63,9 +63,6 @@ void p2pSetup(void)
 
 void p2pLoop(void)
 {
-  //first check the buttons
-  check_button();
-
   //default mode is listening to others
   if (manager.available())  //message has come in
     {

@@ -10,7 +10,31 @@ void ParametersClass::init(){
   //each parameter is tested individually to see if it exists in the preferences 
   //  so if there are changes in the parameters they will be picked up
   // if the preferences do not exist, the default is written to the preferences nvram
-  preferences.begin("LoRa", RW_MODE);  //R/W needed to create it if it does not exist  
+  if (!preferences.begin("LoRa", RW_MODE)) {  //R/W needed to create it if it does not exist
+      //failure to open .... pass Partion value to initialize the partion
+      log_e("Preferences.begin () Failed to begin paramters group Lora. Trying to initialize.");
+      if (!preferences.begin("LoRa", RW_MODE, "Lora_Reliable")) {
+            //Failed again
+            log_e("nvs_flash_init_partition failed. Using defaults");
+            //use defaults here
+            strcpy(parameters.callsign, DEFAULT_CALLSIGN);
+            parameters.frequency_index = DEFAULT_FREQUENCY_INDEX;
+            parameters.gps_state = DEFAULT_GPS_STATE;
+            parameters.tx_lock = DEFAULT_TX_LOCK;
+            parameters.short_pause = DEFAULT_SHORT_PAUSE;
+            parameters.lat_value = DEFAULT_LAT_VALUE;
+            parameters.lon_value = DEFAULT_LON_VALUE;
+            parameters.grid4 = DEFAULT_GRID4;
+            parameters.grid5 = DEFAULT_GRID5;
+            parameters.grid6 = DEFAULT_GRID6;
+            parameters.modulation_index = DEFAULT_MODULATION_INDEX;
+            parameters.power_index = DEFAULT_POWER_INDEX;
+            parameters.tx_interval = DEFAULT_TX_INTERVAL;
+            parameters.address = DEFAULT_ADDRESS;
+            return;
+      }
+      log_e("nvs_flash_init_partition Succeeded");
+  }
   if (preferences.isKey("callsign")) {
         strcpy(parameters.callsign, preferences.getString("callsign").c_str());
   } else { //use defaults and write to nvram
