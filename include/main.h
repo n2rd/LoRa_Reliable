@@ -18,6 +18,7 @@
 #include "telnet.h"
 #include "cli.h"
 #include "csv.h"
+#include "gridutil.h"
 
 #include <RHReliableDatagram.h>
 

@@ -62,13 +62,23 @@ CLI Command set
 
 // These need to move elsewhere=======================================
 #warning "These need to move elsewhere"
-//#define POWER_INDEX_MAX 7
-//extern float power[POWER_INDEX_MAX];
-//#define MODULATION_INDEX_MAX 9
-//extern const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX];
-//extern void setModemConfig(uint8_t i);                             //need to fix
+/*
+uint16_t encode_grid4(String locator) {
+    return ((locator[0] - 'A') * 18 + (locator[1] - 'A') )* 100 + (locator[2] - '0') * 10 + (locator[3] - '0') ;
+  }
+  
+  void decode_grid4(uint16_t grid4, char *grid) {
+    grid[0] = (grid4 / 180) + 'A';
+    grid[1] = (grid4 % 180) / 10 + 'A';
+    grid[2] = (grid4 % 100) / 10 + '0';
+    grid[3] = (grid4 % 10) + '0';
+    grid[4] = '\0';
+  }
+*/
+
 //====================================================================
 #define MODULATION_INDEX_MAX 9
+
 /*
 static const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX] =
 {
@@ -125,8 +135,7 @@ bool is_numeric(const char* string) {
                 return false;
             }
             else {
-                period_counter++;
-                if (period_counter>1) return false;
+                if (++period_counter>1) return false;
             }
         }   
     }
@@ -233,40 +242,45 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
 
 int cli_execute(const char* command_arg) {
 
-static char  callsign[10];
-static float frequency; //depricated
-static int   frequency_index;
-static bool  tx_lock_state;
-static bool  gps_state;
-static float lat_value, lon_value;
-static int   modulation_index;
-static int   power_index;
-static int   tx_interval;
-static int   radio_address;
-static int   radio_type;
-static bool  serial_usb_state;
- 
+static char     callsign[10];
+static float    frequency; //depricated
+static int      frequency_index;
+static bool     tx_lock_state;
+static bool     gps_state;
+static float    lat_value, lon_value;
+static int      modulation_index;
+static int      power_index;
+static int      tx_interval;
+static int      radio_address;
+static int      radio_type;
+static bool     serial_usb_state;
+static uint16_t grid4;          // (2B) 4 char grid square, encoded from 0 to 32,399
+static char     grid5;          // (1B) 1 char subsquare identifier, encoded as an ascii char 
+static char     grid6;          // (1B) 1 char subsquare identifier, encoded as an ascii char 
 
 #include "Preferences.h"
 
- 
-
-char command[50];
-char cmd_code;
-char* param_str[50];
-char lat_str[10];
-char lon_str[10];
-int i, j;
-int int_input;
-float flt_input;
-int status;
-bool location_comma_found;
-int lat_i, lon_i;
-bool parameter_query;
-int current_int_value;
-int current_lat_value;
-int current_lon_value;
-char current_str_value[10];
+char        command[50];
+char        cmd_code;
+char*       param_str[50];
+char        lat_str[10];
+char        lon_str[10];
+int         i, j;
+int         int_input;
+float       flt_input;
+int         status;
+bool        location_comma_found;
+int         lat_i, lon_i;
+bool        parameter_query;
+int         current_int_value;
+int         current_lat_value;
+int         current_lon_value;
+char        current_str_value[10];
+uint16_t    current_uint16_value;
+char        current_char_value1;
+char        current_char_value2;
+bool        valid_gridsquare_format;
+char        grid4_str_value[5];
 
 strcpy(command, command_arg);
 
@@ -560,13 +574,86 @@ if (command[0] == '/') {
             break;
     
 //      Maidenhead Grid Square (4 or 6 characters)------------------------------
+/*
+            Character pairs encode longitude first, and then latitude.
+            The first pair (a field) encodes with base 18 and the letters "A" to "R".
+            The second pair (square) encodes with base 10 and the digits "0" to "9".
+            The third pair (subsquare) encodes with base 24 and the letters "A" to "X".
+            The fourth pair (extended square) encodes with base 10 and the digits "0" to "9".
+    
+            uint16_t grid4;  // (2B) 4 char grid square, encoded from 0 to 32,399
+            char     grid5;  // (1B) 1 char subsquare identifier, encoded as an ascii char 
+            char     grid6; // (1B) 1 char subsquare identifier, encoded as an ascii char 
+*/
         case 'X':
+            if (parameter_query){
+                current_uint16_value = PARMS.parameters.grid4;
+                decode_grid4(current_uint16_value, current_str_value);
+                current_char_value1  = PARMS.parameters.grid5;
+                current_char_value2  = PARMS.parameters.grid6;
+                Serial.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
+                telnet.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
+            }
+            else {
+                i = strlen(command);
+                if (i == 4) {
+                    valid_gridsquare_format =       ((int)'A' <= (int)command[0] && (int)command[0] <= (int('R'))) &&
+                                                    ((int)'A' <= (int)command[1] && (int)command[1] <= (int('R'))) &&
+                                                    ((int)'0' <= (int)command[2] && (int)command[2] <= (int('9'))) &&
+                                                    ((int)'0' <= (int)command[3] && (int)command[3] <= (int('9'))) ;
+                    if (valid_gridsquare_format) {
+                        strcpy(current_str_value, command);
+                        PARMS.parameters.grid4 = encode_grid4(command);
+                        PARMS.parameters.grid5 = 'l';       //L for mid grid location
+                        PARMS.parameters.grid6 = 'l';       //L for mid grid location
+                    }
+                    else {
+                        Serial.printf("NG:Invalid 4 character grid\r\n");
+                        telnet.printf("NG:invalid 4 character grid\r\n");
+                        return 1;
+                    }
+                }
+                else if (i == 6) {
+                        valid_gridsquare_format =   ((int)'A' <= (int)command[0] && (int)command[0] <= (int('R'))) &&
+                                                    ((int)'A' <= (int)command[1] && (int)command[1] <= (int('R'))) &&
+                                                    ((int)'0' <= (int)command[2] && (int)command[2] <= (int('9'))) &&
+                                                    ((int)'0' <= (int)command[3] && (int)command[3] <= (int('9'))) &&
+                                                    ((int)'A' <= (int)command[4] && (int)command[4] <= (int('X'))) &&
+                                                    ((int)'A' <= (int)command[5] && (int)command[5] <= (int('X')));
+                    if (valid_gridsquare_format) {
+                        for (j = 0; j < 4; j++) {
+                            grid4_str_value[j]   = command[j];
+                            current_str_value[j] = command[j];
+                        }
+                        grid4_str_value[4]   = '\0';
+                        current_str_value[4] = '\0';
+                        PARMS.parameters.grid4 = encode_grid4(command);
+                        PARMS.parameters.grid5 = command[4];
+                        PARMS.parameters.grid6 = command[5];
+                    }
+                    else {
+                        Serial.printf("NG:Invalid 6 character grid\r\n");
+                        telnet.printf("NG:invalid 6 character grid\r\n");
+                        return 1;
+                    }
+                }
+                else {
+                    Serial.printf("NG:Gridsquare must be 4 or 6 character gridswuare\r\n");
+                    telnet.printf("NG:Gridsquare must be 4 or 6 character gridswuare\r\n");
+                    return 1;
+                }
+                current_uint16_value = PARMS.parameters.grid4;
+                current_char_value1  = PARMS.parameters.grid5;
+                current_char_value2  = PARMS.parameters.grid6;
+                Serial.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
+                telnet.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
+            }
         
             break;
 
 //      Invalid Command--------------------------------------------------------
         default:
-            Serial.printf("NG:Unrecognized command %c [C, F, G, H, I, L, M, P, R]\r\n"  , cmd_code);
+            Serial.printf("NG:Unrecognized command %c [C, F, G, H, I, L, M, P, R]\r\n", cmd_code);
             telnet.printf("NG:Unrecognized command %c [C, F, G, H, I, L, M, P, R]\r\n", cmd_code);
         }
     }
