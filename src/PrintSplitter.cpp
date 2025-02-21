@@ -10,15 +10,22 @@
  * to both Print objects.
  */
 
-    PrintSplitter::PrintSplitter(Print &_a, Print &_b) : a(_a), b(_b) {}
+    PrintSplitter::PrintSplitter(Print &_a, Print &_b) : a(_a), b(_b), c(_b) { _cnt = 2; }
+    PrintSplitter::PrintSplitter(Print &_a, Print &_b, Print &_c) : a(_a), b(_b), c(_c) { _cnt = 3; }
 
-    size_t PrintSplitter::write(uint8_t c) {
-      a.write(c);
-      return b.write(c);
+    size_t PrintSplitter::write(uint8_t ch) {
+      a.write(ch);
+      size_t retval =  b.write(ch);
+      if (_cnt == 3)
+        c.write(ch);
+      return retval;
     }
     size_t PrintSplitter::write(const char* str) {
       a.write(str);
-      return b.write(str);
+      size_t retval = b.write(str);
+      if (_cnt == 3)
+        c.write(str);
+      return retval;
     }
 
 

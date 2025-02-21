@@ -32,6 +32,7 @@ extern float power[POWER_INDEX_MAX];
 
 #define DRIVER_MAX_MESSAGE_LEN RH_RF95_MAX_MESSAGE_LEN
 
+#define HAS_WIFI    1
 #define HAS_GPS 0
 #if defined(HAS_GPS) && (HAS_GPS ==1)
 #define GPS_ON_PIN  1

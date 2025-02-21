@@ -87,9 +87,6 @@ typedef struct ParametersStruct {
 #define RW_MODE false
 #define RO_MODE true 
 
-# warning "The next 2 lines don't seem to be used"
-//#define MODULATION_LABELS {"Short Fast", "Short Slow", "Medium Fast", "Medium Slow", "Long Fast", "Long Moderate", "Long Slow", "Very Long Slow"}
-//static const String modulation_labels[MODULATION_INDEX_MAX+1] = MODULATION_LABELS;
 class ParametersClass {
   public:
     ParametersClass() { init(); }

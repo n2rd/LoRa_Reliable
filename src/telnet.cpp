@@ -1,12 +1,41 @@
 #include "main.h"
 
-ESPTelnet telnet;
+Telnet telnet;
 
 const uint16_t  port = 23;
 
 /* ------------------------------------------------- */
+size_t Telnet::printf(const char* format, ...) {
+  if (!client || !isConnected()) return 0;
+  
+  va_list arg;
+  va_start(arg, format);
+  char loc_buf[64];
+  int len = vsnprintf(loc_buf, sizeof(loc_buf), format, arg);
+  va_end(arg);
 
-void errorMsg(String error, bool restart = true)
+  if (len < 0) return 0;
+
+  if (len >= (int)sizeof(loc_buf)) {
+    char* temp = (char*)malloc(len + 1);
+    if (temp == nullptr) {
+      return 0;
+    }
+    va_start(arg, format);
+    vsnprintf(temp, len + 1, format, arg);
+    va_end(arg);
+    len = write((uint8_t*)temp, len);
+    free(temp);
+  } else {
+    len = write((uint8_t*)loc_buf, len);
+  }
+
+  return len;
+}
+/* ------------------------------------------------- */
+/* ------------------------------------------------- */
+
+void Telnet::errorMsg(String error, bool restart)
 {
     Serial.println(error);
     if (restart) {
@@ -20,39 +49,29 @@ void errorMsg(String error, bool restart = true)
 /* ------------------------------------------------- */
 
 // (optional) callback functions for telnet events
-void onTelnetConnect(String ip)
+void Telnet::onTelnetConnect(String ip)
 {
-    Serial.print("- Telnet: ");
-    Serial.print(ip);
-    Serial.println(" connected");
-
-    telnet.println("\nWelcome " + telnet.getIP());
-    telnet.println("(Use ^] + q  to disconnect.)");
+    csv_serial.printf("- Telnet: %s connected", ip);
+    telnet.printf("\nWelcome %s\n", telnet.getIP());
+    telnet.printf("(Use ^] + q  to disconnect.)\r\n");
 }
 
-void onTelnetDisconnect(String ip)
+void Telnet::onTelnetDisconnect(String ip)
 {
-    #warning "comment out or remove debuggging info"
-    Serial.print("- Telnet: ");
-    Serial.print(ip);
-    Serial.println(" disconnected");
+    csv_serial.printf("- Telnet: %s disconnected", ip);
 }
 
-void onTelnetReconnect(String ip)
+void Telnet::onTelnetReconnect(String ip)
 {
-    Serial.print("- Telnet: ");
-    Serial.print(ip);
-    Serial.println(" reconnected");
+    csv_serial.printf("- Telnet: %s reconnected", ip);
 }
 
-void onTelnetConnectionAttempt(String ip)
+void Telnet::onTelnetConnectionAttempt(String ip)
 {
-    Serial.print("- Telnet: ");
-    Serial.print(ip);
-    Serial.println(" tried to connected");
+    csv_serial.printf("- Telnet: %s tried to connect", ip);
 }
 
-void onTelnetInput(String str)
+void Telnet::onTelnetInput(String str)
 {
     if (telnet.isLineModeSet()) {
         // checks" for a certain command
@@ -79,7 +98,7 @@ void onTelnetInput(String str)
 }
 /* ------------------------------------------------- */
 
-void telnet_setup()
+void Telnet::setup()
 {  
     // passing on functions for various telnet events
     telnet.onConnect(onTelnetConnect);
@@ -89,20 +108,19 @@ void telnet_setup()
     telnet.onInputReceived(onTelnetInput);
     telnet.setLineMode(true);
 
-    Serial.print("- Telnet: ");
     if (telnet.begin(port)) {
-        Serial.println("telnet running");
+        csv_serial.debug("TEL",(char*)"telnet running");
     } else {
-        Serial.println("telnet error.");
+        csv_serial.debug("TEL",(char*)"telnet error.");
         errorMsg("Will reboot...");
     }
 }
 
 /* ------------------------------------------------- */
 
-void telnet_loop()
+void Telnet::loop()
 {
-    telnet.loop();
+    ESPTelnet::loop();
 
     // send serial input to telnet as output
     if (Serial.available()) {
