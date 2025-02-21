@@ -51,24 +51,24 @@ void Telnet::errorMsg(String error, bool restart)
 // (optional) callback functions for telnet events
 void Telnet::onTelnetConnect(String ip)
 {
-    csv_serial.printf("- Telnet: %s connected", ip);
+    csv_serial.printf("Telnet: %s connected\n", ip);
     telnet.printf("\nWelcome %s\n", telnet.getIP());
     telnet.printf("(Use ^] + q  to disconnect.)\r\n");
 }
 
 void Telnet::onTelnetDisconnect(String ip)
 {
-    csv_serial.printf("- Telnet: %s disconnected", ip);
+    csv_serial.printf("Telnet: %s disconnected\n", ip);
 }
 
 void Telnet::onTelnetReconnect(String ip)
 {
-    csv_serial.printf("- Telnet: %s reconnected", ip);
+    csv_serial.printf("Telnet: %s reconnected\n", ip);
 }
 
 void Telnet::onTelnetConnectionAttempt(String ip)
 {
-    csv_serial.printf("- Telnet: %s tried to connect", ip);
+    csv_serial.printf("Telnet: %s tried to connect\n", ip);
 }
 
 void Telnet::onTelnetInput(String str)
@@ -109,9 +109,9 @@ void Telnet::setup()
     telnet.setLineMode(true);
 
     if (telnet.begin(port)) {
-        csv_serial.debug("TEL",(char*)"telnet running");
+        csv_serial.info("TEL",(char*)"telnet running\n");
     } else {
-        csv_serial.debug("TEL",(char*)"telnet error.");
+        csv_serial.debug("TEL",(char*)"telnet error.\n");
         errorMsg("Will reboot...");
     }
 }

@@ -77,11 +77,11 @@ void p2pLoop(void)
           //display the message
           int snr = driver.lastSNR();
           int rssi = driver.lastRssi();
-          ps_all.printf("Broadcast from %i #%i\n", from, (int)(buf[1]*256 + buf[0]));
-          ps_all.printf("%iB #%i ", from, (int)(buf[1]*256 + buf[0]));
-          ps_all.printf("RSSI %i  SNR %i\n", rssi, snr);
-          csv_serial.data(millis(),from,rssi,snr);
-          csv_telnet.data(millis(),from,rssi,snr);
+          display.printf("Broadcast from %i #%i\n", from, (int)(buf[1]*256 + buf[0]));
+          display.printf("%iB #%i ", from, (int)(buf[1]*256 + buf[0]));
+          display.printf("RSSI %i  SNR %i\n", rssi, snr);
+          csv_serial.data(millis(), 'B', from, to, rssi, snr);
+          csv_telnet.data(millis(), 'B', from, to, rssi, snr);
           //send reply back to sender
           rssi = abs(rssi);
           data[0] = static_cast<uint8_t>(rssi);
@@ -101,10 +101,12 @@ void p2pLoop(void)
           //manager.sendto(data, 2, from);
         } else {
           //we have a signal report for us
-          ps_all.printf("Signal report from %i\n", from);
-          ps_all.printf("RSSI -%i SNR %i\n", (int)buf[0], (int)buf[1]);
-          csv_serial.data(millis(),from,buf[0],buf[1]);
-          csv_telnet.data(millis(),from,buf[0],buf[1]);
+          int rssi = 0 - buf[0];
+          int snr = buf[1];
+          display.printf("Signal report from %i\n", from);
+          display.printf("RSSI %i SNR %i\n", rssi, snr);
+          csv_serial.data(millis(), 'S', from, to, rssi, snr);
+          csv_telnet.data(millis(), 'S', from, to, rssi, snr);
         }
       } //received a message
     } //message waiting

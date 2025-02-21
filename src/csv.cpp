@@ -3,11 +3,17 @@
 /*----------------------------------------------------*/
 CsvClass::CsvClass(Print& _printObject) : printObject(_printObject) {}
 /*----------------------------------------------------*/
+uint count = 0;
+char buffer[100];
+
 size_t CsvClass::write(uint8_t c) { //this outputs as info
-    char s[2];
-    s[0] = c;
-    s[1] = 0;
-    info("INF",s);
+    buffer[count++] = c;
+    buffer[count] = 0;
+    if ((c == 0) || (c== '\n') || (count > (sizeof(buffer)-2)))
+    {
+        info("INF",buffer);
+        count = 0;
+    }
     return 1;
 }
 /*----------------------------------------------------*/
@@ -19,19 +25,23 @@ size_t CsvClass::write(const char* str) { //this outputs as info
 void CsvClass::data(CSVDATAPTR data) 
 {
     printObject.printf(
-        "D, %ld, %d, %f, %f\n",
+        "D, %ld, %c, %d, %d, %f, %f\n",
         data->timeStamp,
+        data->recvType,
         data->from,
+        data->to,
         data->rssi,
         data->snr
     );
 }
 /*----------------------------------------------------*/
-void CsvClass::data(unsigned long timeStamp, int from, float rssi, float snr)
+void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, float rssi, float snr)
 {
     CSVDATA datastruct;
     datastruct.timeStamp = timeStamp;
+    datastruct.recvType = recvType;
     datastruct.from = from;
+    datastruct.to = to;
     datastruct.rssi = rssi;
     datastruct.snr = snr;
     data(&datastruct);
