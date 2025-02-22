@@ -41,6 +41,7 @@ CsvClass csv_telnet(telnet);
 CsvClass csv_serial(Serial);
 PrintSplitter csv_both(csv_serial,csv_telnet);
 PrintSplitter ps_both(Serial, display);
+PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
 RHReliableDatagram manager(driver, PARMS.parameters.address);
 

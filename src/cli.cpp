@@ -20,7 +20,7 @@ CLI Command set
     Default Config          /D
     Frequency index         /F <n>                                          Default = 905.2
                                     n= Frequency in MHz 3.g., 905.2, 
-    GPS                     /G <OFF|GPS ON ON TX|ON>                        Default = OFF<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    GPS                     /G <OFF|TX|ON>                                  Default = OFF<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                                     
     Help                    /H
     Transmission interval   /I <n>  n= number of seconds between            Default = 30
@@ -143,7 +143,7 @@ bool is_numeric(const char* string) {
   }
  
 
-  void cli_process_bool(int parameter_query, const char* param_name, char* param_command, bool* param_value ) {
+void cli_process_bool(int parameter_query, const char* param_name, char* param_command, bool* param_value ) {
     #define PRINTF_OK_BOOL "OK:%s = %s\r\n"
     #define PRINTF_NG_BOOL "NG:%s must be 'OFF' or 'ON'\r\n"
     if (parameter_query) {
@@ -168,7 +168,6 @@ bool is_numeric(const char* string) {
     }
 }
 
-
 void cli_process_int(int parameter_query, const char* param_name, char* param_command, int param_value_min, int param_value_max, int* param_value) {
     #define PRINTF_OK_INT "OK:%s = %u\r\n"
     #define PRINTF_NG_INT "NG:%s must be an integer >=%u and <=%u\r\n"
@@ -186,8 +185,8 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
             telnet.printf(PRINTF_OK_INT, param_name, *param_value);
         }
         else {
-            Serial.printf(PRINTF_NG_INT, param_name, param_value_min, param_value_max);
-            telnet.printf(PRINTF_NG_INT, param_name, param_value_min, param_value_max);
+            ps_st.printf(PRINTF_NG_INT, param_name, param_value_min, param_value_max);
+            //telnet.printf(PRINTF_NG_INT, param_name, param_value_min, param_value_max);
         }   
     }
 }
@@ -241,6 +240,8 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
 
 
 int cli_execute(const char* command_arg) {
+
+PARAMETERS local_params;
 
 static char     callsign[10];
 static float    frequency; //depricated
@@ -376,40 +377,22 @@ if (command[0] == '/') {
 
 //      Help-------------------------------------------------------------------
     case 'H':
-        Serial.printf("Radio Address                    /A <n>\r\n");
-        Serial.printf("Beacon Disable (TX Lockout)      /B <off>|<on>\r\n");
-        Serial.printf("Caallsign                        /C <callsign>\r\n");
-        Serial.printf("Reset radio to default state     /D\r\n");        
-        Serial.printf("Frequency                        /F <Frequency in MHz>\r\n");
-        Serial.printf("GPS State                        /G <off>|<on>\r\n");
-        Serial.printf("Help Text                        /H\r\n");
-        Serial.printf("TX Interval (seconds)            /I <n>\r\n");
-        Serial.printf("Position                         /L <latitude >,<longitude>\r\n");
-        Serial.printf("Modulation index 0<=n<=8         /M <n>\r\n");
-        Serial.printf("Power index 0<=n<=6              /P <n>\r\n");
-        Serial.printf("USB Serial Output                /S <off>|<on>\r\n");
-        Serial.printf("Radio Type                       /T <n>\r\n");
-        Serial.printf("Write no NVRAM                   /W\r\n");
-        Serial.printf("Maidenhead grid square (4 or 6)  /X\r\n");
-        Serial.printf("Commands case insensitive and blanks ignored\r\n");
-
-        telnet.printf("Radio Address                    /A <n>\r\n");
-        telnet.printf("Beacon Disable (TX Lockout)      /B <off>|<on>\r\n");
-        telnet.printf("Caallsign                        /C <callsign>\r\n");
-        Serial.printf("Reset radio to default state     /D\r\n");        
-        telnet.printf("Frequency                        /F <Frequency in MHz>\r\n");
-        telnet.printf("GPS State                        /G <off>|<on>\r\n");
-        telnet.printf("Help Text                        /H\r\n");
-        telnet.printf("TX Interval (seconds)            /I <n>\r\n");
-        telnet.printf("Position                         /L <latitude >,<longitude>\r\n");
-        telnet.printf("Modulation index 0<=n<=8         /M <n>\r\n");
-        telnet.printf("Power index 0<=n<=6              /P <n>\r\n");
-        telnet.printf("USB Serial output                /S <off>|<on>\r\n");
-        telnet.printf("Radio Type                       /T <n>\r\n");
-        telnet.printf("Write no NVRAM                   /W\r\n");
-        telnet.printf("Maidenhead grid square (4 or 6)  /X\r\n");
-        telnet.printf("Commands case insensitive and blanks ignored\r\n");
-
+        ps_st.printf("Radio Address                    /A <n>\r\n");
+        ps_st.printf("Beacon Disable (TX Lockout)      /B <off>|<on>\r\n");
+        ps_st.printf("Caallsign                        /C <callsign>\r\n");
+        ps_st.printf("Reset radio to default state     /D\r\n");        
+        ps_st.printf("Frequency                        /F <Frequency in MHz>\r\n");
+        ps_st.printf("GPS State                        /G <off>|<on>\r\n");
+        ps_st.printf("Help Text                        /H\r\n");
+        ps_st.printf("TX Interval (seconds)            /I <n>\r\n");
+        ps_st.printf("Position                         /L <latitude >,<longitude>\r\n");
+        ps_st.printf("Modulation index 0<=n<=8         /M <n>\r\n");
+        ps_st.printf("Power index 0<=n<=6              /P <n>\r\n");
+        ps_st.printf("USB Serial Output                /S <off>|<on>\r\n");
+        ps_st.printf("Radio Type                       /T <n>\r\n");
+        ps_st.printf("Write no NVRAM                   /W\r\n");
+        ps_st.printf("Maidenhead grid square (4 or 6)  /X\r\n");
+        ps_st.printf("Commands case insensitive and blanks ignored\r\n");
         break;
 
 //      Interval (transmit)----------------------------------------------------
@@ -417,10 +400,10 @@ if (command[0] == '/') {
     case 'I':
         current_int_value = PARMS.parameters.tx_interval;
         tx_interval       = PARMS.parameters.tx_interval;
-        cli_process_int(parameter_query, "TX Interval", command, 10, 600 , & tx_interval);
+        cli_process_int(parameter_query, PARMS.Key.tx_interval, command, 10, 600 , & tx_interval);
         if (current_int_value != tx_interval) {
             //Change transmit inveral in the radio, save to RAM and NVRAM
-            PARMS.putUInt8("tx_interval", tx_interval);
+            PARMS.putUInt8(PARMS.Key.tx_interval, tx_interval);
             PARMS.parameters.tx_interval = tx_interval;
 
         }

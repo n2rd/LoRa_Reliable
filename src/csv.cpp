@@ -9,7 +9,7 @@ char buffer[100];
 size_t CsvClass::write(uint8_t c) { //this outputs as info
     buffer[count++] = c;
     buffer[count] = 0;
-    if ((c == 0) || (c== '\n') || (count > (sizeof(buffer)-2)))
+    if ((c == 0) || (c== '\n') || (c== '\r') ||(count > (sizeof(buffer)-2)))
     {
         info("INF",buffer);
         count = 0;
@@ -25,7 +25,7 @@ size_t CsvClass::write(const char* str) { //this outputs as info
 void CsvClass::data(CSVDATAPTR data) 
 {
     printObject.printf(
-        "D, %ld, %c, %d, %d, %f, %f\n",
+        "D, %ld, %c, %d, %d, %f, %f\r\n",
         data->timeStamp,
         data->recvType,
         data->from,
@@ -49,7 +49,7 @@ void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, flo
 /*----------------------------------------------------*/
 void CsvClass::output(char leadingChar,const char *tag, char *data)
 {
-    printObject.printf("%c,%s,%s\n",leadingChar,tag,data);
+    printObject.printf("%c,%s,%s\r\n",leadingChar,tag,data);
 
 }
 /*----------------------------------------------------*/

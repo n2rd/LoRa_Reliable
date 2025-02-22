@@ -46,6 +46,7 @@ extern CsvClass csv_telnet;
 extern CsvClass csv_serial;
 extern PrintSplitter csv_both;
 extern PrintSplitter ps_both;
+extern PrintSplitter ps_st;
 extern PrintSplitter ps_all;
 extern RHReliableDatagram manager;
 extern void DisplayUpperRight(int count);
