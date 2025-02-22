@@ -100,6 +100,22 @@ class ParametersClass {
     size_t putUInt16(const char *key, uint16_t word );
     size_t putChar(const char *key, char value);
     size_t putFloat(const char *key, float value);
+    struct keyStruct {
+      const char* callsign = "callsign";
+      const char* frequency_index = "frequency_index";
+      const char* gps_state = "gps_state";
+      const char* tx_lock = "tx_lock";
+      const char* short_pause = "short_pause";
+      const char* lat_value = "lat_value";
+      const char* lon_value = "lon_value";
+      const char* grid4 = "grid4";
+      const char* grid5 = "grid5";
+      const char* grid6 = "grid6";
+      const char* modultation_index = "mod_index";
+      const char* power_index = "power_index";
+      const char* tx_interval = "tx_interval";
+      const char* address = "address";
+    } Key;
   private:
     Preferences preferences;
     void init();

@@ -13,7 +13,7 @@ void ParametersClass::init(){
   if (!preferences.begin("LoRa", RW_MODE)) {  //R/W needed to create it if it does not exist
       //failure to open .... pass Partion value to initialize the partion
       log_e("Preferences.begin () Failed to begin paramters group Lora. Trying to initialize.");
-      if (!preferences.begin("LoRa", RW_MODE, "Lora_Reliable")) {
+      if (!preferences.begin("LoRa", RW_MODE, "nvs")) {
             //Failed again
             log_e("nvs_flash_init_partition failed. Using defaults");
             //use defaults here
@@ -35,102 +35,102 @@ void ParametersClass::init(){
       }
       log_e("nvs_flash_init_partition Succeeded");
   }
-  if (preferences.isKey("callsign")) {
-        strcpy(parameters.callsign, preferences.getString("callsign").c_str());
+  if (preferences.isKey(Key.callsign)) {
+        strcpy(parameters.callsign, preferences.getString(Key.callsign).c_str());
   } else { //use defaults and write to nvram
         strcpy(parameters.callsign, DEFAULT_CALLSIGN);
-        preferences.putString("callsign", parameters.callsign);
+        preferences.putString(Key.callsign, parameters.callsign);
   }
-  if (preferences.isKey("frequency_index")) {
+  if (preferences.isKey(Key.frequency_index)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.frequency_index = preferences.getUInt("frequency_index");
+        parameters.frequency_index = preferences.getUInt(Key.frequency_index);
   } else { //use defaults and write to nvram
         parameters.frequency_index = DEFAULT_FREQUENCY_INDEX;
-        preferences.putUInt("frequency_index", parameters.frequency_index);
+        preferences.putUInt(Key.frequency_index, parameters.frequency_index);
   }
-  if (preferences.isKey("gps_state")) {
+  if (preferences.isKey(Key.gps_state)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.gps_state = preferences.getUInt("gps_state");
+        parameters.gps_state = preferences.getUInt(Key.gps_state);
   } else { //use defaults and write to nvram
         parameters.gps_state = DEFAULT_GPS_STATE;
-        preferences.putUInt("gps_state", parameters.gps_state);
+        preferences.putUInt(Key.gps_state, parameters.gps_state);
   }
-  if (preferences.isKey("tx_lock")) {
+  if (preferences.isKey(Key.tx_lock)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.tx_lock = preferences.getUInt("tx_lock");
+        parameters.tx_lock = preferences.getUInt(Key.tx_lock);
   } else { //use defaults and write to nvram
         parameters.tx_lock = DEFAULT_TX_LOCK;
-        preferences.putUInt("tx_lock", parameters.tx_lock);
+        preferences.putUInt(Key.tx_lock, parameters.tx_lock);
   } 
-  if (preferences.isKey("short_pause")) {
+  if (preferences.isKey(Key.short_pause)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.short_pause = preferences.getUInt("short_pause");
+        parameters.short_pause = preferences.getUInt(Key.short_pause);
   } else { //use defaults and write to nvram
         parameters.short_pause = DEFAULT_SHORT_PAUSE;
-        preferences.putUInt("short_pause", parameters.short_pause);
+        preferences.putUInt(Key.short_pause, parameters.short_pause);
   } 
-  if (preferences.isKey("lat_value")) {
+  if (preferences.isKey(Key.lat_value)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.lat_value = preferences.getFloat("lat_value");
+        parameters.lat_value = preferences.getFloat(Key.lat_value);
   } else { //use defaults and write to nvram
         parameters.lat_value = DEFAULT_LAT_VALUE;
-        preferences.putFloat("lat_value", parameters.lat_value);
+        preferences.putFloat(Key.lat_value, parameters.lat_value);
   }
-  if (preferences.isKey("lon_value")) {
+  if (preferences.isKey(Key.lon_value)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.lon_value = preferences.getFloat("lon_value");
+        parameters.lon_value = preferences.getFloat(Key.lon_value);
   } else { //use defaults and write to nvram
         parameters.lon_value = DEFAULT_LON_VALUE;
-        preferences.putFloat("lon_value", parameters.lon_value);
+        preferences.putFloat(Key.lon_value, parameters.lon_value);
   }
-  if (preferences.isKey("grid4")) {
+  if (preferences.isKey(Key.grid4)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.grid4 = preferences.getUInt("grid4");
+        parameters.grid4 = preferences.getUInt(Key.grid4);
   } else { //use defaults and write to nvram
         parameters.grid4 = DEFAULT_GRID4;
-        preferences.putUInt("grid4", parameters.grid4);
+        preferences.putUInt(Key.grid4, parameters.grid4);
   }
-  if (preferences.isKey("grid5")) {
+  if (preferences.isKey(Key.grid5)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.grid5 = preferences.getChar("grid5");
+        parameters.grid5 = preferences.getChar(Key.grid5);
   } else { //use defaults and write to nvram
         parameters.grid5 = DEFAULT_GRID5;
-        preferences.putChar("grid5", parameters.grid5);
+        preferences.putChar(Key.grid5, parameters.grid5);
   }
-  if (preferences.isKey("grid6")) {
+  if (preferences.isKey(Key.grid6)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.grid6 = preferences.getChar("grid6");
+        parameters.grid6 = preferences.getChar(Key.grid6);
   } else { //use defaults and write to nvram
         parameters.grid6 = DEFAULT_GRID6;
-        preferences.putChar("grid6", parameters.grid6);
+        preferences.putChar(Key.grid6, parameters.grid6);
   }
-  if (preferences.isKey("modulation_index")) {
+  if (preferences.isKey(Key.modultation_index)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.modulation_index = preferences.getUInt("modulation_index");
+        parameters.modulation_index = preferences.getUInt(Key.modultation_index);
   } else { //use defaults and write to nvram
         parameters.modulation_index = DEFAULT_MODULATION_INDEX;
-        preferences.putUInt("modulation_index", parameters.modulation_index);
+        preferences.putUInt(Key.modultation_index, parameters.modulation_index);
   }
-  if (preferences.isKey("power_index")) {
+  if (preferences.isKey(Key.power_index)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.power_index = preferences.getUInt("power_index");
+        parameters.power_index = preferences.getUInt(Key.power_index);
   } else { //use defaults and write to nvram
         parameters.power_index = DEFAULT_POWER_INDEX;
-        preferences.putUInt("power_index", parameters.power_index);
+        preferences.putUInt(Key.power_index, parameters.power_index);
   }
-  if (preferences.isKey("tx_interval")) {
+  if (preferences.isKey(Key.tx_interval)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.tx_interval = preferences.getUInt("tx_interval");
+        parameters.tx_interval = preferences.getUInt(Key.tx_interval);
   } else { //use defaults and write to nvram
         parameters.tx_interval = DEFAULT_TX_INTERVAL;
-        preferences.putUInt("tx_interval", parameters.tx_interval);
+        preferences.putUInt(Key.tx_interval, parameters.tx_interval);
   }
-  if (preferences.isKey("address")) {
+  if (preferences.isKey(Key.address)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.address = preferences.getUInt("address");
+        parameters.address = preferences.getUInt(Key.address);
   } else { //use defaults and write to nvram
         parameters.address = DEFAULT_ADDRESS;
-        preferences.putUInt("address", parameters.address);
+        preferences.putUInt(Key.address, parameters.address);
   }
 }
 
