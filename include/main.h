@@ -19,6 +19,7 @@
 #include "telnet.h"
 #include "cli.h"
 #include "csv.h"
+#include "gridutil.h"
 #include "clientServer.h"
 #include "p2p.h"
 

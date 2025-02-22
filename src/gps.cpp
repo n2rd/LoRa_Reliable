@@ -101,7 +101,8 @@ String latLonToMaidenhead(double latitude, double longitude, int precision = 6) 
 
     return locator;
 }
-
+/*
+CODE MOVED TO GRIDUTIL
 uint16_t encode_grid4(String locator) {
   return ((locator[0] - 'A') * 18 + (locator[1] - 'A') )* 100 + (locator[2] - '0') * 10 + (locator[3] - '0') ;
 }
@@ -113,5 +114,6 @@ void decode_grid4(uint16_t grid4, char *grid) {
   grid[3] = (grid4 % 10) + '0';
   grid[4] = '\0';
 }
+  */
 
 #endif //defined(HAS_GPS) && (HAS_GPS ==1)

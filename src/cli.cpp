@@ -20,7 +20,7 @@ CLI Command set
     Default Config          /D
     Frequency index         /F <n>                                          Default = 905.2
                                     n= Frequency in MHz 3.g., 905.2, 
-    GPS                     /G <OFF|ON>                                     Default = ON
+    GPS                     /G <OFF|GPS ON ON TX|ON>                        Default = OFF<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                                     
     Help                    /H
     Transmission interval   /I <n>  n= number of seconds between            Default = 30
@@ -54,7 +54,7 @@ CLI Command set
                                     n=1 Client (client/server operation)
                                     n=2 Peer (peer to peer operation)
     Write NVRAM             /W
-    Maidenhead Grid Square  /???????????????                                
+    Grid                    /X      4 or 6 character maidenhead grid square
 */
 
 #include "main.h"
@@ -62,13 +62,23 @@ CLI Command set
 
 // These need to move elsewhere=======================================
 #warning "These need to move elsewhere"
-//#define POWER_INDEX_MAX 7
-//extern float power[POWER_INDEX_MAX];
-//#define MODULATION_INDEX_MAX 9
-//extern const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX];
-//extern void setModemConfig(uint8_t i);                             //need to fix
+/*
+uint16_t encode_grid4(String locator) {
+    return ((locator[0] - 'A') * 18 + (locator[1] - 'A') )* 100 + (locator[2] - '0') * 10 + (locator[3] - '0') ;
+  }
+  
+  void decode_grid4(uint16_t grid4, char *grid) {
+    grid[0] = (grid4 / 180) + 'A';
+    grid[1] = (grid4 % 180) / 10 + 'A';
+    grid[2] = (grid4 % 100) / 10 + '0';
+    grid[3] = (grid4 % 10) + '0';
+    grid[4] = '\0';
+  }
+*/
+
 //====================================================================
 #define MODULATION_INDEX_MAX 9
+
 /*
 static const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX] =
 {
@@ -114,6 +124,24 @@ bool is_numeric(const char* string) {
     }
     return true;
   }
+
+  bool is_float(const char* string) {
+    int period_counter;
+    const int string_len = strlen(string);
+    period_counter = 0;
+    for(int i = 0; i < string_len; ++i) {
+        if(!isdigit(string[i])) {
+            if (string[i] != '.') {
+                return false;
+            }
+            else {
+                if (++period_counter>1) return false;
+            }
+        }   
+    }
+    return true;
+  }
+ 
 
   void cli_process_bool(int parameter_query, const char* param_name, char* param_command, bool* param_value ) {
     #define PRINTF_OK_BOOL "OK:%s = %s\r\n"
@@ -162,7 +190,7 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
             telnet.printf(PRINTF_NG_INT, param_name, param_value_min, param_value_max);
         }   
     }
- }
+}
 
 
  void cli_process_index_float_value_unit(int parameter_query, const char* param_name, char* param_command, int param_index_min, int param_index_max, float indexed_array[], const char* param_units, int* param_index) {
@@ -189,7 +217,7 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
  }
 
  void cli_process_index_char_value_unit(int parameter_query, const char* param_name, char* param_command, int param_index_min, int param_index_max, char indexed_array[][20], int* param_index) {
-    #define PRINTF_OK_CHAR "OK:%s = %u (%s)\r\n"
+    #define PRINTF_OK_CHAR  "OK:%s = %u (%s)\r\n"
     #define PRINTF_NG_CHAR  "NG:%s must be an integer >=%u and <=%u\r\n"
     int index;
 
@@ -214,42 +242,45 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
 
 int cli_execute(const char* command_arg) {
 
-    //temporary variables pending integration into ui.h
-    static char  callsign[10];
-    static float frequency; //depricated
-    static int   frequency_index;
-    static bool  beacon_state;
-    static bool  gps_state;
-    static float lat_value, lon_value;
-    static int   modulation_index;
-    static int   power_index;
-    static int   tx_interval;
-    static int   radio_address;
-    static int   radio_type;
-    static bool  serial_usb_state;
- 
-    //
+static char     callsign[10];
+static float    frequency; //depricated
+static int      frequency_index;
+static bool     tx_lock_state;
+static bool     gps_state;
+static float    lat_value, lon_value;
+static int      modulation_index;
+static int      power_index;
+static int      tx_interval;
+static int      radio_address;
+static int      radio_type;
+static bool     serial_usb_state;
+static uint16_t grid4;          // (2B) 4 char grid square, encoded from 0 to 32,399
+static char     grid5;          // (1B) 1 char subsquare identifier, encoded as an ascii char 
+static char     grid6;          // (1B) 1 char subsquare identifier, encoded as an ascii char 
 
 #include "Preferences.h"
 
- 
-
-char command[50];
-char cmd_code;
-char* param_str[50];
-char lat_str[10];
-char lon_str[10];
-int i, j;
-int int_input;
-float flt_input;
-int status;
-bool location_comma_found;
-int lat_i, lon_i;
-bool parameter_query;
-int current_int_value;
-int current_lat_value;
-int current_lon_value;
-char current_str_value[10];
+char        command[50];
+char        cmd_code;
+char*       param_str[50];
+char        lat_str[10];
+char        lon_str[10];
+int         i, j;
+int         int_input;
+float       flt_input;
+int         status;
+bool        location_comma_found;
+int         lat_i, lon_i;
+bool        parameter_query;
+int         current_int_value;
+int         current_lat_value;
+int         current_lon_value;
+char        current_str_value[10];
+uint16_t    current_uint16_value;
+char        current_char_value1;
+char        current_char_value2;
+bool        valid_gridsquare_format;
+char        grid4_str_value[5];
 
 strcpy(command, command_arg);
 
@@ -266,29 +297,34 @@ if (command[0] == '/') {
 
     switch (cmd_code) {
 
-//      Radio Address----------------------------------------------
+//      Radio Address----------------------------------------------------------
     case 'A':
-        current_int_value = radio_address;
+        current_int_value = PARMS.parameters.address;
+        radio_address     = PARMS.parameters.address;
         cli_process_int(parameter_query, "Radio Address", command, 0, 20 , & radio_address);
         if (current_int_value != radio_address) {
             //change radio address in the radio, save to RAM and NVRAM
             PARMS.putUInt8("address", radio_address);
+            PARMS.parameters.address = radio_address;
         }
         break;
 
-//      Beacon Off/On-------------------------------------------------------------
+//      TX Lock (Beacon disable) Off/On----------------------------------------
 
     case 'B':
-        current_int_value = beacon_state;    
-        cli_process_bool(parameter_query, "Beacon", command, & beacon_state);
-        if (current_int_value != beacon_state){
+        current_int_value  = PARMS.parameters.tx_lock;    
+        tx_lock_state      = PARMS.parameters.tx_lock;
+        cli_process_bool(parameter_query, "TX Lock (Beacon Disable)", command, & tx_lock_state);
+        if (current_int_value != tx_lock_state){
             //change beacon state in the radio, save to RAM and NVRAM
-            PARMS.putUInt8("tx_lock", beacon_state);
+            PARMS.putUInt8("tx_lock", tx_lock_state);
+            PARMS.parameters.tx_lock = tx_lock_state;
         }
         break;
      
 //      Call Sign--------------------------------------------------------------
     case 'C':
+        strcpy(callsign, PARMS.parameters.callsign);
         if (parameter_query) {
             Serial.printf("OK:Call sign = %s\r\n", callsign);
             telnet.printf("OK:Call sign = %s\r\n", callsign);
@@ -301,6 +337,7 @@ if (command[0] == '/') {
             if (current_str_value != callsign) {
                 //Change callsign in the radio, save to RAM and NVRAM
                 PARMS.putString("callsign", callsign);
+                strcpy(PARMS.parameters.callsign, callsign);
             }    
         }
         break;
@@ -312,86 +349,65 @@ if (command[0] == '/') {
 
 //      Frequency--------------------------------------------------------------
     case 'F':
-        current_int_value = frequency_index;
-        cli_process_index_float_value_unit(parameter_query, "Frequency Index", command, 0, 100, frequency_array , "MHz",  &frequency_index);
+        current_int_value = PARMS.parameters.frequency_index;
+        frequency_index   = PARMS.parameters.frequency_index;
+        cli_process_index_float_value_unit(parameter_query, "Frequency Index", command, 0, sizeof(frequency_array)/sizeof(frequency_array[0])-1, frequency_array , "MHz",  &frequency_index);
         if (current_int_value != frequency_index) {
             //change frequency in the radio, save to RAM and NVRAM
             PARMS.putUInt8("freqIndex", frequency_index);
-             driver.setFrequency(frequency_array[frequency_index]);
+            PARMS.parameters.frequency_index = frequency_index;
+            driver.setFrequency(frequency_array[frequency_index]);
         }
         break;
 
-//      GPS Off/On-------------------------------------------------------------
+//      GPS Off/GPS on on Transmit only/On-------------------------------------
 
     case 'G':
-        current_int_value = gps_state;
+        current_int_value = PARMS.parameters.gps_state;
+        gps_state         = PARMS.parameters.gps_state;
         cli_process_bool(parameter_query, "GPS", command, & gps_state);
         if (current_int_value != gps_state) {
             //change GPS state in the radio, save to RAM and NVRAM
             PARMS.putUInt8("gps_state", gps_state);
+            PARMS.parameters.gps_state = gps_state;
+
         }
         break;
 
 //      Help-------------------------------------------------------------------
     case 'H':
-        Serial.printf("Radio Address                /A <n>\r\n");
-        Serial.printf("Beacon Disable (TX Lockout)  B <off>|<on>\r\n");
-        Serial.printf("Caallsign                    /C <callsign>\r\n");
-        Serial.printf("Reset radio to default state /D\r\n");        
-        Serial.printf("Frequency                    /F <Frequency in MHz>\r\n");
-        Serial.printf("GPS State                    /G <off>|<on>\r\n");
-        Serial.printf("Help Text                    /H\r\n");
-        Serial.printf("TX Interval (seconds)        /I <n>\r\n");
-        Serial.printf("Position                     /L <latitude >,<longitude>\r\n");
-        Serial.printf("Modulation index 0<=n<=8     /M <n>\r\n");
-        Serial.printf("Power index 0<=n<=6          /P <n>\r\n");
-        Serial.printf("USB Serial Output            /S <off>|<on>\r\n");
-        Serial.printf("Radio Type                   /T <n>\r\n");
-        Serial.printf("Write no NVRAM               /W\r\n");
-        Serial.printf("Radio Address                /A <n>\r\n");
-        Serial.printf("Beacon Disable (TX Lockout)  B <off>|<on>\r\n");
-        Serial.printf("Caallsign                    /C <callsign>\r\n");
-        Serial.printf("Reset radio to default state /D\r\n");        
-        Serial.printf("Frequency                    /F <Frequency in MHz>\r\n");
-        Serial.printf("GPS State                    /G <off>|<on>\r\n");
-        Serial.printf("Help Text                    /H\r\n");
-        Serial.printf("TX Interval (seconds)        /I <n>\r\n");
-        Serial.printf("Position                     /L <latitude >,<longitude>\r\n");
-        Serial.printf("Modulation index 0<=n<=8     /M <n>\r\n");
-        Serial.printf("Power index 0<=n<=6          /P <n>\r\n");
-        Serial.printf("USB Serial Output            /S <off>|<on>\r\n");
-        Serial.printf("Radio Type                   /T <n>\r\n");
-        Serial.printf("Write no NVRAM               /W\r\n");
+        Serial.printf("Radio Address                    /A <n>\r\n");
+        Serial.printf("Beacon Disable (TX Lockout)      /B <off>|<on>\r\n");
+        Serial.printf("Caallsign                        /C <callsign>\r\n");
+        Serial.printf("Reset radio to default state     /D\r\n");        
+        Serial.printf("Frequency                        /F <Frequency in MHz>\r\n");
+        Serial.printf("GPS State                        /G <off>|<on>\r\n");
+        Serial.printf("Help Text                        /H\r\n");
+        Serial.printf("TX Interval (seconds)            /I <n>\r\n");
+        Serial.printf("Position                         /L <latitude >,<longitude>\r\n");
+        Serial.printf("Modulation index 0<=n<=8         /M <n>\r\n");
+        Serial.printf("Power index 0<=n<=6              /P <n>\r\n");
+        Serial.printf("USB Serial Output                /S <off>|<on>\r\n");
+        Serial.printf("Radio Type                       /T <n>\r\n");
+        Serial.printf("Write no NVRAM                   /W\r\n");
+        Serial.printf("Maidenhead grid square (4 or 6)  /X\r\n");
         Serial.printf("Commands case insensitive and blanks ignored\r\n");
 
-        telnet.printf("Radio Address                /A <n>\r\n");
-        telnet.printf("Beacon Disable (TX Lockout)  /B <off>|<on>\r\n");
-        telnet.printf("Caallsign                    /C <callsign>\r\n");
-        Serial.printf("Reset radio to default state /D\r\n");        
-        telnet.printf("Frequency                    /F <Frequency in MHz>\r\n");
-        telnet.printf("GPS State                    /G <off>|<on>\r\n");
-        telnet.printf("Help Text                    /H\r\n");
-        telnet.printf("TX Interval (seconds)        /I <n>\r\n");
-        telnet.printf("Position                     /L <latitude >,<longitude>\r\n");
-        telnet.printf("Modulation index 0<=n<=8     /M <n>\r\n");
-        telnet.printf("Power index 0<=n<=6          /P <n>\r\n");
-        telnet.printf("USB Serial output            /S <off>|<on>\r\n");
-        telnet.printf("Radio Type                   /T <n>\r\n");
-        telnet.printf("Write no NVRAM               /W\r\n");
-        telnet.printf("Radio Address                /A <n>\r\n");
-        telnet.printf("Beacon Disable (TX Lockout)  /B <off>|<on>\r\n");
-        telnet.printf("Caallsign                    /C <callsign>\r\n");
-        Serial.printf("Reset radio to default state /D\r\n");        
-        telnet.printf("Frequency                    /F <Frequency in MHz>\r\n");
-        telnet.printf("GPS State                    /G <off>|<on>\r\n");
-        telnet.printf("Help Text                    /H\r\n");
-        telnet.printf("TX Interval (seconds)        /I <n>\r\n");
-        telnet.printf("Position                     /L <latitude >,<longitude>\r\n");
-        telnet.printf("Modulation index 0<=n<=8     /M <n>\r\n");
-        telnet.printf("Power index 0<=n<=6          /P <n>\r\n");
-        telnet.printf("USB Serial output            /S <off>|<on>\r\n");
-        telnet.printf("Radio Type                   /T <n>\r\n");
-        telnet.printf("Write no NVRAM               /W\r\n");
+        telnet.printf("Radio Address                    /A <n>\r\n");
+        telnet.printf("Beacon Disable (TX Lockout)      /B <off>|<on>\r\n");
+        telnet.printf("Caallsign                        /C <callsign>\r\n");
+        Serial.printf("Reset radio to default state     /D\r\n");        
+        telnet.printf("Frequency                        /F <Frequency in MHz>\r\n");
+        telnet.printf("GPS State                        /G <off>|<on>\r\n");
+        telnet.printf("Help Text                        /H\r\n");
+        telnet.printf("TX Interval (seconds)            /I <n>\r\n");
+        telnet.printf("Position                         /L <latitude >,<longitude>\r\n");
+        telnet.printf("Modulation index 0<=n<=8         /M <n>\r\n");
+        telnet.printf("Power index 0<=n<=6              /P <n>\r\n");
+        telnet.printf("USB Serial output                /S <off>|<on>\r\n");
+        telnet.printf("Radio Type                       /T <n>\r\n");
+        telnet.printf("Write no NVRAM                   /W\r\n");
+        telnet.printf("Maidenhead grid square (4 or 6)  /X\r\n");
         telnet.printf("Commands case insensitive and blanks ignored\r\n");
 
         break;
@@ -399,108 +415,126 @@ if (command[0] == '/') {
 //      Interval (transmit)----------------------------------------------------
 
     case 'I':
-        current_int_value = tx_interval;
+        current_int_value = PARMS.parameters.tx_interval;
+        tx_interval       = PARMS.parameters.tx_interval;
         cli_process_int(parameter_query, "TX Interval", command, 10, 600 , & tx_interval);
         if (current_int_value != tx_interval) {
             //Change transmit inveral in the radio, save to RAM and NVRAM
             PARMS.putUInt8("tx_interval", tx_interval);
+            PARMS.parameters.tx_interval = tx_interval;
+
         }
         break;
 
 //      Location---------------------------------------------------------------
     case 'L':
-
-        location_comma_found = false;
-        i = 0;
-        lat_i = 0;
-        lon_i = 0;
-        lat_str[0] = '\0';
-        lon_str[0] = '\0';
-        while (command[i] != '\0') {
-            if (command[i] != ',') {
-                if (location_comma_found) {
-                    if (lon_i < sizeof(lon_str)-1) {
-                        lon_str[lon_i] = command[i];
-                        lon_i++;
+        if (parameter_query) {
+            lat_value = PARMS.parameters.lat_value;
+            lon_value = PARMS.parameters.lon_value;
+            Serial.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
+            telnet.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
+        }
+        else {
+            location_comma_found = false;
+            i = 0;
+            lat_i = 0;
+            lon_i = 0;
+            lat_str[0] = '\0';
+            lon_str[0] = '\0';
+            while (command[i] != '\0') {
+                if (command[i] != ',') {
+                    if (location_comma_found) {
+                        if (lon_i < sizeof(lon_str)-1) {
+                            lon_str[lon_i] = command[i];
+                            lon_i++;
+                        }
+                        else {
+                            Serial.printf("NG:Internal longitude buffer exceeded\r\n");
+                            telnet.printf("NG:Internal longitude buffer exceeded\r\n");
+                            return 1;
+                        }
                     }
                     else {
-                        Serial.printf("NG:Internal longitude buffer exceeded\r\n");
-                        telnet.printf("NG:Internal longitude buffer exceeded\r\n");
-                        return 1;
+                        if (lat_i < sizeof(lat_str)-1) {
+                            lat_str[lat_i] = command[i];
+                            lat_i++;
+                        }
+                        else {
+                            Serial.printf("NG:Internal latitude buffer exceeded\r\n");
+                            telnet.printf("NG:Internal latitude buffer exceeded\r\n");
+                            return 1;
+                        }
                     }
                 }
                 else {
-                    if (lat_i < sizeof(lat_str)-1) {
-                        lat_str[lat_i] = command[i];
-                        lat_i++;
-                    }
-                    else {
-                        Serial.printf("NG:Internal latitude buffer exceeded\r\n");
-                        telnet.printf("NG:Internal latitude buffer exceeded\r\n");
-                        return 1;
-                    }
+                        location_comma_found = true;
                 }
+                i++;
             }
-            else {
-                    location_comma_found = true;
+            lat_str[lat_i] = '\0';
+            lon_str[lon_i] = '\0';
+    
+            if (!location_comma_found) {
+                Serial.printf("NG:Location requires comma separation between Lat & Lon\r\n");
+                telnet.printf("NG:Location requires comma separation between Lat & Lon\r\n");
+                return 1;
             }
-            i++;
+            if (!(is_float(lon_str) && is_float(lat_str))) {
+                Serial.printf("NG:Latitude andLongitude must be valid floating point numbers\r\n");
+                telnet.printf("NG:Latitude andLongitude must be valid floating point numbers\r\n");
+                return 1;
+            }
+            lon_value = atof(lon_str);
+            lat_value = atof(lat_str);
+    
+            if (abs(lon_value) > 180) {
+                Serial.printf("NG:Longitude must be between -180 and 180\r\n");
+                telnet.printf("NG:Longitude must be between -180 and 180\r\n");
+                return 1;
+            }
+            if (abs(lat_value) > 90) {
+                Serial.printf("NG:Longitude must be between -90 and 90\r\n");
+                telnet.printf("NG:Longitude must be between -90 and 90\r\n");
+                return 1;
+            }
+            if ((current_lat_value != lat_value) || (current_lon_value != lon_value)) {
+                    //Save lat/lon pair to RAM and NVRAM
+                    PARMS.putFloat("lat_value", lat_value);
+                    PARMS.parameters.lat_value = lat_value;
+                    PARMS.putFloat("lon_value", lon_value);
+                    PARMS.parameters.lon_value = lon_value;
+    
+    
+            }
+            Serial.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
+            telnet.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
+    
         }
-        lat_str[lat_i] = '\0';
-        lon_str[lon_i] = '\0';
-
-        if (!location_comma_found) {
-            Serial.printf("NG:Location requires comma separation between Lat & Lon\r\n");
-            telnet.printf("NG:Location requires comma separation between Lat & Lon\r\n");
-            return 1;
-        }
-        lon_value = atof(lon_str);
-        lat_value = atof(lat_str);
-
-        if (abs(lon_value) > 180) {
-            Serial.printf("NG:Longitude must be between -180 and 180\r\n");
-            telnet.printf("NG:Longitude must be between -180 and 180\r\n");
-            return 1;
-        }
-        if (abs(lat_value) > 90) {
-            Serial.printf("NG:Longitude must be between -90 and 90\r\n");
-            telnet.printf("NG:Longitude must be between -90 and 90\r\n");
-            return 1;
-        }
-        if ((current_lat_value != lat_value) || (current_lon_value != lon_value)) {
-                //Save lat/lon pair to RAM and NVRAM
-                PARMS.putFloat("lat_value", lat_value);
-                PARMS.putFloat("lon_value", lon_value);
-                PARMS.putFloat("lat_value", lat_value);
-                PARMS.putFloat("lon_value", lon_value);
-
-
-        }
-        Serial.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
-        telnet.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
 
         break;
 
 //      Modulation-------------------------------------------------------------
         case 'M':
-            current_int_value = modulation_index;
-            cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, 8, modulation_array,  &modulation_index);
+            current_int_value = PARMS.parameters.modulation_index;
+            modulation_index  = PARMS.parameters.modulation_index;
+            cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, sizeof(modulation_array)/sizeof(modulation_array[0])-1, modulation_array,  &modulation_index);
             if (current_int_value != modulation_index) {
                 //Change modulation index in the radio, save to RAM and NVRAM
                 PARMS.putUInt8("modIndex", modulation_index);
-                setModemConfig(modulation_index); //SF Bandwith etc
-                PARMS.putUInt8("modIndex", modulation_index);
+                PARMS.parameters.modulation_index = modulation_index;
                 setModemConfig(modulation_index); //SF Bandwith etc
             }
             break;
 
 //      Power------------------------------------------------------------------
         case 'P':
-            current_int_value = power_index;
-            cli_process_index_float_value_unit(parameter_query, "Power Index", command, 0, 6, power , "dBm",  &power_index);
+            current_int_value = PARMS.parameters.power_index;
+            power_index       = PARMS.parameters.power_index;
+            cli_process_index_float_value_unit(parameter_query, "Power Index", command, 0, sizeof(power)/sizeof(power[0])-1, power , "dBm",  &power_index);
             if (current_int_value != power_index) {
                 //Change power index in the radio, save to RAM and NVRAM
                 PARMS.putUInt8("powerIndex", power_index);
+                PARMS.parameters.power_index = power_index;
                 driver.setTxPower(power[power_index]);
             }
             break;
@@ -523,12 +557,14 @@ if (command[0] == '/') {
 
 //      Radio Type-------------------------------------------------------------
         case 'T':
+            //current_int_value = PARMS.parameters.radio_type;
+            //radio_type        = PARMS.parameters.radio_type;
             current_int_value = radio_type;
             cli_process_int(parameter_query, "Radio Type", command, 0, 2 , & radio_type);
             if (current_int_value != radio_type) {
                 //Change radio type in the radio, save to RAM and NVRAM
                 PARMS.putUInt8("type", radio_type);
-                PARMS.putUInt8("type", radio_type);
+                //PARMS.parameters.radio_type = radio_type;
             }
              break;
 
@@ -537,9 +573,87 @@ if (command[0] == '/') {
         
             break;
     
+//      Maidenhead Grid Square (4 or 6 characters)------------------------------
+/*
+            Character pairs encode longitude first, and then latitude.
+            The first pair (a field) encodes with base 18 and the letters "A" to "R".
+            The second pair (square) encodes with base 10 and the digits "0" to "9".
+            The third pair (subsquare) encodes with base 24 and the letters "A" to "X".
+            The fourth pair (extended square) encodes with base 10 and the digits "0" to "9".
+    
+            uint16_t grid4;  // (2B) 4 char grid square, encoded from 0 to 32,399
+            char     grid5;  // (1B) 1 char subsquare identifier, encoded as an ascii char 
+            char     grid6; // (1B) 1 char subsquare identifier, encoded as an ascii char 
+*/
+        case 'X':
+            if (parameter_query){
+                current_uint16_value = PARMS.parameters.grid4;
+                decode_grid4(current_uint16_value, current_str_value);
+                current_char_value1  = PARMS.parameters.grid5;
+                current_char_value2  = PARMS.parameters.grid6;
+                Serial.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
+                telnet.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
+            }
+            else {
+                i = strlen(command);
+                if (i == 4) {
+                    valid_gridsquare_format =       ((int)'A' <= (int)command[0] && (int)command[0] <= (int('R'))) &&
+                                                    ((int)'A' <= (int)command[1] && (int)command[1] <= (int('R'))) &&
+                                                    ((int)'0' <= (int)command[2] && (int)command[2] <= (int('9'))) &&
+                                                    ((int)'0' <= (int)command[3] && (int)command[3] <= (int('9'))) ;
+                    if (valid_gridsquare_format) {
+                        strcpy(current_str_value, command);
+                        PARMS.parameters.grid4 = encode_grid4(command);
+                        PARMS.parameters.grid5 = 'l';       //L for mid grid location
+                        PARMS.parameters.grid6 = 'l';       //L for mid grid location
+                    }
+                    else {
+                        Serial.printf("NG:Invalid 4 character grid\r\n");
+                        telnet.printf("NG:invalid 4 character grid\r\n");
+                        return 1;
+                    }
+                }
+                else if (i == 6) {
+                        valid_gridsquare_format =   ((int)'A' <= (int)command[0] && (int)command[0] <= (int('R'))) &&
+                                                    ((int)'A' <= (int)command[1] && (int)command[1] <= (int('R'))) &&
+                                                    ((int)'0' <= (int)command[2] && (int)command[2] <= (int('9'))) &&
+                                                    ((int)'0' <= (int)command[3] && (int)command[3] <= (int('9'))) &&
+                                                    ((int)'A' <= (int)command[4] && (int)command[4] <= (int('X'))) &&
+                                                    ((int)'A' <= (int)command[5] && (int)command[5] <= (int('X')));
+                    if (valid_gridsquare_format) {
+                        for (j = 0; j < 4; j++) {
+                            grid4_str_value[j]   = command[j];
+                            current_str_value[j] = command[j];
+                        }
+                        grid4_str_value[4]   = '\0';
+                        current_str_value[4] = '\0';
+                        PARMS.parameters.grid4 = encode_grid4(command);
+                        PARMS.parameters.grid5 = command[4];
+                        PARMS.parameters.grid6 = command[5];
+                    }
+                    else {
+                        Serial.printf("NG:Invalid 6 character grid\r\n");
+                        telnet.printf("NG:invalid 6 character grid\r\n");
+                        return 1;
+                    }
+                }
+                else {
+                    Serial.printf("NG:Gridsquare must be 4 or 6 character gridswuare\r\n");
+                    telnet.printf("NG:Gridsquare must be 4 or 6 character gridswuare\r\n");
+                    return 1;
+                }
+                current_uint16_value = PARMS.parameters.grid4;
+                current_char_value1  = PARMS.parameters.grid5;
+                current_char_value2  = PARMS.parameters.grid6;
+                Serial.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
+                telnet.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
+            }
+        
+            break;
+
 //      Invalid Command--------------------------------------------------------
         default:
-            Serial.printf("NG:Unrecognized command %c [C, F, G, H, I, L, M, P, R]\r\n"  , cmd_code);
+            Serial.printf("NG:Unrecognized command %c [C, F, G, H, I, L, M, P, R]\r\n", cmd_code);
             telnet.printf("NG:Unrecognized command %c [C, F, G, H, I, L, M, P, R]\r\n", cmd_code);
         }
     }
