@@ -20,7 +20,7 @@ CLI Command set
     Default Config          /D
     Frequency index         /F <n>                                          Default = 905.2
                                     n= Frequency in MHz 3.g., 905.2, 
-    GPS                     /G <OFF|ON>                                     Default = ON
+    GPS                     /G <OFF|GPS ON ON TX|ON>                        Default = OFF<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                                     
     Help                    /H
     Transmission interval   /I <n>  n= number of seconds between            Default = 30
@@ -190,7 +190,7 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
             telnet.printf(PRINTF_NG_INT, param_name, param_value_min, param_value_max);
         }   
     }
- }
+}
 
 
  void cli_process_index_float_value_unit(int parameter_query, const char* param_name, char* param_command, int param_index_min, int param_index_max, float indexed_array[], const char* param_units, int* param_index) {
@@ -360,7 +360,7 @@ if (command[0] == '/') {
         }
         break;
 
-//      GPS Off/On-------------------------------------------------------------
+//      GPS Off/GPS on on Transmit only/On-------------------------------------
 
     case 'G':
         current_int_value = PARMS.parameters.gps_state;
