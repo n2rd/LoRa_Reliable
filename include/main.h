@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include "myConfig.h"
 #include <SPI.h>
-#include <preferences.h>
+#include <Preferences.h>
 
 #ifndef ARDUINO_LILYGO_T3_V1_6_1
 #include  "myHeltec.h"
