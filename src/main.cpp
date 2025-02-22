@@ -105,11 +105,12 @@ void dumpLatLon()
 {
   double lat;
   double lon;
-  GPS.getLocation(&lat,&lon);
-  if ((lat != lastLat) || (lon != lastLon)) {
-    display.printf("Lat: %f Lon: %f\n",lat,lon);
-    lastLat = lat;
-    lastLon = lon;
+  if (GPS.getLocation(&lat,&lon)) {
+    if ((lat != lastLat) || (lon != lastLon)) {
+      display.printf("Lat: %f Lon: %f\n",lat,lon);
+      lastLat = lat;
+      lastLon = lon;
+    }
   }
 }
 #endif //HAS_GPS
