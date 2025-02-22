@@ -65,6 +65,37 @@ void toggleLED()
 {
   digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
 }
+
+/***********************************************************/
+/***********************************************************/
+
+#include "esp_partition.h"
+void dumpPartitions() {
+  esp_partition_iterator_t iterator = esp_partition_find(ESP_PARTITION_TYPE_ANY,ESP_PARTITION_SUBTYPE_ANY,NULL);
+  esp_partition_iterator_t first_iterator = iterator;
+  if (!iterator) {
+    Serial.println("No Partitions");
+    return;
+  }
+  Serial.println("                        Partion Table");
+  Serial.println("Address              Label             Size    Type SubType");
+  const esp_partition_t *part;
+  do {
+    part = esp_partition_get(iterator);
+    if (part == NULL) {
+      Serial.println("partition value is NULL");
+      return;
+    }
+    Serial.printf("0x%06X   ", part->address);
+    Serial.printf("%15s           ", part->label);
+    Serial.printf("0x%06X  ", part->size);
+    Serial.printf("0x%02X  ", part->type);
+    Serial.printf("0x%02X\n", part->subtype);
+    iterator = esp_partition_next(iterator);
+  } while (iterator != NULL);
+  Serial.println();
+  esp_partition_iterator_release(iterator);
+}
 /***********************************************************/
 /***********************************************************/
 void setup() 
@@ -137,8 +168,9 @@ void setup()
   ps_all.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));
 
   p2pSetup();
-}
 
+  dumpPartitions();
+}
 
 /***********************************************************/
 /***********************************************************/
