@@ -23,6 +23,17 @@
 #define TX_INTERVAL 12
 #define ADDRESS 13
 
+//GPS states
+// no ifdef GPS as we waht to set these values even if GPS is not enabled
+#define GPS_OFF 0 //GPS off all the time
+#define GPS_TX 1  //GPS on only when transmitting   
+#define GPS_ON 2  //GPS on all the time
+
+//array sizes
+#define FREQUENCY_INDEX_MAX 103  //0 is 902.125, 103 is 927.875
+#define ADDRESS_MAX 254  //255 is broadcast 
+#define MENU_ARRAY_SIZE 6  //used for power, modulation, settings menus
+
 //DEFAULT_XXX values. These are overrideable in myConfig.h by defining them
 #ifndef DEFAULT_CALLSIGN
 #define DEFAULT_CALLSIGN    "----"
@@ -90,8 +101,22 @@ typedef struct ParametersStruct {
 class ParametersClass {
   public:
     ParametersClass() { init(); }
+    void init();
     float frequency_index_to_frequency(uint8_t index);
     uint8_t frequency_to_frequency_index(float frequency); 
+    bool set_frequency();  //based on frequency_index
+    //bool set_callsign();
+    //bool set_gps_state();
+    //bool set_tx_lock();
+    //bool set_short_pause();
+    //bool set_lat_lon();
+    //bool set_grid4();
+    //bool set_grid5();
+    //bool set_grid6();
+    bool set_power();
+    bool set_modulation();
+    void set_address();
+    void update(); 
 
     PARAMETERS parameters; //parameters for the radio
 
@@ -111,7 +136,7 @@ class ParametersClass {
       const char* grid4 = "grid4";
       const char* grid5 = "grid5";
       const char* grid6 = "grid6";
-      const char* modultation_index = "mod_index";
+      const char* modulation_index = "mod_index";
       const char* power_index = "power_index";
       const char* tx_interval = "tx_interval";
       const char* address = "address";
