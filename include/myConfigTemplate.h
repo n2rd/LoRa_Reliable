@@ -24,6 +24,11 @@
 //#define MY_ADDRESS 8    //Keith, Portable
 //#define MY_ADDRESS 9    //Spare
 #endif
+/*ADDITIOPNAL ADDRESS ALLOCATIONS:
+    10-19   Raj
+    20-29   Keith
+    30-39   Ron
+*/
 
 #define DEFAULT_CALLSIGN    "xxxxxxx"
 #define DEFAULT_FREQUENCY_INDEX    
