@@ -193,6 +193,7 @@ void setup()
 #endif //DUMP_PARTITIONS
 
 #if HAS_GPS
+  GPS.onoff(GPSClass::GPS_OFF);
   dumpLatLon();
 #endif //HAS_GPS
 }

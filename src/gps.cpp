@@ -6,8 +6,7 @@
 ESP32Time rtc(0);  // stay on UTC, neg or pos offset in seconds
   
 #define GPS_DEBUG 0
-HardwareSerial GPSSerial(2);    //use Hardware UART1 for GPS
-TinyGPSPlus gps;
+static HardwareSerial GPSSerial(2);    //use Hardware UART1 for GPS
 
 GPSClass GPS;
 
@@ -16,10 +15,11 @@ GPSClass GPS;
 //
 GPSClass::GPSClass()
 {
+  //GPSSerial(2);
   setup();
 }
 //
-// FUNCTIONS
+// GPSClass class FUNCTIONS
 //
 
 void GPSClass::setup() {
@@ -28,7 +28,7 @@ void GPSClass::setup() {
   GPSSerial.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
 }
 
-void GPSClass::onoff(int state) {
+void GPSClass::onoff(GPSClass::State state) {
   //turn on or off the GPS
   // if the state is GPS_TX, the GPS will be turned on only when transmitting
   // the serial port does not care if the GPS is on or off
