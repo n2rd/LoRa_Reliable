@@ -193,7 +193,8 @@ void setup()
 #endif //DUMP_PARTITIONS
 
 #if HAS_GPS
-  GPS.onoff(GPSClass::GPS_OFF);
+  GPS.onoff(GPSClass::GPS_ON);
+  Serial.printf("GPS Power State: %s\r\n", GPS.getPowerStateName(GPSClass::GPS_ON));
   dumpLatLon();
 #endif //HAS_GPS
 }

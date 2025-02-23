@@ -28,7 +28,7 @@ void GPSClass::setup() {
   GPSSerial.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
 }
 
-void GPSClass::onoff(GPSClass::State state) {
+void GPSClass::onoff(PowerState state) {
   //turn on or off the GPS
   // if the state is GPS_TX, the GPS will be turned on only when transmitting
   // the serial port does not care if the GPS is on or off
@@ -121,4 +121,7 @@ String GPSClass::latLonToMaidenhead(double latitude, double longitude, int preci
     return locator;
 }
 
+const char *GPSClass::getPowerStateName(GPSClass::PowerState state){
+  return powerStateNames[(int)state];
+}
 #endif //defined(HAS_GPS) && (HAS_GPS ==1)

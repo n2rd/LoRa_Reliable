@@ -12,23 +12,25 @@
 
 class GPSClass {
     public:
-        enum GPSstate {
+        enum GPSPowerState {
             GPS_OFF = 0,
             GPS_TX = 1,
             GPS_ON = 2
-        } GPSSTATE;
-        typedef enum GPSstate State;
+        } GPSPOWERSTATE;
+        typedef enum GPSPowerState PowerState;
         // Constructor
         GPSClass();
         // Function declarations
         //void initGPS();  // Function to initialize the GPS module
-        void onoff(State state);  // Function to turn on or off the GPS 
+        void onoff(PowerState state);  // Function to turn on or off the GPS 
         void setup();
         bool getLocation(double *lat, double *lng, double *alt = NULL, double *hdop = NULL);
         String latLonToMaidenhead(double latitude, double longitude, int precision);
+        const char *getPowerStateName(PowerState state);
     private:
         //HardwareSerial GPSSerial;    //use Hardware UART1 for GPS
         TinyGPSPlus gps;
+        const char *powerStateNames[3] = { "OFF", "ON", "TX"};
 };
 
 extern GPSClass GPS;
