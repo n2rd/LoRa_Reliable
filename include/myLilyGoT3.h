@@ -33,11 +33,13 @@ extern float power[POWER_INDEX_MAX];
 #define DRIVER_MAX_MESSAGE_LEN RH_RF95_MAX_MESSAGE_LEN
 
 #define HAS_WIFI    1
-#define HAS_GPS 0
-#if defined(HAS_GPS) && (HAS_GPS ==1)
+#ifndef HAS_GPS
+#define HAS_GPS     0  //Default if not in myConfig.h
+#endif //HAS_GPS
+#if (HAS_GPS ==1)
 #define GPS_ON_PIN  1
 #define GPS_RX_PIN  2
 #define GPS_TX_PIN  3
-#endif  //HAS_GPS && HAS_GPS==1
+#endif  //HAS_GPS==1
 
 #endif //!defined(myLilyGoT3_h)

@@ -69,7 +69,7 @@ void toggleLED()
 
 /***********************************************************/
 /***********************************************************/
-
+#ifdef DUMP_PARTITIONS
 #include "esp_partition.h"
 void dumpPartitions() {
   esp_partition_iterator_t iterator = esp_partition_find(ESP_PARTITION_TYPE_ANY,ESP_PARTITION_SUBTYPE_ANY,NULL);
@@ -97,6 +97,24 @@ void dumpPartitions() {
   Serial.println();
   esp_partition_iterator_release(iterator);
 }
+#endif //defined(DUMP_PARTITIONS)
+#if HAS_GPS
+double lastLat = 0;
+double lastLon = 0;
+void dumpLatLon()
+{
+  double lat;
+  double lon;
+  if (GPS.getLocation(&lat,&lon)) {
+    if ((lat != lastLat) || (lon != lastLon)) {
+      display.printf("Lat: %f Lon: %f\n",lat,lon);
+      lastLat = lat;
+      lastLon = lon;
+    }
+  }
+}
+#endif //HAS_GPS
+
 /***********************************************************/
 /***********************************************************/
 void setup() 
@@ -170,7 +188,15 @@ void setup()
 
   p2pSetup();
 
+#ifdef DUMP_PARTITIONS
   dumpPartitions();
+#endif //DUMP_PARTITIONS
+
+#if HAS_GPS
+  GPS.onoff(GPSClass::GPS_ON);
+  Serial.printf("GPS Power State: %s\r\n", GPS.getPowerStateName(GPSClass::GPS_ON));
+  dumpLatLon();
+#endif //HAS_GPS
 }
 
 /***********************************************************/
@@ -182,6 +208,10 @@ void loop()
   ota_loop();
   telnet.loop();
   p2pLoop();
+
+#if HAS_GPS
+  dumpLatLon();
+#endif //HAS_GPS
 } //loop
 
 /***********************************************************/

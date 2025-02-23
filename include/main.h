@@ -22,7 +22,7 @@
 #include "gridutil.h"
 #include "clientServer.h"
 #include "p2p.h"
-
+#include "gps.h"
 #include <RHReliableDatagram.h>
 
 #if USE_WIFI >0

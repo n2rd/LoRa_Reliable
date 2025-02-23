@@ -191,16 +191,18 @@ extern const char* MY_CONFIG_NAME[];
 #define POWER_INDEX_MAX 7
 extern float power[POWER_INDEX_MAX];
  
-
 #define DRIVER_MAX_MESSAGE_LEN RH_SX126x_MAX_MESSAGE_LEN
-
-#define HAS_WIFI  1
-#define HAS_GPS 0
-#if defined(HAS_GPS) && (HAS_GPS ==1)
+#ifndef HAS_WIFI
+#define HAS_WIFI  1 //DEFAULT IF not defined in myConfig.h
+#endif //HAS_WIFI
+#ifndef HAS_GPS
+#define HAS_GPS 1 //DEFAULT IF not defined in myConfig.h
+#endif //HAS_GPS
+#if (HAS_GPS ==1)
 #define GPS_ON_PIN GPIO_NUM_46
 #define GPS_RX_PIN GPIO_NUM_47  //connected to GPS TX pad
 #define GPS_TX_PIN GPIO_NUM_48  //connected to GPS RX pad
-#endif //HAS_GPS & HAS_GPS==1
+#endif //HAS_GPS==1
 
 
 
