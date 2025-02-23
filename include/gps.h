@@ -30,7 +30,7 @@ class GPSClass {
     private:
         //HardwareSerial GPSSerial;    //use Hardware UART1 for GPS
         TinyGPSPlus gps;
-        const char *powerStateNames[3] = { "OFF", "ON", "TX"};
+        const char *powerStateNames[3] = { "OFF", "TX", "ON"};
 };
 
 extern GPSClass GPS;
