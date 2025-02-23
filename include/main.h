@@ -51,4 +51,16 @@ extern PrintSplitter ps_all;
 extern RHReliableDatagram manager;
 extern void DisplayUpperRight(int count);
 extern void check_button();
+
+//
+// functions declarations of fucntions in main.cpp
+//
+void DisplayUpperRight(int count);
+void toggleLED();
+void dumpLatLon();
+
+#ifdef DUMP_PARTITIONS
+void dumpPartitions(); 
+#endif //DUMP_PARTITIONS
+
 #endif //MAIN_H

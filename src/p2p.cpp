@@ -46,7 +46,7 @@ uint64_t tx_time = 0;
 //messages are transmitted from the queue
 // to transmit a message, add it to the queue
 //transmit top item in queue after random delay
-#define MAX_DELAY 0x2000 //8192 ms max, must be power of 2
+#define MAX_DELAY 0x1000 //8192 ms max, must be power of 2
 uint16_t random_delay;
 
 //random delay generator
@@ -132,13 +132,18 @@ void p2pLoop(void)
    } //broadcast message
 
   //transmit the top message in the queue after random delay
-  if (millis() - tx_time > random_delay) {
+  if (!tx_lock & (millis() - tx_time > random_delay)) {
     if (!transmit_queue.isEmpty()) {
       message_t message;
       message = transmit_queue.dequeue();
       manager.sendto(message.data, message.len, message.to);
       tx_time = millis();
-      random_delay = random_delay_generator(MAX_DELAY);
-    }
-  } //if it is time to transmit a message
+      int max_delay;
+      if (!short_pause){
+        max_delay = random_delay_generator(MAX_DELAY);
+      } else {
+        max_delay = random_delay_generator(MAX_DELAY/2);  //short pause
+      }
+    } //if it is time to transmit a message
+  }
 } //loop

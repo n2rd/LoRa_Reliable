@@ -476,7 +476,7 @@ if (command[0] == '/') {
             cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, sizeof(modulation_array)/sizeof(modulation_array[0])-1, modulation_array,  &modulation_index);
             if (current_int_value != modulation_index) {
                 //Change modulation index in the radio, save to RAM and NVRAM
-                PARMS.putUInt8(PARMS.Key.modultation_index, modulation_index);
+                PARMS.putUInt8(PARMS.Key.modulation_index, modulation_index);
                 PARMS.parameters.modulation_index = modulation_index;
                 setModemConfig(modulation_index); //SF Bandwith etc
             }

@@ -384,11 +384,11 @@ PROGMEM static const RH_SX126x::ModemConfig MY_MODEM_CONFIG_TABLE[MODULATION_IND
 };
 #define MODEMCONFIGSZ sizeof(RH_SX126x::ModemConfig)
 
-void setModemConfig(uint8_t index) {
+bool setModemConfig(uint8_t index) {
   if (index >= MODULATION_INDEX_MAX)
     index = MODULATION_INDEX_MAX - 1;
     DRIVER_TYPE::ModemConfig cfg;
-    driver.setModemRegisters(&MY_MODEM_CONFIG_TABLE[index]);
+    return driver.setModemRegisters(&MY_MODEM_CONFIG_TABLE[index]);
 }
 
 const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX] =

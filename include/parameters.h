@@ -23,12 +23,6 @@
 #define TX_INTERVAL 12
 #define ADDRESS 13
 
-//GPS states
-// no ifdef GPS as we waht to set these values even if GPS is not enabled
-#define GPS_OFF 0 //GPS off all the time
-#define GPS_TX 1  //GPS on only when transmitting   
-#define GPS_ON 2  //GPS on all the time
-
 //array sizes
 #define FREQUENCY_INDEX_MAX 103  //0 is 902.125, 103 is 927.875
 #define ADDRESS_MAX 254  //255 is broadcast 
@@ -143,7 +137,7 @@ class ParametersClass {
     } Key;
   private:
     Preferences preferences;
-    void init();
+    //void init();
 };
 
 extern ParametersClass PARMS;

@@ -104,12 +104,12 @@ void ParametersClass::init(){
         parameters.grid6 = DEFAULT_GRID6;
         preferences.putChar(Key.grid6, parameters.grid6);
   }
-  if (preferences.isKey(Key.modultation_index)) {
+  if (preferences.isKey(Key.modulation_index)) {
         // Preferences exist, read from it and put into mypreferences
-        parameters.modulation_index = preferences.getUInt(Key.modultation_index);
+        parameters.modulation_index = preferences.getUInt(Key.modulation_index);
   } else { //use defaults and write to nvram
         parameters.modulation_index = DEFAULT_MODULATION_INDEX;
-        preferences.putUInt(Key.modultation_index, parameters.modulation_index);
+        preferences.putUInt(Key.modulation_index, parameters.modulation_index);
   }
   if (preferences.isKey(Key.power_index)) {
         // Preferences exist, read from it and put into mypreferences
@@ -132,6 +132,53 @@ void ParametersClass::init(){
         parameters.address = DEFAULT_ADDRESS;
         preferences.putUInt(Key.address, parameters.address);
   }
+}
+
+void ParametersClass::update() {
+    //update the parameters in the preferences
+    //write only new values as writing to the preferences is slow
+    if (strcmp(preferences.getString(Key.callsign).c_str(), parameters.callsign) != 0) {
+        preferences.putString(Key.callsign, parameters.callsign);
+    }
+    if (preferences.getUInt(Key.frequency_index) != parameters.frequency_index) {
+        preferences.putUInt(Key.frequency_index, parameters.frequency_index);
+    }
+    if (preferences.getUInt(Key.gps_state) != parameters.gps_state) {
+        preferences.putUInt(Key.gps_state, parameters.gps_state);
+    }
+    if (preferences.getUInt(Key.tx_lock) != parameters.tx_lock) {
+        preferences.putUInt(Key.tx_lock, parameters.tx_lock);
+    }
+    if (preferences.getUInt(Key.short_pause) != parameters.short_pause) {
+        preferences.putUInt(Key.short_pause, parameters.short_pause);
+    }
+    if (preferences.getFloat(Key.lat_value) != parameters.lat_value) {
+        preferences.putFloat(Key.lat_value, parameters.lat_value);
+    }
+    if (preferences.getFloat(Key.lon_value) != parameters.lon_value) {
+        preferences.putFloat(Key.lon_value, parameters.lon_value);
+    }
+    if (preferences.getUInt(Key.grid4) != parameters.grid4) {
+        preferences.putUInt(Key.grid4, parameters.grid4);
+    }
+    if (preferences.getChar(Key.grid5) != parameters.grid5) {
+        preferences.putChar(Key.grid5, parameters.grid5);
+    }
+    if (preferences.getChar(Key.grid6) != parameters.grid6) {
+        preferences.putChar(Key.grid6, parameters.grid6);
+    }
+    if (preferences.getUInt(Key.modulation_index) != parameters.modulation_index) {
+        preferences.putUInt(Key.modulation_index, parameters.modulation_index);
+    }
+    if (preferences.getUInt(Key.power_index) != parameters.power_index) {
+        preferences.putUInt(Key.power_index, parameters.power_index);
+    }
+    if (preferences.getUInt(Key.tx_interval) != parameters.tx_interval) {
+        preferences.putUInt(Key.tx_interval, parameters.tx_interval);
+    }
+    if (preferences.getUInt(Key.address) != parameters.address) {
+        preferences.putUInt(Key.address, parameters.address);
+    }
 }
 
 //
@@ -164,3 +211,19 @@ size_t ParametersClass::putFloat(const char *key, float value) {
       return preferences.putFloat(key, value);
 }
 
+//activate parameters based on values in parameters struct
+bool ParametersClass::set_frequency() {
+  return driver.setFrequency(PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
+} 
+
+bool ParametersClass::set_power() {
+  return driver.setTxPower(power[PARMS.parameters.power_index]);
+}
+
+bool ParametersClass::set_modulation() {
+  return setModemConfig(PARMS.parameters.modulation_index); //SF Bandwith etc contained in radio specific code
+}
+
+void ParametersClass::set_address() {
+  manager.setThisAddress(PARMS.parameters.address);
+}

@@ -82,6 +82,9 @@ void on_button_short_click();
 void on_button_long_click();
 void robot();
 void display_setup();
+void rolling_menu(int r_menu_num);
+void show_rolling_item(int r_menu_num, int position, int item_num);
+void draw_regular_menu(int menu, int max_items);
 
 extern SSD1306Wire display;
 // extern Heltec_ESP32 display;

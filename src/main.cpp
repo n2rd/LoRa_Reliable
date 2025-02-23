@@ -120,7 +120,7 @@ void setup()
 #if HAS_GPS
   GPSClass gps;
   gps.onoff(GPSClass::GPS_ON);
-  Serial.printf("GPS Power State: %s\r\n", GPS.getPowerStateName(GPSClass::GPS_ON));
+  Serial.printf("GPS Power State: %s\r\n", gps.getPowerStateName(GPSClass::GPS_ON));
   dumpLatLon();
 #endif //HAS_GPS
 }

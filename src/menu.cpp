@@ -18,8 +18,6 @@ extern bool menu_active;  //do not show radio messages on display when menu is a
 int cur_menu = 0;
 int act_item[MAX_MENUS] = {0, 0, 0, 0, 0, 0, 0};  //this has been activated
 int cur_item[MAX_MENUS] = {0, 0, 0, 0, 0, 0, 0};  //this has been selected
-int tx_lock = 0;
-int short_pause = 0;
 
 String menu_label[MAX_MENUS] = MENU_LABELS;
 String item_label[MAX_MENUS][MAX_ITEMS] = MENU_ITEM_LABELS;
@@ -357,10 +355,10 @@ void robot()
 unsigned long shortPressAfterMiliseconds = 50;   //how long short press shoud be. Do not set too low to avoid bouncing (false press events).
 unsigned long longPressAfterMiliseconds = 1000;  //how long čong press shoud be.
 
-#ifndef ROTARY_H
-#define ROTARY_H 
-AiEsp32RotaryEncoder rotary = AiEsp32RotaryEncoder(RE_PIN_A, RE_PIN_B, RE_PIN_SW, RE_VCC_PIN, RE_STEPS);
-#endif
+// #ifndef ROTARY_H
+// #define ROTARY_H 
+// extern AiEsp32RotaryEncoder rotary = AiEsp32RotaryEncoder(RE_PIN_A, RE_PIN_B, RE_PIN_SW, RE_VCC_PIN, RE_STEPS);
+// #endif
 
 
 void handle_rotary_button() {
