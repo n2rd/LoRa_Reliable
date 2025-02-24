@@ -112,7 +112,7 @@ void p2pLoop(void)
     } //message waiting
 
   // every PAUSE seconds add a broadcast message to the message queue to be sent
-  if (millis() - broadcast_time > PAUSE * 1000) {
+  if ((!tx_lock) && (millis() - broadcast_time > PAUSE * 1000)) {
      broadcast_time = millis();
      data[0] = static_cast<uint8_t>(counter & 0xFF); //low byte
      data[1] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
@@ -125,14 +125,14 @@ void p2pLoop(void)
           if (!transmit_queue.isFull()) {
             transmit_queue.enqueue(message);
           } else {
-            csv_serial.debug("p2p",(char *)"Transmit queue full");
-            csv_telnet.debug("p2p",(char *)"Transmit queue full");
+            csv_serial.debug("p2p",(char *)"Transmit queue full\n");
+            csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
           }
      counter++;
    } //broadcast message
 
   //transmit the top message in the queue after random delay
-  if (!tx_lock & (millis() - tx_time > random_delay)) {
+  if ((!tx_lock) && (millis() - tx_time > random_delay)) {
     if (!transmit_queue.isEmpty()) {
       message_t message;
       message = transmit_queue.dequeue();
