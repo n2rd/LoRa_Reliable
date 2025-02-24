@@ -529,7 +529,7 @@ if (command[0] == '/') {
             PARMS.putUInt8(PARMS.Key.tx_interval, tx_interval);
             PARMS.putFloat(PARMS.Key.lat_value, lat_value);
             PARMS.putFloat(PARMS.Key.lon_value, lon_value);
-            PARMS.putUInt8(PARMS.Key.modultation_index, modulation_index);
+            PARMS.putUInt8(PARMS.Key.modulation_index, modulation_index);
             PARMS.putUInt8(PARMS.Key.power_index, power_index);
             PARMS.putUInt8("type", radio_type);            //No radio type in the structure
 
