@@ -287,6 +287,7 @@ if (command[0] == '/') {
         cli_process_int(parameter_query, "Radio Address", command, 0, 254 , & radio_address);
         if (current_int_value != radio_address) {
             PARMS.parameters.address = radio_address;
+            driver.setHeaderId(radio_address);
         }
         break;
 
