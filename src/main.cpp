@@ -35,8 +35,11 @@ PrintSplitter csv_both(csv_serial,csv_telnet);
 PrintSplitter ps_both(Serial, display);
 PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
-//RHReliableDatagram manager(driver, PARMS.parameters.address);  //where this address come from, its not yet initialized
-RHReliableDatagram manager(driver, DEFAULT_ADDRESS);  //this will be reset in setup to address from parameters
+
+//It's possible we might have a chicken and Egg issue with this and PARMS constructor
+//not being called before this manager is being initialized.
+#warning "Verify that PARMS constructor called before this is initialized"
+RHReliableDatagram manager(driver, PARMS.parameters.address);  
 
 #if HAS_GPS
 double lastLat = 0;
@@ -75,9 +78,6 @@ void setup()
   display.setFont(ArialMT_Plain_10);
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
-
-  //now initialize parameters
-  PARMS.init();
 
   //start the radio
   if (!manager.init()) 
@@ -118,9 +118,8 @@ void setup()
 #endif //DUMP_PARTITIONS
 
 #if HAS_GPS
-  GPSClass gps;
-  gps.onoff(GPSClass::GPS_ON);
-  Serial.printf("GPS Power State: %s\r\n", gps.getPowerStateName(GPSClass::GPS_ON));
+  GPS.onoff(GPSClass::GPS_ON);
+  Serial.printf("GPS Power State: %s\r\n", GPS.getPowerStateName(GPSClass::GPS_ON));
   dumpLatLon();
 #endif //HAS_GPS
 }
