@@ -1,10 +1,7 @@
-#include "myConfig.h"
-#ifdef HAS_ENCODER // only include this file if we have encoder
+#include "main.h"
+#if defined(HAS_ENCODER) && HAS_ENCODER == 1// only include this file if we have encoder
 
-#include "Arduino.h"
 #include "Dialog_bolditalic_10.h"
-#include "SSD1306Wire.h" // Include the necessary header file
-#include "parameters.h"
 
 #define MENU_DEBUG 0
 
@@ -91,22 +88,5 @@ extern SSD1306Wire display;
 // extern Preferences preferences;
 
 #define POS_ARRAY {{4, 20}, {4, 35}, {4, 50}, {78, 20}, {78, 35}, {78, 50}}
-
-struct Parameters
-{
-    char callsign[10];           // (10B) 9 char max
-    uint8_t frequency_index;     // (1B) index 0 to 103 freq = 902.125 + 0.25 * index in MHz
-    uint8_t gps_state;           // (1B) 0 off, 1 on at tx, 2 on all the time
-    uint8_t tx_lock;             // (1B) 0 off, 1 on
-    uint8_t short_pause;         // (1B) 0 off, 1 on
-    double lat_value, lon_value; // (16B) GPS location
-    uint16_t grid4;              // (2B) 4 char grid square, encoded from 0 to 32,399
-    char grid5;                  // (1B) 1 char subsquare identifier, encoded as an ascii char
-    char grid6;                  // (1B) 1 char subsquare identifier, encoded as an ascii char
-    uint8_t modulation_index;    // (1B) index 0 to 8
-    uint8_t power_index;         // (1B) index 0 to 6
-    uint8_t tx_interval;         // (1B) 0 to 255 seconds
-    uint8_t address;             // (1B) 0 to 255
-} Parameters;
 
 #endif // HAS_ENCODER

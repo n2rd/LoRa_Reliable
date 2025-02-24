@@ -1,14 +1,5 @@
-#include "myConfig.h"
-#ifdef HAS_ENCODER  //only include this file if we have encoder
-
-#include "Arduino.h"
-#include "menu.h"
-
-#include "SSD1306Wire.h"
-#ifndef DISPLAY_GEOMETRY
-#define DISPLAY_GEOMETRY GEOMETRY_128_64
-SSD1306Wire display(0x3c, SDA_OLED, SCL_OLED, DISPLAY_GEOMETRY);
-#endif
+#include "main.h"
+#if defined(HAS_ENCODER) && HAS_ENCODER == 1  //only include this file if we have encoder
 
 #include "AiEsp32RotaryEncoder.h"
 AiEsp32RotaryEncoder rotary = AiEsp32RotaryEncoder(RE_PIN_A, RE_PIN_B, RE_PIN_SW, RE_VCC_PIN, RE_STEPS);
@@ -27,8 +18,6 @@ String item_label[MAX_MENUS][MAX_ITEMS] = MENU_ITEM_LABELS;
 // The coordinates define the left starting point of the text
 int pos[MAX_ITEMS][2] = POS_ARRAY;
 
-extern struct Parameters parameters;
-
 void IRAM_ATTR readEncoderISR()
 {
   rotary.readEncoder_ISR();
@@ -39,13 +28,13 @@ void IRAM_ATTR readEncoderISR()
 void act_item_init()
 {
   act_item[0] = -1;  //nothing activated on main menu yet
-  act_item[1] = parameters.power_index;
-  act_item[2] = parameters.modulation_index;
-  act_item[3] = parameters.address;
-  act_item[4] = parameters.frequency_index;
-  act_item[5] = parameters.gps_state;
-  tx_lock = parameters.tx_lock;
-  short_pause = parameters.short_pause;
+  act_item[1] = PARMS.parameters.power_index;
+  act_item[2] = PARMS.parameters.modulation_index;
+  act_item[3] = PARMS.parameters.address;
+  act_item[4] = PARMS.parameters.frequency_index;
+  act_item[5] = PARMS.parameters.gps_state;
+  tx_lock = PARMS.parameters.tx_lock;
+  short_pause = PARMS.parameters.short_pause;
 }
 
 void rotary_setup()
