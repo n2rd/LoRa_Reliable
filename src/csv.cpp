@@ -76,3 +76,35 @@ void CsvClass::debug(const char *tag, char *data)
     output('G',tag,data);
 }
 /*----------------------------------------------------*/
+#if 0
+class foo : public Print {
+    public:
+        foo(CsvPrintSplitter&& _a);
+        size_t write(uint8_t ch);
+        size_t write(const char* str);
+    private:
+        CsvPrintSplitter& a;
+};
+foo::foo(CsvPrintSplitter&& _a) : a(_a) {}
+size_t foo::write(uint8_t ch) {
+    size_t retval =  a.write(ch);
+    return retval;
+}
+size_t foo::write(const char* str) {
+    size_t retval = a.write(str);
+    return retval;
+}
+/*----------------------------------------------------*/
+CsvPrintSplitter::CsvPrintSplitter(CsvClass &_a, CsvClass &_b) : CsvClass(foo(this)), a(_a), b(_b) {}
+
+size_t CsvPrintSplitter::write(uint8_t ch) {
+    a.write(ch);
+    size_t retval =  b.write(ch);
+    return retval;
+}
+size_t CsvPrintSplitter::write(const char* str) {
+    a.write(str);
+    size_t retval = b.write(str);
+    return retval;
+}
+#endif
