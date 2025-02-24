@@ -243,8 +243,6 @@ static uint16_t grid4;          // (2B) 4 char grid square, encoded from 0 to 32
 static char     grid5;          // (1B) 1 char subsquare identifier, encoded as an ascii char 
 static char     grid6;          // (1B) 1 char subsquare identifier, encoded as an ascii char 
 
-#include "Preferences.h"
-
 char        command[50];
 char        cmd_code;
 char*       param_str[50];
@@ -339,26 +337,30 @@ if (command[0] == '/') {
 //const char *powerStateNames[3] = { "OFF", "ON", "TX"}; <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 //      GPS.getPowerStateName(GPSClass::GPS_ON)
     case 'G':
-        #define PRINTF_OK_GPS "OK:%u (%s)\r\n"
-        #define PRINTF_NG_GPS "NG:%u must be 0 for OFF, 1 for ON AT TX or 2 for ON\r\n"
+        #if HAS_GPS == 1
+            #define PRINTF_OK_GPS "OK:%u (%s)\r\n"
+            #define PRINTF_NG_GPS "NG:%u must be 0 for OFF, 1 for ON AT TX or 2 for ON\r\n"
 
 
-        current_int_value = PARMS.parameters.gps_state;
-        gps_index         = PARMS.parameters.gps_state;
-        if (parameter_query) {
-            //ps_st.printf(PRINTF_OK_GPS, current_int_value, gps_power_state_name[current_int_value]);
-            ps_st.printf(PRINTF_OK_GPS, current_int_value, GPS.getPowerStateName((GPSClass::PowerState) current_int_value));
-        }
-        else {
-            int_input = atoi(command);
-            if ((int_input >= 0 && int_input <= 2) && is_numeric(command)) {
-                PARMS.parameters.gps_state = int_input;
-                ps_st.printf(PRINTF_OK_GPS, (int)PARMS.parameters.gps_state, GPS.getPowerStateName((GPSClass::PowerState) int_input));
+            current_int_value = PARMS.parameters.gps_state;
+            gps_index         = PARMS.parameters.gps_state;
+            if (parameter_query) {
+                //ps_st.printf(PRINTF_OK_GPS, current_int_value, gps_power_state_name[current_int_value]);
+                ps_st.printf(PRINTF_OK_GPS, current_int_value, GPS.getPowerStateName((GPSClass::PowerState) current_int_value));
             }
             else {
-                ps_st.printf(PRINTF_NG_GPS, int_input);
+                int_input = atoi(command);
+                if ((int_input >= 0 && int_input <= 2) && is_numeric(command)) {
+                    PARMS.parameters.gps_state = int_input;
+                    ps_st.printf(PRINTF_OK_GPS, (int)PARMS.parameters.gps_state, GPS.getPowerStateName((GPSClass::PowerState) int_input));
+                }
+                else {
+                    ps_st.printf(PRINTF_NG_GPS, int_input);
+                }
             }
-        }
+        #else //HAS_GPS == 0
+            ps_st.printf("NO GPS defined for this device\r\n");
+        #endif
         break;
 
 //      Help-------------------------------------------------------------------
