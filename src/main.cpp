@@ -39,7 +39,7 @@ PrintSplitter ps_all(Serial,telnet, display);
 //It's possible we might have a chicken and Egg issue with this and PARMS constructor
 //not being called before this manager is being initialized.
 #warning "Verify that PARMS constructor called before this is initialized"
-RHReliableDatagram manager(driver, PARMS.parameters.address);  
+RHReliableDatagram manager(driver, 0 /*PARMS.parameters.address */);  
 
 #if HAS_GPS
 double lastLat = 0;
@@ -50,12 +50,14 @@ double lastLon = 0;
 /***********************************************************/
 void setup() 
 {
+  Serial.begin(115200);
+  while (!Serial) ; // Wait for serial port to be available
+
   #ifdef ARDUINO_LILYGO_T3_V1_6_1
   pinMode(LED_BUILTIN, OUTPUT);
   SPI.begin(LORA_SCK,LORA_MISO,LORA_MOSI,LORA_CS);
   #endif
-  Serial.begin(115200);
-  while (!Serial) ; // Wait for serial port to be available
+
   delay(5000);
   ota_setup();
   telnet.setup();
@@ -122,6 +124,10 @@ void setup()
   Serial.printf("GPS Power State: %s\r\n", GPS.getPowerStateName(GPSClass::GPS_ON));
   dumpLatLon();
 #endif //HAS_GPS
+
+#if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
+   rotary_setup();
+#endif
 }
 
 /***********************************************************/
@@ -133,6 +139,10 @@ void loop()
   ota_loop();
   telnet.loop();
   p2pLoop();
+
+  #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
+    rotary_loop();
+  #endif
 
 // #if HAS_GPS
 //   dumpLatLon();
