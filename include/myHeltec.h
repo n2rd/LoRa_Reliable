@@ -185,7 +185,7 @@ void heltec_loop();
 void heltec_delay(int ms);
 
 #define MODULATION_INDEX_MAX 9
-void setModemConfig(uint8_t index);
+bool setModemConfig(uint8_t index);
 extern const char* MY_CONFIG_NAME[];
 
 #define POWER_INDEX_MAX 7
@@ -204,7 +204,10 @@ extern float power[POWER_INDEX_MAX];
 #define GPS_TX_PIN GPIO_NUM_48  //connected to GPS RX pad
 #endif //HAS_GPS==1
 
-
+#ifdef HELTEC_POWER_BUTTON
+    esp_sleep_enable_ext0_wakeup(BUTTON, LOW);
+    button.waitForRelease();
+#endif
 
 #endif //!defined(ARDUINO_LILYGO_T3_V1_6_1)
 #endif //!defined(myheltec_h)

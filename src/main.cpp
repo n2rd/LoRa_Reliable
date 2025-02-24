@@ -18,24 +18,16 @@
   #endif //defined(ESP32)
 #endif //deefined(USE_WIFI) && (USE_WIFI > 0)
 
-// 2 bytes packet payload, logging data as csv on serial port
-/***  logging format ***
-*  server
-*     millis, from, counter, rssi, snr, send_report_back_status
-* 
-*  client
-*   successful
-*     millis, counter, rssi, snr, rssi_reported_by_server, snr_report 
-*   failed
-*     millis, counter, "failed"
-*/
-
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 #define TIMEOUT     200  //for sendtoWait
 #define RETRIES     3     //for sendtoWait
 
-int modulation_index = PARMS.parameters.modulation_index;
-int power_index = PARMS.parameters.power_index;
+// some state variables
+bool menu_active = false;
+bool tx_lock = false;
+bool short_pause = false;
+
+//
 
 CsvClass csv_telnet(telnet);
 CsvClass csv_serial(Serial);
@@ -43,7 +35,136 @@ PrintSplitter csv_both(csv_serial,csv_telnet);
 PrintSplitter ps_both(Serial, display);
 PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
-RHReliableDatagram manager(driver, PARMS.parameters.address);
+
+//It's possible we might have a chicken and Egg issue with this and PARMS constructor
+//not being called before this manager is being initialized.
+#warning "Verify that PARMS constructor called before this is initialized"
+RHReliableDatagram manager(driver, PARMS.parameters.address);  
+
+#if HAS_GPS
+double lastLat = 0;
+double lastLon = 0;
+#endif //HAS_GPS
+
+/***********************************************************/
+/***********************************************************/
+void setup() 
+{
+  #ifdef ARDUINO_LILYGO_T3_V1_6_1
+  pinMode(LED_BUILTIN, OUTPUT);
+  SPI.begin(LORA_SCK,LORA_MISO,LORA_MOSI,LORA_CS);
+  #endif
+  Serial.begin(115200);
+  while (!Serial) ; // Wait for serial port to be available
+  delay(5000);
+  ota_setup();
+  telnet.setup();
+
+  //display init
+  #ifndef ARDUINO_LILYGO_T3_V1_6_1
+  heltec_display_power(true);
+  heltec_ve(true); //added to turn on display
+  #endif //!deefined(ARDUINO_LILYGO_T3_V1_6_1)
+  display.init();
+  display.setContrast(255);
+  display.flipScreenVertically();
+  display.displayOn();
+  display.setFont(ArialMT_Plain_16);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)-16 /* font height */, "Lora_Reliable");
+  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)*2-16 /* font height */, VERSION);
+  display.display();
+  delay(3000);
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.cls();
+
+  //start the radio
+  if (!manager.init()) 
+  {
+    display.println("Radio failed to initialize");
+    ps_both.println("HALTING");
+    while (1);
+  }
+
+  //set the radio parameters
+  PARMS.set_frequency();
+  PARMS.set_power();
+  PARMS.set_modulation();
+  PARMS.set_address();
+
+  //#define DEBUG_INCOMING_PACKETS
+  #if defined(DEBUG_INCOMING_PACKETS) && defined(ARDUINO_LILYGO_T3_V1_6_1)
+  driver.setPromiscuous(true);
+  #endif
+  //You can optionally require this module to wait until Channel Activity
+  // Detection shows no activity on the channel before transmitting by setting
+  // the CAD timeout to non-zero:
+#ifdef ARDUINO_LILYGO_T3_V1_6_1
+  driver.setPayloadCRC(true);
+  driver.setCADTimeout(DEFAULT_CAD_TIMEOUT);  //Carrier Activity Detect Timeout 
+#else
+// This doesn't work on the heltec SX1262 driver yet
+#endif
+
+  // Battery
+  float vbat = heltec_vbat();
+  ps_all.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));
+
+  p2pSetup();
+
+#ifdef DUMP_PARTITIONS
+  dumpPartitions();
+#endif //DUMP_PARTITIONS
+
+#if HAS_GPS
+  GPS.onoff(GPSClass::GPS_ON);
+  Serial.printf("GPS Power State: %s\r\n", GPS.getPowerStateName(GPSClass::GPS_ON));
+  dumpLatLon();
+#endif //HAS_GPS
+}
+
+/***********************************************************/
+/***********************************************************/
+void loop()
+{
+  //first check the buttons
+  check_button();
+  ota_loop();
+  telnet.loop();
+  p2pLoop();
+
+// #if HAS_GPS
+//   dumpLatLon();
+// #endif //HAS_GPS
+} //loop
+
+/***********************************************************/
+/***********************************************************/
+void check_button() 
+{
+    //button presses
+  #warning "verify these are only initialized to zero once"
+  static uint32_t single_button_time = 0.0;
+  static uint32_t double_button_time = 0.0;
+  #ifdef ARDUINO_LILYGO_T3_V1_6_1
+    //We don't have a button at this time so just return
+    return;
+  #endif
+
+  button.update();
+
+  // single click will wake up sleeping unit
+
+  //long press puts to sleep
+  if (button.pressedFor(1000)) 
+  { //go to sleep
+    // Visually confirm it's off so user releases button
+    display.displayOff();
+    // Deep sleep (has wait for release so we don't wake up immediately)
+    heltec_deep_sleep();
+  }
+}
 
 /***********************************************************/
 /***********************************************************/
@@ -98,9 +219,8 @@ void dumpPartitions() {
   esp_partition_iterator_release(iterator);
 }
 #endif //defined(DUMP_PARTITIONS)
+
 #if HAS_GPS
-double lastLat = 0;
-double lastLon = 0;
 void dumpLatLon()
 {
   double lat;
@@ -117,161 +237,3 @@ void dumpLatLon()
 
 /***********************************************************/
 /***********************************************************/
-void setup() 
-{
-  #ifdef ARDUINO_LILYGO_T3_V1_6_1
-  pinMode(LED_BUILTIN, OUTPUT);
-  SPI.begin(LORA_SCK,LORA_MISO,LORA_MOSI,LORA_CS);
-  #endif
-  Serial.begin(115200);
-  while (!Serial) ; // Wait for serial port to be available
-  delay(5000);
-  ota_setup();
-  telnet.setup();
-
-  //display init
-  #ifndef ARDUINO_LILYGO_T3_V1_6_1
-  heltec_display_power(true);
-  heltec_ve(true); //added to turn on display
-  #endif //!deefined(ARDUINO_LILYGO_T3_V1_6_1)
-  display.init();
-  display.setContrast(255);
-  display.flipScreenVertically();
-  display.displayOn();
-  display.setFont(ArialMT_Plain_16);
-  display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)-16 /* font height */, "Lora_Reliable");
-  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)*2-16 /* font height */, VERSION);
-  display.display();
-  delay(3000);
-  display.setFont(ArialMT_Plain_10);
-  display.setTextAlignment(TEXT_ALIGN_LEFT);
-  display.cls();
-
-  //start the radio
-  if (!manager.init()) 
-  {
-    display.println("Radio failed to initialize");
-    ps_both.println("HALTING");
-    while (1);
-  }
-
-  uint8_t power_index = PARMS.parameters.power_index;
-  uint8_t modulation_index = PARMS.parameters.modulation_index;
-
-  if (PARMS.parameters.address == 1) {
-    ps_all.printf("Server %.3f MHz\n", PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
-  } else {
-    ps_all.printf("Client/P2P #%i at %.3f MHz\n", PARMS.parameters.address, PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
-  }
-  ps_all.printf("%s %.3f dBm\n", MY_CONFIG_NAME[modulation_index], power[power_index]);
-  driver.setFrequency(PARMS.frequency_index_to_frequency(PARMS.parameters.frequency_index));
-  setModemConfig(modulation_index); //SF Bandwith etc
-  driver.setTxPower(power[power_index]);
-  //#define DEBUG_INCOMING_PACKETS
-  #if defined(DEBUG_INCOMING_PACKETS) && defined(ARDUINO_LILYGO_T3_V1_6_1)
-  driver.setPromiscuous(true);
-  #endif
-  //You can optionally require this module to wait until Channel Activity
-  // Detection shows no activity on the channel before transmitting by setting
-  // the CAD timeout to non-zero:
-#ifdef ARDUINO_LILYGO_T3_V1_6_1
-  driver.setPayloadCRC(true);
-  driver.setCADTimeout(DEFAULT_CAD_TIMEOUT);  //Carrier Activity Detect Timeout 
-#else
-// This doesn't work on the heltec SX1262 driver yet
-#endif
-
-  // Battery
-  float vbat = heltec_vbat();
-  ps_all.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));
-
-  p2pSetup();
-
-#ifdef DUMP_PARTITIONS
-  dumpPartitions();
-#endif //DUMP_PARTITIONS
-
-#if HAS_GPS
-  GPS.onoff(GPSClass::GPS_ON);
-  Serial.printf("GPS Power State: %s\r\n", GPS.getPowerStateName(GPSClass::GPS_ON));
-  dumpLatLon();
-#endif //HAS_GPS
-}
-
-/***********************************************************/
-/***********************************************************/
-void loop()
-{
-  //first check the buttons
-  check_button();
-  ota_loop();
-  telnet.loop();
-  p2pLoop();
-
-#if HAS_GPS
-  dumpLatLon();
-#endif //HAS_GPS
-} //loop
-
-/***********************************************************/
-/***********************************************************/
-void check_button() 
-{
-    //button presses
-  #warning "verify these are only initialized to zero once"
-  static uint32_t single_button_time = 0.0;
-  static uint32_t double_button_time = 0.0;
-  #ifdef ARDUINO_LILYGO_T3_V1_6_1
-    //We don't have a button at this time so just return
-    return;
-  #endif
-
-  button.update();
-
-  //single click to change power
-  if (button.isSingleClick()) 
-  {
-    uint32_t button_time = millis() - single_button_time;
-    single_button_time = millis();
-    //if button time is < 1000 then pick next value
-    //else show current value
-    if (button_time > 2000 ) 
-    {
-      ps_all.printf("Current Power %.3fdBm\n", power[power_index]);
-      ps_both.println("Single press button to change\n");
-    } else {
-      power_index = (power_index + 1) % POWER_INDEX_MAX;
-      driver.setTxPower(power[power_index]);
-      ps_all.printf("New Power %.3fdBm\n", power[power_index]);
-    }
-  }
- 
-  //double click inits the radio
-  if (button.isDoubleClick()) // start the radio 
-  {
-    uint32_t button_time = millis() - double_button_time;
-    double_button_time = millis();
-    //if button time is < 1000 then pick next value
-    //else show current value
-    if (button_time > 2000 ) 
-    {
-      ps_all.printf("modulation_index= %d\n",modulation_index);
-      ps_all.printf("Current Modulation %i %s\n", MY_CONFIG_NAME[modulation_index]);
-      ps_both.println("Double press button to change\n");
-    } else {
-      modulation_index = (modulation_index + 1) % MODULATION_INDEX_MAX;
-      setModemConfig(modulation_index);
-      ps_all.printf("Current Modulation %i %s\n", MY_CONFIG_NAME[modulation_index]);
-    }
-  }
-
-  //long press puts to sleep
-  if (button.pressedFor(1000)) 
-  { //go to sleep
-    // Visually confirm it's off so user releases button
-    display.displayOff();
-    // Deep sleep (has wait for release so we don't wake up immediately)
-    heltec_deep_sleep();
-  }
-}

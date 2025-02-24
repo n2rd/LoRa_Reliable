@@ -51,12 +51,13 @@ PROGMEM static const MYMODEM_CONFIG_TABLE TTGO_MODEM_CONFIG_TABLE[MODULATION_IND
   { 062500, SF_4096,8}  //8 Very Long Slow
 };
 
-void setModemConfig(uint8_t index) {
+bool setModemConfig(uint8_t index) {
   if (index >= MODULATION_INDEX_MAX)
     index = MODULATION_INDEX_MAX - 1;
   driver.setSignalBandwidth(TTGO_MODEM_CONFIG_TABLE[index].bandwidth);
   driver.setSpreadingFactor(TTGO_MODEM_CONFIG_TABLE[index].spreadingFactor);
   driver.setCodingRate4(TTGO_MODEM_CONFIG_TABLE[index].codingRate4Denominator);
+  return true;
 }
 
 const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX] =

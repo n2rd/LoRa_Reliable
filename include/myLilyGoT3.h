@@ -24,7 +24,7 @@ extern RH_RF95 driver;
 #define heltec_deep_sleep(X) esp_deep_sleep(0)
 
 #define MODULATION_INDEX_MAX 9
-void setModemConfig(uint8_t index);
+bool setModemConfig(uint8_t index);
 extern const char* MY_CONFIG_NAME[];
 
 #define POWER_INDEX_MAX 7
