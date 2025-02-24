@@ -27,8 +27,6 @@ String item_label[MAX_MENUS][MAX_ITEMS] = MENU_ITEM_LABELS;
 // The coordinates define the left starting point of the text
 int pos[MAX_ITEMS][2] = POS_ARRAY;
 
-extern struct Parameters parameters;
-
 void IRAM_ATTR readEncoderISR()
 {
   rotary.readEncoder_ISR();
@@ -39,13 +37,13 @@ void IRAM_ATTR readEncoderISR()
 void act_item_init()
 {
   act_item[0] = -1;  //nothing activated on main menu yet
-  act_item[1] = parameters.power_index;
-  act_item[2] = parameters.modulation_index;
-  act_item[3] = parameters.address;
-  act_item[4] = parameters.frequency_index;
-  act_item[5] = parameters.gps_state;
-  tx_lock = parameters.tx_lock;
-  short_pause = parameters.short_pause;
+  act_item[1] = PARMS.parameters.power_index;
+  act_item[2] = PARMS.parameters.modulation_index;
+  act_item[3] = PARMS.parameters.address;
+  act_item[4] = PARMS.parameters.frequency_index;
+  act_item[5] = PARMS.parameters.gps_state;
+  tx_lock = PARMS.parameters.tx_lock;
+  short_pause = PARMS.parameters.short_pause;
 }
 
 void rotary_setup()

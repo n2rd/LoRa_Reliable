@@ -24,6 +24,7 @@
 #include "p2p.h"
 #include "gps.h"
 #include <RHReliableDatagram.h>
+#include "menu.h"
 
 #if USE_WIFI >0
     #if defined(ESP32)

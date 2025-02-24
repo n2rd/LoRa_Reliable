@@ -56,6 +56,7 @@ void setup()
   delay(5000);
   ota_setup();
   telnet.setup();
+  rotary_setup();
 
   //display init
   #ifndef ARDUINO_LILYGO_T3_V1_6_1
@@ -134,6 +135,7 @@ void loop()
   ota_loop();
   telnet.loop();
   p2pLoop();
+  rotary_loop(); //rotary encoder
 
 // #if HAS_GPS
 //   dumpLatLon();
