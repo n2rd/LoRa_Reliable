@@ -21,12 +21,29 @@ GPSClass::GPSClass()
 //
 // GPSClass class FUNCTIONS
 //
+#ifdef ARDUINO_ARCH_ESP32
+TaskHandle_t GPSTaskHandle;
+
+void GPSClass::GPSTask(void *pvParameter)
+{
+  while (true) {
+    GPSClass* me = (GPSClass *)pvParameter;
+    while (GPSSerial.available() > 0) {
+      me->gps.encode(GPSSerial.read());
+    }
+  }
+}
+#endif //ARDUINO_ARCH_ESP32
 
 void GPSClass::setup() {
   pinMode(GPS_ON_PIN, OUTPUT);  
   digitalWrite(GPS_ON_PIN, HIGH);//supply power to the GPS 
   GPSSerial.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+  #ifdef ARDUINO_ARCH_ESP32
+    xTaskCreatePinnedToCore(GPSTask,"GPSTask",10000,this,1,&GPSTaskHandle, xPortGetCoreID() == 1 ? 0 : 1);
+  #endif //ARDUINO_ARCH_ESP32
 }
+
 
 void GPSClass::onoff(PowerState state) {
   //turn on or off the GPS
@@ -44,14 +61,16 @@ bool GPSClass::getLocation(double *lat, double *lng, double *alt, double *hdop) 
   unsigned long gps_start = millis();
   if (GPS_DEBUG) Serial.print("GPS:");
   
+  #ifndef ARDUINO_ARCH_ESP32
   while (GPSSerial.available() > 0) {
     gps.encode(GPSSerial.read());
   }
+  #endif //ARDUINO_ARCH_ESP32
   
   gps_fix = gps.location.isUpdated() && gps.location.isValid();
   
   if (!gps_fix && (millis() - gps_start) > GPS_TIMEOUT * 1000) {
-    Serial.println("No fix\n");
+    display.println("GPS: No fix\n");
     gps_start = millis();
   } 
 

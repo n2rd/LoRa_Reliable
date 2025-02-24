@@ -31,6 +31,9 @@ class GPSClass {
         //HardwareSerial GPSSerial;    //use Hardware UART1 for GPS
         TinyGPSPlus gps;
         const char *powerStateNames[3] = { "OFF", "ON", "TX"};
+        #ifdef ARDUINO_ARCH_ESP32
+        static void GPSTask(void *pvParameter);
+        #ifdef ARDUINO_ARCH_ESP32
 };
 
 extern GPSClass GPS;
