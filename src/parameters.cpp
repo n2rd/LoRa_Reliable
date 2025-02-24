@@ -217,7 +217,8 @@ bool ParametersClass::set_frequency() {
 } 
 
 bool ParametersClass::set_power() {
-  return driver.setTxPower(power[PARMS.parameters.power_index]);
+  driver.setTxPower(power[PARMS.parameters.power_index]);
+  return true;
 }
 
 bool ParametersClass::set_modulation() {
