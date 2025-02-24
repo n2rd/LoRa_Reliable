@@ -57,7 +57,9 @@ extern void check_button();
 //
 void DisplayUpperRight(int count);
 void toggleLED();
+#if HAS_GPS
 void dumpLatLon();
+#endif //HAS_GPS
 
 #ifdef DUMP_PARTITIONS
 void dumpPartitions(); 
