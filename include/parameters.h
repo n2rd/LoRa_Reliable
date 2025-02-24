@@ -135,7 +135,7 @@ class ParametersClass {
       const char* address = "address";
     } Key;
   private:
-    Preferences preferences;
+    static Preferences preferences;
     void init();
 };
 

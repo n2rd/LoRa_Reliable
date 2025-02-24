@@ -1,5 +1,8 @@
 #include "main.h"
 #if defined(HAS_GPS) && (HAS_GPS ==1)
+#ifndef TESTGPS_TASK
+#define TESTGPS_TASK 0
+#endif //TESTGPS_TASK
 
 // TIME esp32 internal RTC
 #include <ESP32Time.h>  //includes time.h, uses the RTC built into ESP32
@@ -15,13 +18,13 @@ GPSClass GPS;
 //
 GPSClass::GPSClass()
 {
-  //GPSSerial(2);
   setup();
 }
 //
 // GPSClass class FUNCTIONS
 //
-#ifdef ARDUINO_ARCH_ESP32
+
+#if defined(ARDUINO_ARCH_ESP32) && TESTGPS_TASK == 1
 TaskHandle_t GPSTaskHandle;
 
 void GPSClass::GPSTask(void *pvParameter)
@@ -39,7 +42,7 @@ void GPSClass::setup() {
   pinMode(GPS_ON_PIN, OUTPUT);  
   digitalWrite(GPS_ON_PIN, HIGH);//supply power to the GPS 
   GPSSerial.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
-  #ifdef ARDUINO_ARCH_ESP32
+  #if defined(ARDUINO_ARCH_ESP32) && TESTGPS_TASK == 1
     xTaskCreatePinnedToCore(GPSTask,"GPSTask",10000,this,1,&GPSTaskHandle, xPortGetCoreID() == 1 ? 0 : 1);
   #endif //ARDUINO_ARCH_ESP32
 }
@@ -61,11 +64,11 @@ bool GPSClass::getLocation(double *lat, double *lng, double *alt, double *hdop) 
   unsigned long gps_start = millis();
   if (GPS_DEBUG) Serial.print("GPS:");
   
-  #ifndef ARDUINO_ARCH_ESP32
+  #if !defined(ARDUINO_ARCH_ESP32) || TESTGPS_TASK == 0
   while (GPSSerial.available() > 0) {
     gps.encode(GPSSerial.read());
   }
-  #endif //ARDUINO_ARCH_ESP32
+  #endif //!defined(ARDUINO_ARCH_ESP32) || TESTGPS_TASK == 0
   
   gps_fix = gps.location.isUpdated() && gps.location.isValid();
   
