@@ -3,6 +3,8 @@
 #include "parameters.h"
 
 ParametersClass PARMS;
+
+Preferences ParametersClass::preferences;
 //
 //@brief parameter initialization from nv ram if it exits else use defaults
 //
@@ -132,9 +134,24 @@ void ParametersClass::init(){
         parameters.address = DEFAULT_ADDRESS;
         preferences.putUInt(Key.address, parameters.address);
   }
+  {
+      if (preferences.isKey(Key.callsign)) {
+            log_e("Callsign key exists");
+            const char* temp = preferences.getString(Key.callsign).c_str();
+            log_e("callsign: %s",temp);
+            log_e("Callsign in parameters: %s", parameters.callsign);
+      }
+      else log_e("No key: %s",Key.callsign);
+      update();
+      const char* temp = preferences.getString(Key.callsign).c_str();
+      log_e("callsign after update: %s",temp);
+      //preferences.end();
+  }
+  log_e("Parameters init Succeeded");
 }
 
 void ParametersClass::update() {
+      log_e("start parameter update");
     //update the parameters in the preferences
     //write only new values as writing to the preferences is slow
     if (strcmp(preferences.getString(Key.callsign).c_str(), parameters.callsign) != 0) {
@@ -179,6 +196,7 @@ void ParametersClass::update() {
     if (preferences.getUInt(Key.address) != parameters.address) {
         preferences.putUInt(Key.address, parameters.address);
     }
+    log_e("end Parameter update()");
 }
 
 //
