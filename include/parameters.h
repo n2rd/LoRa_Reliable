@@ -95,7 +95,6 @@ typedef struct ParametersStruct {
 class ParametersClass {
   public:
     ParametersClass() { init(); }
-    void init();
     float frequency_index_to_frequency(uint8_t index);
     uint8_t frequency_to_frequency_index(float frequency); 
     bool set_frequency();  //based on frequency_index
@@ -137,7 +136,7 @@ class ParametersClass {
     } Key;
   private:
     Preferences preferences;
-    //void init();
+    void init();
 };
 
 extern ParametersClass PARMS;
