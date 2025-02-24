@@ -80,7 +80,7 @@ typedef struct ParametersStruct {
     uint8_t  modulation_index; // (1B) index 0 to 8
     uint8_t  power_index; // (1B) index 0 to 6
     uint8_t  tx_interval; // (1B) 0 to 255 seconds
-    uint8_t  address; // (1B) 0 to 255
+    uint8_t  address; // (1B) 0 to 254 (255=broadcast address)
 } PARAMETERS;
 
 //for opening nvram preferences

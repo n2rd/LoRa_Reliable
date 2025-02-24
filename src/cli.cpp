@@ -79,13 +79,7 @@ uint16_t encode_grid4(String locator) {
 //====================================================================
 #define MODULATION_INDEX_MAX 9
 
-/*
-static const char* MY_CONFIG_NAME[MODULATION_INDEX_MAX] =
-{
 
-"Short Turbo", "Short Fast", "Short Slow", "Medium Fast", "Medium Slow", "Long Fast", "Long Moderate", "Long Slow", "Very Long Slow"
-};
-*/
 char gps_array[3][4] = {"Off", "TX", "On"};
 char modulation_array[9][20] = {"Short Turbo", "Short Fast", "Short Slow", "Medium Fast", "Medium Slow", "Long Fast", "Long Moderate", "Long Slow", "Very Long Slow"};
 float frequency_array[] = {902.125,902.375,902.625,902.875,903.125,903.375,903.625,903.875,904.125,904.375,904.625,904.875,905.125,905.375,905.625,905.875,906.125,906.375,906.625,906.875,907.125,907.375,907.625,907.875,908.125,908.375,908.625,908.875,909.125,909.375,909.625,909.875,910.125,910.375,910.625,910.875,911.125,911.375,911.625,911.875,912.125,912.375,912.625,912.875,913.125,913.375,913.625,913.875,914.125,914.375,914.625,914.875,915.125,915.375,915.625,915.875,916.125,916.375,916.625,916.875,917.125,917.375,917.625,917.875,918.125,918.375,918.625,918.875,919.125,919.375,919.625,919.875,920.125,920.375,920.625,920.875,921.125,921.375,921.625,921.875,922.125,922.375,922.625,922.875,923.125,923.375,923.625,923.875,924.125,924.375,924.625,924.875,925.125,925.375,925.625,925.875,926.125,926.375,926.625,926.875,927.125,927.375,927.625,927.875};
@@ -237,6 +231,7 @@ static float    frequency; //depricated
 static int      frequency_index;
 static bool     tx_lock_state;
 static bool     gps_state;
+static int      gps_index;
 static float    lat_value, lon_value;
 static int      modulation_index;
 static int      power_index;
@@ -291,9 +286,8 @@ if (command[0] == '/') {
     case 'A':
         current_int_value = PARMS.parameters.address;
         radio_address     = PARMS.parameters.address;
-        cli_process_int(parameter_query, "Radio Address", command, 0, 255 , & radio_address);
+        cli_process_int(parameter_query, "Radio Address", command, 0, 254 , & radio_address);
         if (current_int_value != radio_address) {
-            PARMS.putUInt8(PARMS.Key.address, radio_address);
             PARMS.parameters.address = radio_address;
         }
         break;
@@ -305,7 +299,6 @@ if (command[0] == '/') {
         tx_lock_state      = PARMS.parameters.tx_lock;
         cli_process_bool(parameter_query, "TX Lock (Beacon Disable)", command, & tx_lock_state);
         if (current_int_value != tx_lock_state){
-            PARMS.putUInt8(PARMS.Key.tx_lock, tx_lock_state);
             PARMS.parameters.tx_lock = tx_lock_state;
         }
         break;
@@ -321,7 +314,6 @@ if (command[0] == '/') {
             strcpy(current_str_value,callsign);
             ps_st.printf("OK:Call sign = %s\r\n", callsign);
             if (current_str_value != callsign) {
-                PARMS.putString(PARMS.Key.callsign, callsign);
                 strcpy(PARMS.parameters.callsign, callsign);
             }    
         }
@@ -338,22 +330,34 @@ if (command[0] == '/') {
         frequency_index   = PARMS.parameters.frequency_index;
         cli_process_index_float_value_unit(parameter_query, "Frequency Index", command, 0, sizeof(frequency_array)/sizeof(frequency_array[0])-1, frequency_array , "MHz",  &frequency_index);
         if (current_int_value != frequency_index) {
-            PARMS.putUInt8(PARMS.Key.frequency_index, frequency_index);
             PARMS.parameters.frequency_index = frequency_index;
             driver.setFrequency(frequency_array[frequency_index]);
         }
         break;
 
 //      GPS Off/GPS on on Transmit only/On-------------------------------------
-
+//const char *powerStateNames[3] = { "OFF", "ON", "TX"}; <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+//      GPS.getPowerStateName(GPSClass::GPS_ON)
     case 'G':
-        current_int_value = PARMS.parameters.gps_state;
-        gps_state         = PARMS.parameters.gps_state;
-        cli_process_bool(parameter_query, "GPS", command, & gps_state);
-        if (current_int_value != gps_state) {
-            PARMS.putUInt8(PARMS.Key.gps_state, gps_state);
-            PARMS.parameters.gps_state = gps_state;
+        #define PRINTF_OK_GPS "OK:%u (%s)\r\n"
+        #define PRINTF_NG_GPS "NG:%u must be 0 for OFF, 1 for ON AT TX or 2 for ON\r\n"
 
+
+        current_int_value = PARMS.parameters.gps_state;
+        gps_index         = PARMS.parameters.gps_state;
+        if (parameter_query) {
+            //ps_st.printf(PRINTF_OK_GPS, current_int_value, gps_power_state_name[current_int_value]);
+            ps_st.printf(PRINTF_OK_GPS, current_int_value, GPS.getPowerStateName((GPSClass::PowerState) current_int_value));
+        }
+        else {
+            int_input = atoi(command);
+            if ((int_input >= 0 && int_input <= 2) && is_numeric(command)) {
+                PARMS.parameters.gps_state = int_input;
+                ps_st.printf(PRINTF_OK_GPS, (int)PARMS.parameters.gps_state, GPS.getPowerStateName((GPSClass::PowerState) int_input));
+            }
+            else {
+                ps_st.printf(PRINTF_NG_GPS, int_input);
+            }
         }
         break;
 
@@ -364,7 +368,7 @@ if (command[0] == '/') {
         ps_st.printf("Caallsign                        /C <callsign>\r\n");
         ps_st.printf("Reset radio to default state     /D\r\n");        
         ps_st.printf("Frequency                        /F <Frequency in MHz>\r\n");
-        ps_st.printf("GPS State                        /G <off>|<on>\r\n");
+        ps_st.printf("GPS State                        /G 0 for OFF, 1 for ON FOR TX and 2 for ON<off>|<tx<on>\r\n");
         ps_st.printf("Help Text                        /H\r\n");
         ps_st.printf("TX Interval (seconds)            /I <n>\r\n");
         ps_st.printf("Position                         /L <latitude >,<longitude>\r\n");
@@ -384,9 +388,7 @@ if (command[0] == '/') {
         tx_interval       = PARMS.parameters.tx_interval;
         cli_process_int(parameter_query, PARMS.Key.tx_interval, command, 10, 255 , & tx_interval);
         if (current_int_value != tx_interval) {
-            PARMS.putUInt8(PARMS.Key.tx_interval, tx_interval);
             PARMS.parameters.tx_interval = tx_interval;
-
         }
         break;
 
@@ -456,9 +458,7 @@ if (command[0] == '/') {
             }
             if ((current_lat_value != lat_value) || (current_lon_value != lon_value)) {
                     //Save lat/lon pair to RAM and NVRAM
-                    PARMS.putFloat(PARMS.Key.lat_value, lat_value);
                     PARMS.parameters.lat_value = lat_value;
-                    PARMS.putFloat(PARMS.Key.lon_value, lon_value);
                     PARMS.parameters.lon_value = lon_value;
     
     
@@ -476,7 +476,6 @@ if (command[0] == '/') {
             cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, sizeof(modulation_array)/sizeof(modulation_array[0])-1, modulation_array,  &modulation_index);
             if (current_int_value != modulation_index) {
                 //Change modulation index in the radio, save to RAM and NVRAM
-                PARMS.putUInt8(PARMS.Key.modultation_index, modulation_index);
                 PARMS.parameters.modulation_index = modulation_index;
                 setModemConfig(modulation_index); //SF Bandwith etc
             }
@@ -489,7 +488,6 @@ if (command[0] == '/') {
             cli_process_index_float_value_unit(parameter_query, "Power Index", command, 0, sizeof(power)/sizeof(power[0])-1, power , "dBm",  &power_index);
             if (current_int_value != power_index) {
                 //Change power index in the radio, save to RAM and NVRAM
-                PARMS.putUInt8(PARMS.Key.power_index, power_index);
                 PARMS.parameters.power_index = power_index;
                 driver.setTxPower(power[power_index]);
             }
@@ -516,13 +514,24 @@ if (command[0] == '/') {
             current_int_value = radio_type;
             cli_process_int(parameter_query, "Radio Type", command, 0, 2 , & radio_type);
             if (current_int_value != radio_type) {
-                PARMS.putUInt8("type", radio_type);
+                //set radio type here.....
             }
              break;
 
 //      Write to NVRAM---------------------------------------------------------
         case 'W':
-        
+            PARMS.putUInt8(PARMS.Key.address, radio_address);
+            PARMS.putUInt8(PARMS.Key.tx_lock, tx_lock_state);
+            PARMS.putString(PARMS.Key.callsign, callsign);
+            PARMS.putUInt8(PARMS.Key.frequency_index, frequency_index);
+            PARMS.putUInt8(PARMS.Key.gps_state, gps_state);
+            PARMS.putUInt8(PARMS.Key.tx_interval, tx_interval);
+            PARMS.putFloat(PARMS.Key.lat_value, lat_value);
+            PARMS.putFloat(PARMS.Key.lon_value, lon_value);
+            PARMS.putUInt8(PARMS.Key.modultation_index, modulation_index);
+            PARMS.putUInt8(PARMS.Key.power_index, power_index);
+            PARMS.putUInt8("type", radio_type);            //No radio type in the structure
+
             break;
     
 //      Maidenhead Grid Square (4 or 6 characters)------------------------------

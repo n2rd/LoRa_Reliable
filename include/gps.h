@@ -34,6 +34,7 @@ class GPSClass {
         #ifdef ARDUINO_ARCH_ESP32
         static void GPSTask(void *pvParameter);
         #ifdef ARDUINO_ARCH_ESP32
+        const char *powerStateNames[3] = { "OFF", "TX", "ON"};
 };
 
 extern GPSClass GPS;
