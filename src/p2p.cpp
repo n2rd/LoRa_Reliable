@@ -13,8 +13,8 @@
 
 // some state variables
 extern bool menu_active;
-extern bool tx_lock;
-extern bool short_pause;
+bool tx_lock = false;
+bool short_pause = false;
 
 
 //send and receive data

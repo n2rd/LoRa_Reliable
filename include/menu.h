@@ -86,7 +86,7 @@ void draw_regular_menu(int menu, int max_items);
 extern SSD1306Wire display;
 // extern Heltec_ESP32 display;
 // extern Preferences preferences;
-
+extern bool menu_active;
 #define POS_ARRAY {{4, 20}, {4, 35}, {4, 50}, {78, 20}, {78, 35}, {78, 50}}
 
 #endif // HAS_ENCODER

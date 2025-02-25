@@ -23,9 +23,8 @@
 #define RETRIES     3     //for sendtoWait
 
 // some state variables
-bool menu_active = false;
-bool tx_lock = false;
-bool short_pause = false;
+
+
 
 //
 

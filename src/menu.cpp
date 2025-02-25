@@ -4,7 +4,7 @@
 #include "AiEsp32RotaryEncoder.h"
 AiEsp32RotaryEncoder rotary = AiEsp32RotaryEncoder(RE_PIN_A, RE_PIN_B, RE_PIN_SW, RE_VCC_PIN, RE_STEPS);
 
-extern bool menu_active;  //do not show radio messages on display when menu is active
+bool menu_active = false;  //do not show radio messages on display when menu is active
 
 int cur_menu = 0;
 int act_item[MAX_MENUS] = {0, 0, 0, 0, 0, 0, 0};  //this has been activated
