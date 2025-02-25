@@ -135,14 +135,15 @@ void setup()
 void loop()
 {
   //first check the buttons
-  check_button();
-  ota_loop();
-  telnet.loop();
-  p2pLoop();
-
-  #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
+  if (!otaActive) {
+    check_button();
+    telnet.loop();
+    p2pLoop();
+    #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
     rotary_loop();
   #endif
+  }
+  ota_loop();
 
 // #if HAS_GPS
 //   dumpLatLon();

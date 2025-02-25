@@ -5,13 +5,14 @@
 //////////////////////// OTA  stuff /////////////////////////
 #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
 /////// Async Version ///////
-
+bool otaActive = false;
 unsigned long ota_progress_millis = 0;
 
 void onOTAStart() {
   // Log when OTA has started
   Serial.println("OTA update started!");
-  // <Add your own code here>
+  driver.setModeIdle();
+  otaActive = true;
 }
 
 void onOTAProgress(size_t current, size_t final) {
@@ -29,7 +30,8 @@ void onOTAEnd(bool success) {
   } else {
     Serial.println("There was an error during OTA update!");
   }
-  // <Add your own code here>
+  driver.setMode(driver.RHModeRx);
+  otaActive = false;
 }
 
 void ota_setup(void) {
