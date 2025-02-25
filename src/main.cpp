@@ -39,7 +39,7 @@ PrintSplitter ps_all(Serial,telnet, display);
 //It's possible we might have a chicken and Egg issue with this and PARMS constructor
 //not being called before this manager is being initialized.
 #warning "Verify that PARMS constructor called before this is initialized"
-RHReliableDatagram manager(driver, 0 /*PARMS.parameters.address */);  
+RHDatagram manager(driver, 0 /*PARMS.parameters.address */);  
 
 #if HAS_GPS
 double lastLat = 0;

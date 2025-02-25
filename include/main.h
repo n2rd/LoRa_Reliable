@@ -49,7 +49,7 @@ extern PrintSplitter csv_both;
 extern PrintSplitter ps_both;
 extern PrintSplitter ps_st;
 extern PrintSplitter ps_all;
-extern RHReliableDatagram manager;
+extern RHDatagram manager;
 extern void DisplayUpperRight(int count);
 extern void check_button();
 
