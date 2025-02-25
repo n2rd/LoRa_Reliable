@@ -26,7 +26,7 @@ size_t CsvClass::write(const char* str) { //this outputs as info
 void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId)
 {
     printObject.printf(
-        "B, %ld, O, %d, 255, %2u\r\n",
+        "B, %ld, O, %3d, 255, %3u\r\n",
         timeStamp,
         from,
         headerId
@@ -36,7 +36,7 @@ void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId
 void CsvClass::data(CSVDATAPTR data) 
 {
     printObject.printf(
-        "D, %ld, %c, %d, %d, %2u, %.0f, %.0f\r\n",
+        "D, %ld, %c, %3d, %3d, %3u, %3.0f, %3.0f\r\n",
         data->timeStamp,
         data->recvType,
         data->from,
