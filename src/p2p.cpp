@@ -124,10 +124,13 @@ void p2pLoop(void)
           message.data[0] = data[0];
           message.data[1] = data[1];
           message.len = 2;
-          message.headerID = transmit_headerId++;
+          message.headerID = ++transmit_headerId;
           message.to = RH_BROADCAST_ADDRESS;
           if (!transmit_queue.isFull()) {
             transmit_queue.enqueue(message);
+            uint8_t from = manager.thisAddress();
+            csv_serial.broadcast(millis(),from,transmit_headerId);
+            csv_telnet.broadcast(millis(),from,transmit_headerId);
           } else {
             csv_serial.debug("p2p",(char *)"Transmit queue full\n");
             csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
