@@ -20,7 +20,7 @@ CLI Command set
     Default Config          /D
     Frequency index         /F <n>                                          Default = 905.2
                                     n= Frequency in MHz 3.g., 905.2, 
-    GPS                     /G <OFF|TX|ON>                                  Default = OFF<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    GPS                     /G <OFF|TX|ON>                                  Default = OFF
                                     
     Help                    /H
     Transmission interval   /I <n>  n= number of seconds between            Default = 30
@@ -48,6 +48,7 @@ CLI Command set
                                     n=5 +18.0 dBm
                                     n=6 +22.0 dBm
     Quit (Telnet)           /Q
+    RF Signal Reports (CSV) /R <OFF|ON>                                     Default = TBD 
     Serial USB Output       /S <OFF|ON>                                     Default = on
     Radio Type              /T <n>                                          Default = 2
                                     n=0 Server (client/server operation)
@@ -55,6 +56,7 @@ CLI Command set
                                     n=2 Peer (peer to peer operation)
     Write NVRAM             /W
     Grid                    /X      4 or 6 character maidenhead grid square
+    Short Pause             /Y <OFF|ON>                                     Default = OFF      
 */
 
 #include "main.h"
@@ -224,12 +226,16 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
 
 int cli_execute(const char* command_arg) {
 
+static bool local_PARMS_parameters_csv_output;
+
 PARAMETERS local_params;
 
 static char     callsign[10];
 static float    frequency; //depricated
 static int      frequency_index;
 static bool     tx_lock_state;
+static bool     short_pause_state;
+static bool     csv_output_state;
 static bool     gps_state;
 static int      gps_index;
 static float    lat_value, lon_value;
@@ -287,7 +293,8 @@ if (command[0] == '/') {
         cli_process_int(parameter_query, "Radio Address", command, 0, 254 , & radio_address);
         if (current_int_value != radio_address) {
             PARMS.parameters.address = radio_address;
-            driver.setHeaderId(radio_address);
+            driver.setThisAddress(radio_address);
+            driver.setHeaderTo(radio_address);
         }
         break;
 
@@ -381,6 +388,8 @@ if (command[0] == '/') {
         ps_st.printf("Radio Type                       /T <n>\r\n");
         ps_st.printf("Write no NVRAM                   /W\r\n");
         ps_st.printf("Maidenhead grid square (4 or 6)  /X\r\n");
+        ps_st.printf("Short TX Pause                   /Y <off>|<on>\r\n");
+        ps_st.printf("CSV Output                       /Z <off>|<on>\r\n");
         ps_st.printf("Commands case insensitive and blanks ignored\r\n");
         break;
 
@@ -610,6 +619,30 @@ if (command[0] == '/') {
             }
         
             break;
+
+//      Short TX Pause Off/On--------------------------------------------------
+
+        case 'Y':
+            current_int_value = PARMS.parameters.short_pause;    
+            short_pause_state = PARMS.parameters.short_pause;
+            cli_process_bool(parameter_query, "Short Pause State", command, & short_pause_state);
+            if (current_int_value != short_pause_state){
+                PARMS.parameters.short_pause = short_pause_state;
+            }
+
+        break;
+
+//      Short TX Pause Off/On--------------------------------------------------
+
+        case 'Z':
+            current_int_value = local_PARMS_parameters_csv_output;    
+            csv_output_state  = local_PARMS_parameters_csv_output;
+            cli_process_bool(parameter_query, "CSV Output State", command, & csv_output_state);
+            if (current_int_value != csv_output_state){
+                local_PARMS_parameters_csv_output = csv_output_state;
+            }
+
+break;
 
 //      Invalid Command--------------------------------------------------------
         default:
