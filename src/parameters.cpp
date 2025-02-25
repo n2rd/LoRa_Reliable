@@ -212,6 +212,9 @@ void ParametersClass::update() {
     if (preferences.getUInt(Key.address) != parameters.address) {
         preferences.putUInt(Key.address, parameters.address);
     }
+    if (preferences.getUInt(Key.radioType) != parameters.radioType) {
+      preferences.putUInt(Key.radioType, parameters.radioType);
+    }
     preferences.end();
     log_e("end Parameter update()");
 }

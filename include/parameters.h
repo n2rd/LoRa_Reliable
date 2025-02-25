@@ -86,6 +86,7 @@ typedef struct ParametersStruct {
     uint8_t  power_index; // (1B) index 0 to 6
     uint8_t  tx_interval; // (1B) 0 to 255 seconds
     uint8_t  address; // (1B) 0 to 254 (255=broadcast address)
+    uint8_t  radioType; //Radio Type ... the meaning of the values: 0,1,2 needs to be clarified
 } PARAMETERS;
 
 //for opening nvram preferences
@@ -113,11 +114,6 @@ class ParametersClass {
 
     PARAMETERS parameters; //parameters for the radio
 
-    size_t putString(const char *key, char *value);
-    size_t putUInt8(const char *key, uint8_t byte );
-    size_t putUInt16(const char *key, uint16_t word );
-    size_t putChar(const char *key, char value);
-    size_t putFloat(const char *key, float value);
     struct keyStruct {
       const char* callsign = "callsign";
       const char* frequency_index = "frequency_index";
@@ -133,10 +129,16 @@ class ParametersClass {
       const char* power_index = "power_index";
       const char* tx_interval = "tx_interval";
       const char* address = "address";
+      const char* radioType = "radioType";
     } Key;
   private:
     static Preferences preferences;
     void init();
+    size_t putString(const char *key, char *value);
+    size_t putUInt8(const char *key, uint8_t byte );
+    size_t putUInt16(const char *key, uint16_t word );
+    size_t putChar(const char *key, char value);
+    size_t putFloat(const char *key, float value);
     void DumpKeyUint(char *keyToDump);
     void DumpKeyString(char *keyToDump);
 };

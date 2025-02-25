@@ -488,7 +488,6 @@ if (command[0] == '/') {
             cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, sizeof(modulation_array)/sizeof(modulation_array[0])-1, modulation_array,  &modulation_index);
             if (current_int_value != modulation_index) {
                 //Change modulation index in the radio, save to RAM and NVRAM
-                PARMS.putUInt8(PARMS.Key.modulation_index, modulation_index);
                 PARMS.parameters.modulation_index = modulation_index;
                 setModemConfig(modulation_index); //SF Bandwith etc
             }
@@ -533,18 +532,7 @@ if (command[0] == '/') {
 
 //      Write to NVRAM---------------------------------------------------------
         case 'W':
-            PARMS.putUInt8(PARMS.Key.address, radio_address);
-            PARMS.putUInt8(PARMS.Key.tx_lock, tx_lock_state);
-            PARMS.putString(PARMS.Key.callsign, callsign);
-            PARMS.putUInt8(PARMS.Key.frequency_index, frequency_index);
-            PARMS.putUInt8(PARMS.Key.gps_state, gps_state);
-            PARMS.putUInt8(PARMS.Key.tx_interval, tx_interval);
-            PARMS.putFloat(PARMS.Key.lat_value, lat_value);
-            PARMS.putFloat(PARMS.Key.lon_value, lon_value);
-            PARMS.putUInt8(PARMS.Key.modulation_index, modulation_index);
-            PARMS.putUInt8(PARMS.Key.power_index, power_index);
-            PARMS.putUInt8("type", radio_type);            //No radio type in the structure
-
+            PARMS.update(); // update current settings in parameters structure to nvs
             break;
     
 //      Maidenhead Grid Square (4 or 6 characters)------------------------------
