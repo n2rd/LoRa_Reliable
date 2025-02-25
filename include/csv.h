@@ -15,7 +15,8 @@ class CsvClass : public Print { //we derive from Print so that we can use printS
     public:
         CsvClass(Print& _printObject);
         virtual size_t write(uint8_t c); //this outputs as info 
-        virtual size_t write(const char* str); //this outputs as info 
+        virtual size_t write(const char* str); //this outputs as info
+        void broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId);
         void data(CSVDATAPTR data);
         void data(unsigned long timeStamp,char recvType, int from, int to, uint8_t headerID, float rssi, float snr);
         void info(const char *threeCharTag, char *data);

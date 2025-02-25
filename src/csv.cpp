@@ -23,6 +23,16 @@ size_t CsvClass::write(const char* str) { //this outputs as info
     return strlen(str);
 }
 /*----------------------------------------------------*/
+void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId)
+{
+    printObject.printf(
+        "B, %ld, O, %d, 255, %2u\r\n",
+        timeStamp,
+        from,
+        headerId
+    );  
+}
+/*----------------------------------------------------*/
 void CsvClass::data(CSVDATAPTR data) 
 {
     printObject.printf(
