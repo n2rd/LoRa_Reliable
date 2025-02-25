@@ -1,5 +1,5 @@
 #include "main.h"
-
+#if 0
 // Pause between transmited packets in seconds.
 #define PAUSE       20  // client, time between transmissions
 static int Failure_Counter = 0;
@@ -106,3 +106,4 @@ void clientServerLoop()
     } //legal to transmit
   } // as a client
 } //ClientServeLoop
+#endif //0
