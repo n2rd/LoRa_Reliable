@@ -230,6 +230,9 @@ static bool local_PARMS_parameters_csv_output;
 
 PARAMETERS local_params;
 
+#define PRINTF_NG_NULL_ARG "NG:Arguement required and none provided\r\n"
+
+
 static char     callsign[10];
 static float    frequency; //depricated
 static int      frequency_index;
@@ -271,6 +274,8 @@ char        current_char_value2;
 bool        valid_gridsquare_format;
 char        grid4_str_value[5];
 
+
+
 strcpy(command, command_arg);
 
 if (command[0] == '/') {
@@ -290,7 +295,7 @@ if (command[0] == '/') {
     case 'A':
         current_int_value = PARMS.parameters.address;
         radio_address     = PARMS.parameters.address;
-        cli_process_int(parameter_query, "Radio Address", command, 0, 254 , & radio_address);
+        cli_process_int(parameter_query, "Radio Address", command, 1, 254 , & radio_address);
         if (current_int_value != radio_address) {
             PARMS.parameters.address = radio_address;
             manager.setThisAddress(radio_address);
@@ -311,17 +316,22 @@ if (command[0] == '/') {
      
 //      Call Sign--------------------------------------------------------------
     case 'C':
-        strcpy(callsign, PARMS.parameters.callsign);
-        if (parameter_query) {
-            ps_st.printf("OK:Call sign = %s\r\n", callsign);
+        if (command[0] != '\0') {
+            strcpy(callsign, PARMS.parameters.callsign);
+            if (parameter_query) {
+                ps_st.printf("OK:Call sign = %s\r\n", callsign);
+            }
+            else {
+                strcpy(callsign, command); 
+                strcpy(current_str_value,callsign);
+                ps_st.printf("OK:Call sign = %s\r\n", callsign);
+                if (current_str_value != callsign) {
+                    strcpy(PARMS.parameters.callsign, callsign);
+                }    
+            }
         }
         else {
-            strcpy(callsign, command); 
-            strcpy(current_str_value,callsign);
-            ps_st.printf("OK:Call sign = %s\r\n", callsign);
-            if (current_str_value != callsign) {
-                strcpy(PARMS.parameters.callsign, callsign);
-            }    
+            ps_st.printf(PRINTF_NG_NULL_ARG);
         }
         break;
 //      Reset radio to default state-------------------------------------------
@@ -332,39 +342,50 @@ if (command[0] == '/') {
 
 //      Frequency--------------------------------------------------------------
     case 'F':
-        current_int_value = PARMS.parameters.frequency_index;
-        frequency_index   = PARMS.parameters.frequency_index;
-        cli_process_index_float_value_unit(parameter_query, "Frequency Index", command, 0, sizeof(frequency_array)/sizeof(frequency_array[0])-1, frequency_array , "MHz",  &frequency_index);
-        if (current_int_value != frequency_index) {
-            PARMS.parameters.frequency_index = frequency_index;
-            driver.setFrequency(frequency_array[frequency_index]);
+        if (command[0] != '\0') {
+            current_int_value = PARMS.parameters.frequency_index;
+            frequency_index   = PARMS.parameters.frequency_index;
+            cli_process_index_float_value_unit(parameter_query, "Frequency Index", command, 0, sizeof(frequency_array)/sizeof(frequency_array[0])-1, frequency_array , "MHz",  &frequency_index);
+            if (current_int_value != frequency_index) {
+                PARMS.parameters.frequency_index = frequency_index;
+                driver.setFrequency(frequency_array[frequency_index]);
+            }
         }
-        break;
+        else {
+            ps_st.printf(PRINTF_NG_NULL_ARG);
+        }
+         break;
 
 //      GPS Off/GPS on on Transmit only/On-------------------------------------
 //const char *powerStateNames[3] = { "OFF", "ON", "TX"}; <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 //      GPS.getPowerStateName(GPSClass::GPS_ON)
     case 'G':
         #if HAS_GPS == 1
-            #define PRINTF_OK_GPS "OK:%u (%s)\r\n"
-            #define PRINTF_NG_GPS "NG:%u must be 0 for OFF, 1 for ON AT TX or 2 for ON\r\n"
-
-
-            current_int_value = PARMS.parameters.gps_state;
-            gps_index         = PARMS.parameters.gps_state;
-            if (parameter_query) {
-                //ps_st.printf(PRINTF_OK_GPS, current_int_value, gps_power_state_name[current_int_value]);
-                ps_st.printf(PRINTF_OK_GPS, current_int_value, GPS.getPowerStateName((GPSClass::PowerState) current_int_value));
-            }
-            else {
-                int_input = atoi(command);
-                if ((int_input >= 0 && int_input <= 2) && is_numeric(command)) {
-                    PARMS.parameters.gps_state = int_input;
-                    ps_st.printf(PRINTF_OK_GPS, (int)PARMS.parameters.gps_state, GPS.getPowerStateName((GPSClass::PowerState) int_input));
+            if (command[0] != '\0') {
+                #define PRINTF_OK_GPS "OK:%u (%s)\r\n"
+                #define PRINTF_NG_GPS "NG:%u must be 0 for OFF, 1 for ON AT TX or 2 for ON\r\n"
+    
+    
+                current_int_value = PARMS.parameters.gps_state;
+                gps_index         = PARMS.parameters.gps_state;
+                if (parameter_query) {
+                    //ps_st.printf(PRINTF_OK_GPS, current_int_value, gps_power_state_name[current_int_value]);
+                    ps_st.printf(PRINTF_OK_GPS, current_int_value, GPS.getPowerStateName((GPSClass::PowerState) current_int_value));
                 }
                 else {
-                    ps_st.printf(PRINTF_NG_GPS, int_input);
+                    int_input = atoi(command);
+                    if ((int_input >= 0 && int_input <= 2) && is_numeric(command)) {
+                        PARMS.parameters.gps_state = int_input;
+                        ps_st.printf(PRINTF_OK_GPS, (int)PARMS.parameters.gps_state, GPS.getPowerStateName((GPSClass::PowerState) int_input));
+                    }
+                    else {
+                        ps_st.printf(PRINTF_NG_GPS, int_input);
+                    }
                 }
+    
+            }
+            else {
+                ps_st.printf(PRINTF_NG_NULL_ARG);
             }
         #else //HAS_GPS == 0
             ps_st.printf("NO GPS defined for this device\r\n");
@@ -469,39 +490,45 @@ if (command[0] == '/') {
                 return 1;
             }
             if ((current_lat_value != lat_value) || (current_lon_value != lon_value)) {
-                    //Save lat/lon pair to RAM and NVRAM
                     PARMS.parameters.lat_value = lat_value;
-                    PARMS.parameters.lon_value = lon_value;
-    
-    
+                    PARMS.parameters.lon_value = lon_value;    
             }
             ps_st.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
-    
         }
 
         break;
 
 //      Modulation-------------------------------------------------------------
         case 'M':
-            current_int_value = PARMS.parameters.modulation_index;
-            modulation_index  = PARMS.parameters.modulation_index;
-            cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, sizeof(modulation_array)/sizeof(modulation_array[0])-1, modulation_array,  &modulation_index);
-            if (current_int_value != modulation_index) {
-                //Change modulation index in the radio, save to RAM and NVRAM
-                PARMS.parameters.modulation_index = modulation_index;
-                setModemConfig(modulation_index); //SF Bandwith etc
+            if (command[0] != '\0') {
+                current_int_value = PARMS.parameters.modulation_index;
+                modulation_index  = PARMS.parameters.modulation_index;
+                cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, sizeof(modulation_array)/sizeof(modulation_array[0])-1, modulation_array,  &modulation_index);
+                if (current_int_value != modulation_index) {
+                    //Change modulation index in the radio, save to RAM and NVRAM
+                    PARMS.parameters.modulation_index = modulation_index;
+                    setModemConfig(modulation_index); //SF Bandwith etc
+                }
+            }
+            else {
+                ps_st.printf(PRINTF_NG_NULL_ARG);
             }
             break;
 
 //      Power------------------------------------------------------------------
         case 'P':
-            current_int_value = PARMS.parameters.power_index;
-            power_index       = PARMS.parameters.power_index;
-            cli_process_index_float_value_unit(parameter_query, "Power Index", command, 0, sizeof(power)/sizeof(power[0])-1, power , "dBm",  &power_index);
-            if (current_int_value != power_index) {
-                //Change power index in the radio, save to RAM and NVRAM
-                PARMS.parameters.power_index = power_index;
-                driver.setTxPower(power[power_index]);
+            if (command[0] != '\0') {
+                current_int_value = PARMS.parameters.power_index;
+                power_index       = PARMS.parameters.power_index;
+                cli_process_index_float_value_unit(parameter_query, "Power Index", command, 0, sizeof(power)/sizeof(power[0])-1, power , "dBm",  &power_index);
+                if (current_int_value != power_index) {
+                    //Change power index in the radio, save to RAM and NVRAM
+                    PARMS.parameters.power_index = power_index;
+                    driver.setTxPower(power[power_index]);
+                }
+            }
+            else {
+                ps_st.printf(PRINTF_NG_NULL_ARG);
             }
             break;
 
@@ -521,14 +548,20 @@ if (command[0] == '/') {
 
 //      Radio Type-------------------------------------------------------------
         case 'T':
-            //current_int_value = PARMS.parameters.radio_type;
-            //radio_type        = PARMS.parameters.radio_type;
-            current_int_value = radio_type;
-            cli_process_int(parameter_query, "Radio Type", command, 0, 2 , & radio_type);
-            if (current_int_value != radio_type) {
-                //set radio type here.....
+            if (command[0] != '\0')
+            {
+                //current_int_value = PARMS.parameters.radio_type;
+                radio_type        = PARMS.parameters.radioType;
+                current_int_value = radio_type;
+                cli_process_int(parameter_query, "Radio Type", command, 0, 2 , & radio_type);
+                if (current_int_value != radio_type) {
+                    PARMS.parameters.radioType = radio_type;
+                }
             }
-             break;
+            else {
+                ps_st.printf(PRINTF_NG_NULL_ARG);
+             }
+            break;
 
 //      Write to NVRAM---------------------------------------------------------
         case 'W':
@@ -549,62 +582,68 @@ if (command[0] == '/') {
             char     grid6; // (1B) 1 char subsquare identifier, encoded as an ascii char 
 */
         case 'X':
-            if (parameter_query){
-                current_uint16_value = PARMS.parameters.grid4;
-                decode_grid4(current_uint16_value, current_str_value);
-                current_char_value1  = PARMS.parameters.grid5;
-                current_char_value2  = PARMS.parameters.grid6;
-                ps_st.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
-            }
-            else {
-                i = strlen(command);
-                if (i == 4) {
-                    valid_gridsquare_format =       ((int)'A' <= (int)command[0] && (int)command[0] <= (int('R'))) &&
-                                                    ((int)'A' <= (int)command[1] && (int)command[1] <= (int('R'))) &&
-                                                    ((int)'0' <= (int)command[2] && (int)command[2] <= (int('9'))) &&
-                                                    ((int)'0' <= (int)command[3] && (int)command[3] <= (int('9'))) ;
-                    if (valid_gridsquare_format) {
-                        strcpy(current_str_value, command);
-                        PARMS.parameters.grid4 = encode_grid4(command);
-                        PARMS.parameters.grid5 = 'l';       //L for mid grid location
-                        PARMS.parameters.grid6 = 'l';       //L for mid grid location
-                    }
-                    else {
-                        ps_st.printf("NG:Invalid 4 character grid\r\n");
-                        return 1;
-                    }
-                }
-                else if (i == 6) {
-                        valid_gridsquare_format =   ((int)'A' <= (int)command[0] && (int)command[0] <= (int('R'))) &&
-                                                    ((int)'A' <= (int)command[1] && (int)command[1] <= (int('R'))) &&
-                                                    ((int)'0' <= (int)command[2] && (int)command[2] <= (int('9'))) &&
-                                                    ((int)'0' <= (int)command[3] && (int)command[3] <= (int('9'))) &&
-                                                    ((int)'A' <= (int)command[4] && (int)command[4] <= (int('X'))) &&
-                                                    ((int)'A' <= (int)command[5] && (int)command[5] <= (int('X')));
-                    if (valid_gridsquare_format) {
-                        for (j = 0; j < 4; j++) {
-                            grid4_str_value[j]   = command[j];
-                            current_str_value[j] = command[j];
-                        }
-                        grid4_str_value[4]   = '\0';
-                        current_str_value[4] = '\0';
-                        PARMS.parameters.grid4 = encode_grid4(command);
-                        PARMS.parameters.grid5 = command[4];
-                        PARMS.parameters.grid6 = command[5];
-                    }
-                    else {
-                        ps_st.printf("NG:Invalid 6 character grid\r\n");
-                        return 1;
-                    }
+            if (command[0] != '\0')
+            {
+                if (parameter_query){
+                    current_uint16_value = PARMS.parameters.grid4;
+                    decode_grid4(current_uint16_value, current_str_value);
+                    current_char_value1  = PARMS.parameters.grid5;
+                    current_char_value2  = PARMS.parameters.grid6;
+                    ps_st.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
                 }
                 else {
-                    ps_st.printf("NG:Gridsquare must be 4 or 6 character gridswuare\r\n");
-                    return 1;
+                    i = strlen(command);
+                    if (i == 4) {
+                        valid_gridsquare_format =       ((int)'A' <= (int)command[0] && (int)command[0] <= (int('R'))) &&
+                                                        ((int)'A' <= (int)command[1] && (int)command[1] <= (int('R'))) &&
+                                                        ((int)'0' <= (int)command[2] && (int)command[2] <= (int('9'))) &&
+                                                        ((int)'0' <= (int)command[3] && (int)command[3] <= (int('9'))) ;
+                        if (valid_gridsquare_format) {
+                            strcpy(current_str_value, command);
+                            PARMS.parameters.grid4 = encode_grid4(command);
+                            PARMS.parameters.grid5 = 'l';       //L for mid grid location
+                            PARMS.parameters.grid6 = 'l';       //L for mid grid location
+                        }
+                        else {
+                            ps_st.printf("NG:Invalid 4 character grid\r\n");
+                            return 1;
+                        }
+                    }
+                    else if (i == 6) {
+                            valid_gridsquare_format =   ((int)'A' <= (int)command[0] && (int)command[0] <= (int('R'))) &&
+                                                        ((int)'A' <= (int)command[1] && (int)command[1] <= (int('R'))) &&
+                                                        ((int)'0' <= (int)command[2] && (int)command[2] <= (int('9'))) &&
+                                                        ((int)'0' <= (int)command[3] && (int)command[3] <= (int('9'))) &&
+                                                        ((int)'A' <= (int)command[4] && (int)command[4] <= (int('X'))) &&
+                                                        ((int)'A' <= (int)command[5] && (int)command[5] <= (int('X')));
+                        if (valid_gridsquare_format) {
+                            for (j = 0; j < 4; j++) {
+                                grid4_str_value[j]   = command[j];
+                                current_str_value[j] = command[j];
+                            }
+                            grid4_str_value[4]   = '\0';
+                            current_str_value[4] = '\0';
+                            PARMS.parameters.grid4 = encode_grid4(command);
+                            PARMS.parameters.grid5 = command[4];
+                            PARMS.parameters.grid6 = command[5];
+                        }
+                        else {
+                            ps_st.printf("NG:Invalid 6 character grid\r\n");
+                            return 1;
+                        }
+                    }
+                    else {
+                        ps_st.printf("NG:Gridsquare must be 4 or 6 character gridswuare\r\n");
+                        return 1;
+                    }
+                    current_uint16_value = PARMS.parameters.grid4;
+                    current_char_value1  = PARMS.parameters.grid5;
+                    current_char_value2  = PARMS.parameters.grid6;
+                    ps_st.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
                 }
-                current_uint16_value = PARMS.parameters.grid4;
-                current_char_value1  = PARMS.parameters.grid5;
-                current_char_value2  = PARMS.parameters.grid6;
-                ps_st.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
+            }
+            else {
+                ps_st.printf(PRINTF_NG_NULL_ARG);
             }
         
             break;
