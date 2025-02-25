@@ -149,6 +149,8 @@ void show_rolling_item(int r_menu_num, int position, int item_num) //position -1
 //   this is the default case
 void menu(int menu_num) //only for non-address menus
 {
+  menu_active = true;
+  display.clear();
   switch (menu_num) {
     case ADD_MENU:
       rolling_menu(menu_num);
@@ -321,9 +323,9 @@ void on_button_short_click()
 }
 void on_button_long_click()
 {
-  menu_active = true;
   if (MENU_DEBUG) Serial.println("long click\n");
   cur_menu = 0;
+  menu_active = true;
   menu(0);
 }
 
