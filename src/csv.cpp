@@ -26,23 +26,25 @@ size_t CsvClass::write(const char* str) { //this outputs as info
 void CsvClass::data(CSVDATAPTR data) 
 {
     printObject.printf(
-        "D, %ld, %c, %d, %d, %.0f, %.0f\r\n",
+        "D, %ld, %c, %d, %d, %2u, %.0f, %.0f\r\n",
         data->timeStamp,
         data->recvType,
         data->from,
         data->to,
+        data->headerId,
         data->rssi,
         data->snr
     );
 }
 /*----------------------------------------------------*/
-void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, float rssi, float snr)
+void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, uint8_t headerId, float rssi, float snr)
 {
     CSVDATA datastruct;
     datastruct.timeStamp = timeStamp;
     datastruct.recvType = recvType;
     datastruct.from = from;
     datastruct.to = to;
+    datastruct.headerId = headerId;
     datastruct.rssi = rssi;
     datastruct.snr = snr;
     data(&datastruct);

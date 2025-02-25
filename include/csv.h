@@ -6,6 +6,7 @@ typedef struct CsvData {
     char recvType;
     int from;
     int to;
+    uint8_t headerId;
     float rssi;
     float snr;
 } CSVDATA, *CSVDATAPTR;
@@ -16,7 +17,7 @@ class CsvClass : public Print { //we derive from Print so that we can use printS
         virtual size_t write(uint8_t c); //this outputs as info 
         virtual size_t write(const char* str); //this outputs as info 
         void data(CSVDATAPTR data);
-        void data(unsigned long timeStamp,char recvType, int from, int to, float rssi, float snr);
+        void data(unsigned long timeStamp,char recvType, int from, int to, uint8_t headerID, float rssi, float snr);
         void info(const char *threeCharTag, char *data);
         void error(const char *threeCharTag, char *data);
         void fatalError(const char *threeCharTag, char *data);
