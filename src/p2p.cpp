@@ -1,4 +1,5 @@
 #include "main.h"
+#include "p2p.h"
 
 //
 //Peer to Peer Messaging
@@ -9,6 +10,11 @@
 // Pause between transmited packets in seconds.
 #define PAUSE       20  // client, time between transmissions
 #define TIMEOUT     200  //for sendtoWait
+
+// some state variables
+extern bool menu_active;
+extern bool tx_lock;
+extern bool short_pause;
 
 
 //send and receive data
@@ -80,9 +86,11 @@ void p2pLoop(void)
           //display the message
           int snr = driver.lastSNR();
           int rssi = driver.lastRssi();
-          display.printf("Broadcast from %i #%i\n", from, (int)(buf[1]*256 + buf[0]));
-          display.printf("%iB #%i ", from, (int)(buf[1]*256 + buf[0]));
-          display.printf("RSSI %i  SNR %i\n", rssi, snr);
+          if (!menu_active) {
+            display.printf("Broadcast from %i #%i\n", from, (int)(buf[1]*256 + buf[0]));
+            display.printf("%iB #%i ", from, (int)(buf[1]*256 + buf[0]));
+            display.printf("RSSI %i  SNR %i\n", rssi, snr);
+          }
           //send reply back to sender
           rssi = abs(rssi);
           data[0] = static_cast<uint8_t>(rssi);
@@ -106,8 +114,11 @@ void p2pLoop(void)
           //we have a signal report for us
           int rssi = 0 - buf[0];
           int snr = buf[1];
-          display.printf("SigRep %u ", from);
-          display.printf("RSSI %i SNR %i\n", rssi, snr);
+          if (!menu_active) {
+            display.printf("Signal Report from %i\n", from);
+            display.printf("SigRep %u ", from);
+            display.printf("RSSI %i SNR %i\n", rssi, snr);
+          }
           csv_serial.data(millis(), 'S', from, to, headerId, rssi, snr);
           csv_telnet.data(millis(), 'S', from, to, headerId, rssi, snr);
         }
@@ -115,7 +126,13 @@ void p2pLoop(void)
     } //message waiting
 
   // every PAUSE seconds add a broadcast message to the message queue to be sent
-  if ((!tx_lock) && (((millis() - broadcast_time) > (PAUSE * 1000)))) {
+  // if short_aouse is true then the pause interval is cut by half
+  // this is to facilitate testing
+  int effective_pause = PAUSE;
+  if (short_pause) {
+    effective_pause = PAUSE / 2;
+  }
+  if ((!tx_lock) && (((millis() - broadcast_time) > (effective_pause * 1000)))) {
      broadcast_time = millis();
      data[0] = static_cast<uint8_t>(counter & 0xFF); //low byte
      data[1] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
