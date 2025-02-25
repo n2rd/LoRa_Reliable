@@ -533,6 +533,7 @@ if (command[0] == '/') {
 //      Write to NVRAM---------------------------------------------------------
         case 'W':
             PARMS.update(); // update current settings in parameters structure to nvs
+            ps_st.printf("OK: Non-volatile Storage updated with current values\r\n"); 
             break;
     
 //      Maidenhead Grid Square (4 or 6 characters)------------------------------
