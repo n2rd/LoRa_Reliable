@@ -56,7 +56,9 @@ void ota_setup(void) {
   Serial.println(WiFi.localIP());
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", "Hi! This is Lora_reliable. ASYNC");
+    char buffer[100];
+    sprintf(buffer,"Hi! This is a Lora_reliable device.\r\n\r\nThis radio is #%u ASYNC",manager.thisAddress());
+    request->send(200, "text/plain",buffer);
   });
 
   // https://docs.elegantota.pro/getting-started/installation
