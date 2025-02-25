@@ -294,7 +294,7 @@ if (command[0] == '/') {
         if (current_int_value != radio_address) {
             PARMS.parameters.address = radio_address;
             driver.setThisAddress(radio_address);
-            driver.setHeaderTo(radio_address);
+            driver.setHeaderFrom(radio_address);
         }
         break;
 
