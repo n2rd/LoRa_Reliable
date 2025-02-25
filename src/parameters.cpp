@@ -6,9 +6,33 @@ ParametersClass PARMS;
 
 Preferences ParametersClass::preferences;
 //
+//@brief Dump a key value thats a Uint type
+//
+void ParametersClass::DumpKeyUint(char *keyToDump) {
+      if (preferences.isKey(keyToDump)) {
+            log_e("Address key exists");
+            uint8_t temp = preferences.getUInt(keyToDump);
+            log_e("Address: %u",temp);
+      }
+      else log_e("No key: %s",keyToDump);
+}
+//
+//@brief Dump a key value thats a string
+//
+void ParametersClass::DumpKeyString(char *keyToDump) {
+      if (preferences.isKey(keyToDump)) {
+            log_e("Callsign key exists");
+            String stringValue = preferences.getString(keyToDump);
+            char* temp = (char *) stringValue.c_str();
+            int len = strlen(temp);
+            log_e("callsign:(%i), %s",len,temp);
+      }
+      else log_e("No key: %s",keyToDump);
+}
+//
 //@brief parameter initialization from nv ram if it exits else use defaults
 //
-void ParametersClass::init(){
+void ParametersClass::init() {
   //each parameter is tested individually to see if it exists in the preferences 
   //  so if there are changes in the parameters they will be picked up
   // if the preferences do not exist, the default is written to the preferences nvram
@@ -133,25 +157,17 @@ void ParametersClass::init(){
   } else { //use defaults and write to nvram
         parameters.address = DEFAULT_ADDRESS;
         preferences.putUInt(Key.address, parameters.address);
-  }
-  {
-      if (preferences.isKey(Key.callsign)) {
-            log_e("Callsign key exists");
-            const char* temp = preferences.getString(Key.callsign).c_str();
-            log_e("callsign: %s",temp);
-            log_e("Callsign in parameters: %s", parameters.callsign);
-      }
-      else log_e("No key: %s",Key.callsign);
-      update();
-      const char* temp = preferences.getString(Key.callsign).c_str();
-      log_e("callsign after update: %s",temp);
-      //preferences.end();
-  }
-  log_e("Parameters init Succeeded");
+  }     
+  preferences.end();
 }
-
+//
+//@brief update nvs from parameters if they have changed
+//
 void ParametersClass::update() {
-      log_e("start parameter update");
+    log_e("start parameter update");
+    if (!preferences.begin("LoRa", RW_MODE)) {
+      log_e("Couldn't open preferences RW");
+    }
     //update the parameters in the preferences
     //write only new values as writing to the preferences is slow
     if (strcmp(preferences.getString(Key.callsign).c_str(), parameters.callsign) != 0) {
@@ -196,6 +212,7 @@ void ParametersClass::update() {
     if (preferences.getUInt(Key.address) != parameters.address) {
         preferences.putUInt(Key.address, parameters.address);
     }
+    preferences.end();
     log_e("end Parameter update()");
 }
 

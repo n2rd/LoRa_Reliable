@@ -137,6 +137,8 @@ class ParametersClass {
   private:
     static Preferences preferences;
     void init();
+    void DumpKeyUint(char *keyToDump);
+    void DumpKeyString(char *keyToDump);
 };
 
 extern ParametersClass PARMS;
