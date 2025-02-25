@@ -7,8 +7,11 @@
 // TIME esp32 internal RTC
 #include <ESP32Time.h>  //includes time.h, uses the RTC built into ESP32
 ESP32Time rtc(0);  // stay on UTC, neg or pos offset in seconds
-  
+
+#ifndef GPS_DEBUG  
 #define GPS_DEBUG 0
+#endif //GPS_DEBUG
+
 static HardwareSerial GPSSerial(2);    //use Hardware UART1 for GPS
 
 GPSClass GPS;
