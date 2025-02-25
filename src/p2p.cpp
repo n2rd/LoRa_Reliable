@@ -35,10 +35,12 @@ uint32_t double_button_time = 0.0;
 typedef struct {
   uint8_t to;
   uint8_t len;
+  uint8_t headerID;
   uint8_t data[DRIVER_MAX_MESSAGE_LEN];
 } message_t;
 
 ArduinoQueue<message_t> transmit_queue(MAX_QUEUE);
+uint8_t transmit_headerId = 0;
 
 //keep track of the last time a message was transmitted
 uint64_t tx_time = 0;
@@ -72,6 +74,7 @@ void p2pLoop(void)
       uint8_t id;
       uint8_t flags;
       if (manager.recvfrom(buf, &len, &from, &to, &id, &flags)) {
+        uint8_t headerId = driver.headerId();
         if (to == RH_BROADCAST_ADDRESS) {
           //we have a broadcast message
           //display the message
@@ -80,8 +83,6 @@ void p2pLoop(void)
           display.printf("Broadcast from %i #%i\n", from, (int)(buf[1]*256 + buf[0]));
           display.printf("%iB #%i ", from, (int)(buf[1]*256 + buf[0]));
           display.printf("RSSI %i  SNR %i\n", rssi, snr);
-          csv_serial.data(millis(), 'B', from, to, rssi, snr);
-          csv_telnet.data(millis(), 'B', from, to, rssi, snr);
           //send reply back to sender
           rssi = abs(rssi);
           data[0] = static_cast<uint8_t>(rssi);
@@ -92,27 +93,29 @@ void p2pLoop(void)
           message.data[1] = data[1];
           message.len = 2;
           message.to = from;
+          message.headerID = headerId;
           if (!transmit_queue.isFull()) {
             transmit_queue.enqueue(message);
           } else {
             csv_serial.debug("p2p",(char *)"Transmit queue full\n");
             csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
           }
-          //manager.sendto(data, 2, from);
+          csv_serial.data(millis(), 'B', from, to, headerId, rssi, snr);
+          csv_telnet.data(millis(), 'B', from, to, headerId, rssi, snr);
         } else {
           //we have a signal report for us
           int rssi = 0 - buf[0];
           int snr = buf[1];
-          display.printf("Signal report from %i\n", from);
+          display.printf("SigRep %u ", from);
           display.printf("RSSI %i SNR %i\n", rssi, snr);
-          csv_serial.data(millis(), 'S', from, to, rssi, snr);
-          csv_telnet.data(millis(), 'S', from, to, rssi, snr);
+          csv_serial.data(millis(), 'S', from, to, headerId, rssi, snr);
+          csv_telnet.data(millis(), 'S', from, to, headerId, rssi, snr);
         }
       } //received a message
     } //message waiting
 
   // every PAUSE seconds add a broadcast message to the message queue to be sent
-  if ((!tx_lock) && (millis() - broadcast_time > PAUSE * 1000)) {
+  if ((!tx_lock) && (((millis() - broadcast_time) > (PAUSE * 1000)))) {
      broadcast_time = millis();
      data[0] = static_cast<uint8_t>(counter & 0xFF); //low byte
      data[1] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
@@ -121,6 +124,7 @@ void p2pLoop(void)
           message.data[0] = data[0];
           message.data[1] = data[1];
           message.len = 2;
+          message.headerID = transmit_headerId++;
           message.to = RH_BROADCAST_ADDRESS;
           if (!transmit_queue.isFull()) {
             transmit_queue.enqueue(message);
@@ -132,11 +136,17 @@ void p2pLoop(void)
    } //broadcast message
 
   //transmit the top message in the queue after random delay
-  if ((!tx_lock) && (millis() - tx_time > random_delay)) {
+  if ((!tx_lock) && ((millis() - tx_time) > random_delay)) {
+    //log_e("ATransmit Queue Depth: %d", transmit_queue.itemCount());
     if (!transmit_queue.isEmpty()) {
       message_t message;
       message = transmit_queue.dequeue();
+      //log_e("Queue Depth: %u",transmit_queue.itemCount());
+      unsigned long curMicros = micros();
+      manager.setHeaderId(message.headerID);
       manager.sendto(message.data, message.len, message.to);
+      unsigned long transmitMicros = micros() - curMicros;
+      log_e("Transmit time: %ld", transmitMicros);
       tx_time = millis();
       int max_delay;
       if (!short_pause){
@@ -145,5 +155,8 @@ void p2pLoop(void)
         max_delay = random_delay_generator(MAX_DELAY/2);  //short pause
       }
     } //if it is time to transmit a message
+  }
+  else {
+    //log_e("BTransmit Queue Depth: %d", transmit_queue.itemCount());
   }
 } //loop
