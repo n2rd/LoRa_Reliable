@@ -201,8 +201,8 @@ void p2pLoop(void)
           //  log_e("Grid Locator: %s", gridLocator);
           char gridLocator[11];
           extractGrid6LocatorFromData(2, buf, len, gridLocator);
-          csv_serial.data(millis(), 'B', from, to, headerId, rssi, snr, gridLocator);
-          csv_telnet.data(millis(), 'B', from, to, headerId, rssi, snr, gridLocator);
+          csv_serial.data(GPS.getTimeStamp(), 'B', from, to, headerId, rssi, snr, gridLocator);
+          csv_telnet.data(GPS.getTimeStamp(), 'B', from, to, headerId, rssi, snr, gridLocator);
         } else {
           //we have a signal report for us
           int rssi = 0 - buf[0];
@@ -215,8 +215,8 @@ void p2pLoop(void)
           }
           char gridLocator[11];
           extractGrid6LocatorFromData(2, buf, len, gridLocator);
-          csv_serial.data(millis(), 'S', from, to, headerId, rssi, snr, gridLocator);
-          csv_telnet.data(millis(), 'S', from, to, headerId, rssi, snr, gridLocator);
+          csv_serial.data(GPS.getTimeStamp(), 'S', from, to, headerId, rssi, snr, gridLocator);
+          csv_telnet.data(GPS.getTimeStamp(), 'S', from, to, headerId, rssi, snr, gridLocator);
         }
       } //received a message
     } //message waiting
@@ -246,8 +246,8 @@ void p2pLoop(void)
           if (!transmit_queue.isFull()) {
             transmit_queue.enqueue(message);
             uint8_t from = manager.thisAddress();
-            csv_serial.broadcast(millis(), from, transmit_headerId, gridLocator);
-            csv_telnet.broadcast(millis(), from, transmit_headerId, gridLocator);
+            csv_serial.broadcast(GPS.getTimeStamp(), from, transmit_headerId, gridLocator);
+            csv_telnet.broadcast(GPS.getTimeStamp(), from, transmit_headerId, gridLocator);
           } else {
             csv_serial.debug("p2p",(char *)"Transmit queue full\n");
             csv_telnet.debug("p2p",(char *)"Transmit queue full\n");

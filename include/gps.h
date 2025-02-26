@@ -25,6 +25,7 @@ class GPSClass {
         PowerState onoffState();
         void setup();
         void loop();
+        unsigned long getTimeStamp();
         bool getLocation(double *lat, double *lng, double *alt = NULL, double *hdop = NULL);
         char *latLonToMaidenhead(double latitude, double longitude, int precision);
         void maidenheadGridToLatLon(char* grid,double *lat, double *lon);
@@ -33,6 +34,7 @@ class GPSClass {
         //HardwareSerial GPSSerial;    //use Hardware UART1 for GPS
         TinyGPSPlus gps;
         PowerState powerState;
+        bool rtcIsSet;
         #ifdef ARDUINO_ARCH_ESP32
         static void GPSTask(void *pvParameter);
         #endif //ARDUINO_ARCH_ESP32

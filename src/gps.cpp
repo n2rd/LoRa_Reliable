@@ -21,6 +21,7 @@ GPSClass GPS;
 //
 GPSClass::GPSClass()
 {
+  rtcIsSet = false;
   setup();
 }
 //
@@ -77,7 +78,33 @@ void GPSClass::loop()
   while (GPSSerial.available() > 0) {
     gps.encode(GPSSerial.read());
   }
+  if (!rtcIsSet) {
+    if (gps.time.isUpdated() && gps.time.isValid()
+      && gps.date.isUpdated() && gps.date.isValid()) {
+      rtc.setTime(
+        gps.time.second(),
+        gps.time.minute(),
+        gps.time.hour(),
+        gps.date.day(),
+        gps.date.month(),
+        gps.date.year(),
+        0
+      );
+      rtcIsSet = true;
+      log_e(" time: %lu", rtc.getLocalEpoch());
+    }
+  }
 }
+
+unsigned long GPSClass::getTimeStamp()
+{
+  if (rtcIsSet)
+    return rtc.getLocalEpoch();
+  else
+    return millis();
+}
+
+
 bool GPSClass::getLocation(double *lat, double *lng, double *alt, double *hdop) {
   bool gps_fix = false;
   unsigned long gps_start = millis();
@@ -181,7 +208,7 @@ char* GPSClass::latLonToMaidenhead(double latitude, double longitude, int precis
 extern "C" {
 #endif
 #endif //0
-char letterize(int x, bool upper) {
+static char letterize(int x, bool upper) {
   if (upper)
     return (char) x + 65;
   else
