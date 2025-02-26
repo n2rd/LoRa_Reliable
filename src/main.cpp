@@ -139,8 +139,11 @@ void loop()
     telnet.loop();
     p2pLoop();
     #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
-    rotary_loop();
-  #endif
+      rotary_loop();
+    #endif
+    #if HAS_GPS
+      GPS.loop();
+    #endif
   }
   ota_loop();
 

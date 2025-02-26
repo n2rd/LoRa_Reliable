@@ -23,31 +23,34 @@ size_t CsvClass::write(const char* str) { //this outputs as info
     return strlen(str);
 }
 /*----------------------------------------------------*/
-void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId)
+void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId, char *gridLocator)
 {
+    char nul = 0;
     printObject.printf(
-        "B, %ld, O, %3d, 255, %3u\r\n",
+        "B, %ld, O, %3d, 255, %3u,    ,    , %s\r\n",
         timeStamp,
         from,
-        headerId
+        headerId,
+        gridLocator == NULL ? &nul : gridLocator
     );  
 }
 /*----------------------------------------------------*/
 void CsvClass::data(CSVDATAPTR data) 
 {
     printObject.printf(
-        "D, %ld, %c, %3d, %3d, %3u, %3.0f, %3.0f\r\n",
+        "D, %ld, %c, %3d, %3d, %3u, %3.0f, %3.0f, %s\r\n",
         data->timeStamp,
         data->recvType,
         data->from,
         data->to,
         data->headerId,
         data->rssi,
-        data->snr
+        data->snr,
+        data->gridLocator
     );
 }
 /*----------------------------------------------------*/
-void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, uint8_t headerId, float rssi, float snr)
+void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, uint8_t headerId, float rssi, float snr, char* gridLocator)
 {
     CSVDATA datastruct;
     datastruct.timeStamp = timeStamp;
@@ -57,6 +60,10 @@ void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, uin
     datastruct.headerId = headerId;
     datastruct.rssi = rssi;
     datastruct.snr = snr;
+    if (gridLocator)
+        strncpy(datastruct.gridLocator, (const char *)gridLocator, 11);
+    else
+        datastruct.gridLocator[0] = 0;
     data(&datastruct);
 }
 /*----------------------------------------------------*/
