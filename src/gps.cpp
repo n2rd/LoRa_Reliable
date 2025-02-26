@@ -208,7 +208,7 @@ char* GPSClass::latLonToMaidenhead(double lat, double lon, int size = 6) {
         lon = fmod(lon, LON_F[i]);
         lat = fmod(lat, LAT_F[i]);
     }
-    locator[(i-1)*2]=0;
+    locator[i*2]=0;
     return locator;
 }
 
