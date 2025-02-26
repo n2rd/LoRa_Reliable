@@ -91,7 +91,6 @@ void GPSClass::loop()
         0
       );
       rtcIsSet = true;
-      log_e(" time: %lu", rtc.getLocalEpoch());
     }
   }
 }
