@@ -30,6 +30,7 @@ class GPSClass {
         char *latLonToMaidenhead(double latitude, double longitude, int precision);
         void maidenheadGridToLatLon(char* grid,double *lat, double *lon);
         const char *getPowerStateName(PowerState state);
+        double distance(double lat1, double lon1, double lat2, double lon2);
     private:
         //HardwareSerial GPSSerial;    //use Hardware UART1 for GPS
         TinyGPSPlus gps;

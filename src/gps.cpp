@@ -282,4 +282,28 @@ void GPSClass::maidenheadGridToLatLon(char* grid,double *lat, double *lon) {
 const char *GPSClass::getPowerStateName(GPSClass::PowerState state){
   return powerStateNames[(int)state];
 }
+
+static double degreesToRadians(double d)
+{
+  return d * (PI / 180.0);
+}
+//
+//@brief returns distance in miles between 2 pairs of lat/lon data
+double GPSClass::distance(double lat1, double lon1, double lat2, double lon2)
+{
+  const double earthRadius = 6371.0; //in kilometers
+  double deltaRLat, deltaRLon;
+  deltaRLat = degreesToRadians(lat2 - lat1);
+  deltaRLon = degreesToRadians(lon2 - lon1);
+
+  // Apply the Haversine formula
+  double a = sin(deltaRLat / 2) * sin(deltaRLat / 2) + 
+    cos(degreesToRadians(lat1)) * cos(degreesToRadians(lat2)) * 
+    sin(deltaRLon / 2) * sin(deltaRLon / 2);
+    
+  double c = 2 * atan2(sqrt(a), sqrt(1 - a)); //calulate the central angle 
+  double distanceInKilometers = earthRadius *c;
+  double miles = distanceInKilometers / 1.6; //convert to miles
+  return miles;
+}
 #endif //defined(HAS_GPS) && (HAS_GPS ==1)
