@@ -128,7 +128,49 @@ void setup()
    rotary_setup();
 #endif
 }
-
+/***********************************************************/
+/***********************************************************/
+const int SIB_SIZE = 100;
+char sib[SIB_SIZE+1];
+int sibIndex = 0;
+void serial_input_loop()
+{
+  bool sendToCli = false;
+  do {
+    while(Serial.available()) {
+      if (sibIndex == 0)
+        Serial.println();
+      char ch = Serial.read();
+      sib[sibIndex] = ch;
+      if ((ch == '/') && (sibIndex == 0))
+        Serial.print("Command:/");
+      else
+        Serial.print(ch);
+      if ((ch == '\r') || (ch == '\n')) {
+        sib[sibIndex] = 0;
+        sendToCli = true;
+        break;
+      }
+      else if ((ch == 8) || (ch == 127)) {
+        if (sibIndex > 0) {
+          sib[--sibIndex] = 0;
+        }
+      }
+      if (sibIndex >= SIB_SIZE) {
+        sib[sibIndex] = 0;
+        break;
+      }
+      sibIndex++;
+    }
+    if (sendToCli) {
+      //log_e("executing cli %d '%s'",sibIndex,sib);
+      cli_execute(sib);
+      sibIndex = 0;
+      sendToCli = false;
+      sib[0]=0;
+    }
+  } while(sib[0] == '/'); 
+}
 /***********************************************************/
 /***********************************************************/
 void loop()
@@ -144,6 +186,7 @@ void loop()
     #if HAS_GPS
       GPS.loop();
     #endif
+    serial_input_loop();
   }
   ota_loop();
 
