@@ -326,9 +326,9 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
             ps_st.printf("OK:SSID = \"%s\"; Passcode = \"%s\"\r\n", ssid_str, passcode_str);
         }
         else {
-			command[0] = ' ';               //replace leading \ and command with blanks
-			command[1] = ' ';
-			removeBlanks(command);
+			command_original_case[0] = ' ';               //replace leading \ and command with blanks
+			command_original_case[1] = ' ';
+			removeBlanks(command_original_case);
 			
             comma_found = false;
             ssid_i     = 0;
