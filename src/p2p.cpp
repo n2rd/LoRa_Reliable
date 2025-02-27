@@ -103,7 +103,6 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
           PARMS.parameters.lon_value,
           6
           );
-      log_e("Fixed Grid: %s %d",fixedMaidenheadGrid,strlen(fixedMaidenheadGrid));
       if (gridLocatorPtr != NULL)
         *gridLocatorPtr = fixedMaidenheadGrid;
 

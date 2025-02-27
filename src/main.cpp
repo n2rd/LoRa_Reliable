@@ -45,6 +45,10 @@ double lastLat = 0;
 double lastLon = 0;
 #endif //HAS_GPS
 
+void initializeNetwork() {
+  ota_setup();
+  telnet.setup();
+}
 /***********************************************************/
 /***********************************************************/
 void setup() 
@@ -56,11 +60,6 @@ void setup()
   pinMode(LED_BUILTIN, OUTPUT);
   SPI.begin(LORA_SCK,LORA_MISO,LORA_MOSI,LORA_CS);
   #endif
-
-  delay(5000);
-  ota_setup();
-  telnet.setup();
-
   //display init
   #ifndef ARDUINO_LILYGO_T3_V1_6_1
   heltec_display_power(true);
@@ -79,6 +78,10 @@ void setup()
   display.setFont(ArialMT_Plain_10);
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
+
+  if (WIFI.init()) {
+    initializeNetwork();
+  }
 
   //start the radio
   if (!manager.init()) 

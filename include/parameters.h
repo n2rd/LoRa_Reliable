@@ -87,6 +87,8 @@ typedef struct ParametersStruct {
     uint8_t  tx_interval; // (1B) 0 to 255 seconds
     uint8_t  address; // (1B) 0 to 254 (255=broadcast address)
     uint8_t  radioType; //Radio Type ... the meaning of the values: 0,1,2 needs to be clarified
+    char     wifiSSID[33]; //32+null
+    char     wifiKey[63+1]; //+ null;
 } PARAMETERS;
 
 //for opening nvram preferences
@@ -130,6 +132,8 @@ class ParametersClass {
       const char* tx_interval = "tx_interval";
       const char* address = "address";
       const char* radioType = "radioType";
+      const char* wifiSSID = "WifiSSID";
+      const char* wifiKey = "WifiKey";
     } Key;
   private:
     static Preferences preferences;
