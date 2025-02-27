@@ -255,8 +255,10 @@ static char     grid6;          // (1B) 1 char subsquare identifier, encoded as 
 char        command[50];
 char        cmd_code;
 char*       param_str[50];
-char        lat_str[10];
-char        lon_str[10];
+char        lat_str[20], lon_str[20];
+char        *lat_str_ptr = lat_str;
+char        *lon_str_ptr = lon_str;
+float       lat_sign,lon_sign;
 int         i, j;
 int         int_input;
 float       flt_input;
@@ -273,7 +275,6 @@ char        current_char_value1;
 char        current_char_value2;
 bool        valid_gridsquare_format;
 char        grid4_str_value[5];
-
 
 
 strcpy(command, command_arg);
@@ -357,8 +358,6 @@ if (command[0] == '/') {
          break;
 
 //      GPS Off/GPS on on Transmit only/On-------------------------------------
-//const char *powerStateNames[3] = { "OFF", "ON", "TX"}; <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-//      GPS.getPowerStateName(GPSClass::GPS_ON)
     case 'G':
         #if HAS_GPS == 1
             if (command[0] != '\0') {
@@ -394,6 +393,7 @@ if (command[0] == '/') {
 
 //      Help-------------------------------------------------------------------
     case 'H':
+    case '?':
         ps_st.printf("Radio Address                    /A <n>\r\n");
         ps_st.printf("Beacon Disable (TX Lockout)      /B <off>|<on>\r\n");
         ps_st.printf("Caallsign                        /C <callsign>\r\n");
@@ -439,6 +439,8 @@ if (command[0] == '/') {
             lon_i = 0;
             lat_str[0] = '\0';
             lon_str[0] = '\0';
+            lat_sign = 1;
+            lon_sign = 1;
             while (command[i] != '\0') {
                 if (command[i] != ',') {
                     if (location_comma_found) {
@@ -467,6 +469,14 @@ if (command[0] == '/') {
                 }
                 i++;
             }
+            if (lat_str[0] == '-') {
+                lat_str_ptr++;
+                lat_sign = -1;
+            }
+            if (lon_str[0] == '-') {
+                lon_str_ptr++;
+                lon_sign = -1;
+            }
             lat_str[lat_i] = '\0';
             lon_str[lon_i] = '\0';
     
@@ -474,12 +484,12 @@ if (command[0] == '/') {
                 ps_st.printf("NG:Location requires comma separation between Lat & Lon\r\n");
                 return 1;
             }
-            if (!(is_float(lon_str) && is_float(lat_str))) {
-                ps_st.printf("NG:Latitude andLongitude must be valid floating point numbers\r\n");
+            if (!(is_float(lon_str_ptr) && is_float(lat_str_ptr))) {
+                ps_st.printf("NG:Latitude and Longitude must be valid floating point numbers\r\n");
                 return 1;
             }
-            lon_value = atof(lon_str);
-            lat_value = atof(lat_str);
+            lon_value = atof(lon_str_ptr) * lon_sign;
+            lat_value = atof(lat_str_ptr) * lat_sign;
     
             if (abs(lon_value) > 180) {
                 ps_st.printf("NG:Longitude must be between -180 and 180\r\n");
@@ -660,7 +670,7 @@ if (command[0] == '/') {
 
         break;
 
-//      Short TX Pause Off/On--------------------------------------------------
+//      CSV Output Off/On------------------------------------------------------
 
         case 'Z':
             current_int_value = local_PARMS_parameters_csv_output;    
