@@ -62,7 +62,7 @@ void p2pSetup(void)
   random_delay = random_delay_generator(MAX_DELAY);
 }
 
-#define GPS_FIX_TIMEOUT 1000
+#define GPS_FIX_TIMEOUT 10000
 
 void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
 {
