@@ -307,7 +307,10 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 */
     case '@':
         if (parameter_query) {
-            ps_st.printf("OK:SSID = \"%s\"; Passcode = \"%s\"\r\n", ssid_str, passcode_str);
+            ps_st.printf("OK:SSID = \"%s\"; Passcode = \"%s\"\r\n",
+                PARMS.parameters.wifiSSID,
+                PARMS.parameters.wifiKey
+                );
         }
         else {
 			command_original_case[0] = ' ';               //replace leading \ and command with blanks
@@ -355,7 +358,14 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
                 return 1;
             }
             ps_st.printf("OK:SSID = \"%s\"; Passcode = \"%s\"\r\n", ssid_str, passcode_str);
-
+            strcpy(PARMS.parameters.wifiSSID, ssid_str);
+            strcpy(PARMS.parameters.wifiKey, passcode_str);
+            if (WIFI.changeAP()) {
+                initializeNetwork();
+            }
+            else {
+                /* should we do anything in the case of failure */
+            }
         }
 
        break;

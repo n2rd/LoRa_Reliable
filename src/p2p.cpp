@@ -62,7 +62,7 @@ void p2pSetup(void)
   random_delay = random_delay_generator(MAX_DELAY);
 }
 
-#define GPS_FIX_TIMEOUT 1000
+#define GPS_FIX_TIMEOUT 10000
 
 void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
 {
@@ -103,7 +103,6 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
           PARMS.parameters.lon_value,
           6
           );
-      log_e("Fixed Grid: %s %d",fixedMaidenheadGrid,strlen(fixedMaidenheadGrid));
       if (gridLocatorPtr != NULL)
         *gridLocatorPtr = fixedMaidenheadGrid;
 
