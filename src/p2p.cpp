@@ -73,7 +73,7 @@ void p2pSetup(void)
 
 void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
 {
-  const int gridSize = 8;
+  const int gridSize = 6;
   double lat = 0, lon = 0;
   bool hasFix;
   if (GPS.onoffState() == GPS.GPS_OFF) {
@@ -91,11 +91,10 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
       encode_grid4_to_buffer(fixedMaidenheadGrid,&messagePtr->data[messagePtr->len]);
       messagePtr->len+=2;
       messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[4];
-      messagePtr->data[messagePtr->len] = (uint8_t)fixedMaidenheadGrid[5];
+      messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[5];
       return;
   }
   else {
-    log_e("going into GPS powered on");
     unsigned long beforeFix = millis();
     do {
       hasFix = !GPS.getLocation(&lat,&lon);
@@ -111,6 +110,7 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
           PARMS.parameters.lon_value,
           6
           );
+      log_e("Fixed Grid: %s %d",fixedMaidenheadGrid,strlen(fixedMaidenheadGrid));
       if (gridLocatorPtr != NULL)
         *gridLocatorPtr = fixedMaidenheadGrid;
 
@@ -118,7 +118,7 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
       encode_grid4_to_buffer(fixedMaidenheadGrid,&messagePtr->data[messagePtr->len]);
       messagePtr->len+=2;
       messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[4];
-      messagePtr->data[messagePtr->len] = (uint8_t)fixedMaidenheadGrid[5];
+      messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[5];
       return;
     }
     log_e("Got a fix TTF %lu lat %lf lon %lf",millis()-beforeFix, lat,lon);
@@ -126,12 +126,13 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
     //lat = 43.147195; lon = -76.171003; //Ron's house FN13VD95LH Dif -0.334576 -0.669267
     //lat = 0.000; lon = 180.000; 
     char *curMaidenheadGrid = GPS.latLonToMaidenhead(lat,lon, gridSize);
+    log_e("GPS Grid: %s %d",curMaidenheadGrid,strlen(curMaidenheadGrid));
     if (gridLocatorPtr != NULL)
       *gridLocatorPtr = curMaidenheadGrid;
     encode_grid4_to_buffer(curMaidenheadGrid,&messagePtr->data[messagePtr->len]);
     messagePtr->len+=2;
     messagePtr->data[messagePtr->len++] = (uint8_t)curMaidenheadGrid[4];
-    messagePtr->data[messagePtr->len] = (uint8_t)curMaidenheadGrid[5];
+    messagePtr->data[messagePtr->len++] = (uint8_t)curMaidenheadGrid[5];
     ///////////// TESTING ///////////////
     //log_e("Grid: %s",curMaidenheadGrid);
     //double newLat = 0, newLon = 0;
@@ -148,11 +149,15 @@ void extractGrid6LocatorFromData(int startMsgDataIndex, uint8_t* data, int dataL
   uint16_t lindex = 4;
   if (dataLen >= (startMsgDataIndex+2)) {
     decode_grid4_from_buffer(&data[mindex],locator);
+    log_e("Grid after decode_grid4: %s",locator);
+    log_e("dataLen: %d index: %d",dataLen,(startMsgDataIndex+4));
     if (dataLen >= (startMsgDataIndex+4)) {
       mindex+=2;
       locator[lindex++] = data[mindex++]; //5th locator character
       locator[lindex++] = data[mindex++]; //6th locator character
+      locator[lindex] = 0;
     }
+    log_e("Grid after add others: %s %d",locator,strlen(locator));
   } 
 }
 
@@ -169,6 +174,7 @@ void p2pLoop(void)
       if (manager.recvfrom(buf, &len, &from, &to, &id, &flags)) {
         uint8_t headerId = driver.headerId();
         if (to == RH_BROADCAST_ADDRESS) {
+          log_e("Received broadcast length = %d", len);
           //we have a broadcast message
           //display the message
           int snr = driver.lastSNR();
@@ -189,6 +195,7 @@ void p2pLoop(void)
           message.len = 2;
           message.to = from;
           message.headerID = headerId;
+
           addGrid6LocatorIntoMsg(&message);
 
           if (!transmit_queue.isFull()) {
@@ -201,10 +208,11 @@ void p2pLoop(void)
           //  log_e("Grid Locator: %s", gridLocator);
           char gridLocator[11];
           extractGrid6LocatorFromData(2, buf, len, gridLocator);
-          csv_serial.data(millis(), 'B', from, to, headerId, rssi, snr, gridLocator);
-          csv_telnet.data(millis(), 'B', from, to, headerId, rssi, snr, gridLocator);
+          csv_serial.data(GPS.getTimeStamp(), 'B', from, to, headerId, rssi, snr, gridLocator);
+          csv_telnet.data(GPS.getTimeStamp(), 'B', from, to, headerId, rssi, snr, gridLocator);
         } else {
           //we have a signal report for us
+          log_e("Received SigRep length = %d", len);
           int rssi = 0 - buf[0];
           int snr = buf[1];
           if (!menu_active) {
@@ -215,8 +223,8 @@ void p2pLoop(void)
           }
           char gridLocator[11];
           extractGrid6LocatorFromData(2, buf, len, gridLocator);
-          csv_serial.data(millis(), 'S', from, to, headerId, rssi, snr, gridLocator);
-          csv_telnet.data(millis(), 'S', from, to, headerId, rssi, snr, gridLocator);
+          csv_serial.data(GPS.getTimeStamp(), 'S', from, to, headerId, rssi, snr, gridLocator);
+          csv_telnet.data(GPS.getTimeStamp(), 'S', from, to, headerId, rssi, snr, gridLocator);
         }
       } //received a message
     } //message waiting
@@ -246,8 +254,8 @@ void p2pLoop(void)
           if (!transmit_queue.isFull()) {
             transmit_queue.enqueue(message);
             uint8_t from = manager.thisAddress();
-            csv_serial.broadcast(millis(), from, transmit_headerId, gridLocator);
-            csv_telnet.broadcast(millis(), from, transmit_headerId, gridLocator);
+            csv_serial.broadcast(GPS.getTimeStamp(), from, transmit_headerId, gridLocator);
+            csv_telnet.broadcast(GPS.getTimeStamp(), from, transmit_headerId, gridLocator);
           } else {
             csv_serial.debug("p2p",(char *)"Transmit queue full\n");
             csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
