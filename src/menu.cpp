@@ -4,6 +4,11 @@
 #include "AiEsp32RotaryEncoder.h"
 AiEsp32RotaryEncoder rotary = AiEsp32RotaryEncoder(RE_PIN_A, RE_PIN_B, RE_PIN_SW, RE_VCC_PIN, RE_STEPS);
 
+//paramaters for button
+unsigned long shortPressAfterMiliseconds = 100;   //how long short press shoud be. Do not set too low to avoid bouncing (false press events).
+unsigned long longPressAfterMiliseconds = 1000;  //how long čong press shoud be.
+
+
 extern bool menu_active;  //do not show radio messages on display when menu is active
 
 int cur_menu = 0;
@@ -29,12 +34,19 @@ void act_item_init()
 {
   act_item[0] = -1;  //nothing activated on main menu yet
   act_item[1] = PARMS.parameters.power_index;
+  if (MENU_DEBUG) Serial.printf("act_item_init: power %i\n", act_item[1]);
   act_item[2] = PARMS.parameters.modulation_index;
+  if (MENU_DEBUG) Serial.printf("act_item_init: modulation %i\n", act_item[2]);
   act_item[3] = PARMS.parameters.address;
+  if (MENU_DEBUG) Serial.printf("act_item_init: address %i\n", act_item[3]);
   act_item[4] = PARMS.parameters.frequency_index;
+  if (MENU_DEBUG) Serial.printf("act_item_init: frequency %i\n", act_item[4]);
   act_item[5] = PARMS.parameters.gps_state;
+  if (MENU_DEBUG) Serial.printf("act_item_init: gps %i\n", act_item[5]);
   tx_lock = PARMS.parameters.tx_lock;
+  if (MENU_DEBUG) Serial.printf("act_item_init: tx_lock %i\n", tx_lock);
   short_pause = PARMS.parameters.short_pause;
+  if (MENU_DEBUG) Serial.printf("act_item_init: short_pause %i\n", short_pause);
 }
 
 void rotary_setup()
@@ -103,14 +115,14 @@ void rolling_menu(int r_menu_num)
   if (cur_item[cur_menu] > 0) {
     show_rolling_item(r_menu_num, -1, cur_item[cur_menu]-1);
   } else {
-    show_rolling_item(r_menu_num, -1, max_index-1);
+    show_rolling_item(r_menu_num, -1, max_index);
   }
 
   // 0 position
   show_rolling_item(r_menu_num, 0, cur_item[cur_menu]);
 
   // +1 position
-  if (cur_item[cur_menu] == MAX_ADDRESS-1) {
+  if (cur_item[cur_menu] == max_index) {
     show_rolling_item(r_menu_num, 1, 0);
   } else {
     show_rolling_item(r_menu_num, 1, cur_item[cur_menu] + 1);
@@ -149,8 +161,8 @@ void show_rolling_item(int r_menu_num, int position, int item_num) //position -1
 //   this is the default case
 void menu(int menu_num) //only for non-address menus
 {
+  if (MENU_DEBUG) Serial.printf("menu %i\n", menu_num);
   menu_active = true;
-  display.clear();
   switch (menu_num) {
     case ADD_MENU:
       rolling_menu(menu_num);
@@ -160,13 +172,6 @@ void menu(int menu_num) //only for non-address menus
       break;
     case EXIT_MENU:
       //exit menu and back to regular radio display
-      menu_active = false;
-      display.clear();
-      display.setFont(ArialMT_Plain_16);
-      display.setColor(WHITE);
-      display.setTextAlignment(TEXT_ALIGN_LEFT);
-      display.drawString(0, 0, "Exiting Menu - Back to Radio");
-      display.display();
       break;
     case SET_MENU:
       #ifdef HAS_GPS
@@ -174,6 +179,19 @@ void menu(int menu_num) //only for non-address menus
       #else
       draw_regular_menu(MAX_ITEMS - 3);
       #endif
+      display.setTextAlignment(TEXT_ALIGN_LEFT);
+      display.setFont(ArialMT_Plain_10);
+      if (tx_lock) {
+        display.drawString(52, 20, "on");
+      } else {
+        display.drawString(52, 20, "off");
+      }
+      if (short_pause) {
+        display.drawString(52, 35, "on");
+      } else {
+        display.drawString(52, 35, "off");
+      }
+      display.display();
       break;
     default: //all other menus, including main menu
       draw_regular_menu(menu_num, MAX_ITEMS);
@@ -205,36 +223,39 @@ bool activate(int cmenu, int citem)
   if (cmenu == MAIN_MENU) {  
     // activated in main menu, no radio actions, just go to correct menu
     bool circleValues = true;
-    switch (citem) {
+    int secondary_menu_number = citem + 1;  //menu number is main menu item number + 1
+    if (MENU_DEBUG) Serial.printf("activating menu  %i %s in main menu\n", secondary_menu_number, menu_label[secondary_menu_number]);
+    switch (secondary_menu_number) {  //item 0 POWER_MENU menu 1, 1 MOD_MENU no 2,and 4 SET_MENU use regular menus in case default below
       //item 0 POWER_MENU, 1 MOD_MENU,and 4 SET_MENU use regular menus in case default below
       case ADD_MENU:  //ADD_MENU
         if (MENU_DEBUG) Serial.println("going to address menu");
         //show the current address
         cur_menu = ADD_MENU;
         cur_item[cur_menu] = act_item[cur_menu];  //set activated item as the default selected item
-        rolling_menu(cur_menu);
         //set up for address changes with the rotary knob
+        //set boundaries and if values should cycle or not
         rotary.setBoundaries(1, ADDRESS_MAX, circleValues); //minValue, maxValue, circleValues true|false (when max go to min and vice versa)
         rotary.disableAcceleration(); //disable acceleration 
-        //rotaryEncoder.setAcceleration(250); //or set the value - larger number = more accelearation; 0 or 1 means disabled acceleration
+        rotary.reset(cur_item[cur_menu]); //sets the current value for the rotary encoder to the activated value
+        rolling_menu(cur_menu);
         break;
       case FREQ_MENU: //FREQ_MENU
         if (MENU_DEBUG) Serial.println("going to frequency menu");
         //show the current address
         cur_menu = FREQ_MENU;
         cur_item[cur_menu] = act_item[cur_menu]; //set the activated item as the default selected item
-        rolling_menu(cur_menu);
         //set up for address changes with the rotary knob
         rotary.setBoundaries(0, FREQUENCY_INDEX_MAX, circleValues); //minValue, maxValue, circleValues true|false (when max go to min and vice versa)
         rotary.disableAcceleration(); //disable acceleration 
-        //rotaryEncoder.setAcceleration(250); //or set the value - larger number = more accelearation; 0 or 1 means disabled acceleration
+        rotary.reset(cur_item[cur_menu]); //sets the current value for the rotary encoder to the activated value
+        rolling_menu(cur_menu);
         break;
       case EXIT_MENU: //Exit to radio
         if (MENU_DEBUG) Serial.println("Exiting menu");
         //exit menu and back to regular radio display
         menu_active = false;
         display.clear();
-        display.setFont(ArialMT_Plain_16);
+        display.setFont(ArialMT_Plain_10);
         display.setColor(WHITE);
         display.setTextAlignment(TEXT_ALIGN_LEFT);
         display.drawString(0, 0, "Exiting Menu - Back to Radio");
@@ -271,6 +292,7 @@ bool activate(int cmenu, int citem)
 	  act_item[cmenu] = citem;  //activate this on the radio
     //now save in preferences and activate on radio
     bool new_status;
+    if (MENU_DEBUG) Serial.printf("in activate cur_menu %i %s cur_item %i %s\n", cur_menu, menu_label[cur_menu], cur_item[cur_menu], item_label[cur_menu][cur_item[cur_menu]]);
     switch (cur_menu) {
       case POWER_MENU:
         PARMS.parameters.power_index = citem;
@@ -309,7 +331,6 @@ bool activate(int cmenu, int citem)
         break;
      } //switch secondary menus
   } //secondary menu item
-    if (MENU_DEBUG) Serial.printf("in activate non main menu cur_menu %i cur_item %i\n", cur_menu, cur_item[cur_menu]);
     return status;
 }
 
@@ -317,15 +338,16 @@ bool activate(int cmenu, int citem)
 void on_button_short_click()
 {
   //select and activate menu item
-  if (MENU_DEBUG) Serial.printf("Short click cur_menu %i cur_item %i\n", cur_menu, cur_item[cur_menu]);
+  if (MENU_DEBUG) Serial.printf("Short click cur_menu %i %s cur_item %i %s\n", cur_menu, menu_label[cur_menu], cur_item[cur_menu], item_label[cur_menu][cur_item[cur_menu]]);
   if (!activate(cur_menu, cur_item[cur_menu])) Serial.println("Failed to activate");
-	menu(cur_menu); //show the menu again
+	if (!(cur_menu == MAIN_MENU && cur_item[cur_menu] + 1 == EXIT_MENU)) menu(cur_menu); //show the menu again unless exiting
 }
 void on_button_long_click()
 {
   if (MENU_DEBUG) Serial.println("long click\n");
   cur_menu = 0;
   menu_active = true;
+  act_item_init(); //pick up the activated values, needed for the main menu items
   menu(0);
 }
 
@@ -341,10 +363,6 @@ void robot()
   }
   highlight_item(0,5,0);
 }
-
-//paramaters for button
-unsigned long shortPressAfterMiliseconds = 50;   //how long short press shoud be. Do not set too low to avoid bouncing (false press events).
-unsigned long longPressAfterMiliseconds = 1000;  //how long čong press shoud be.
 
 // #ifndef ROTARY_H
 // #define ROTARY_H 

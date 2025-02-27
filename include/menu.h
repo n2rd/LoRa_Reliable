@@ -3,7 +3,7 @@
 
 #include "Dialog_bolditalic_10.h"
 
-#define MENU_DEBUG 0
+#define MENU_DEBUG 1
 
 //
 // MENU Structure
@@ -20,7 +20,7 @@
 #define SET_MENU 5
 #define EXIT_MENU 6
 
-#define MENU_LABELS {"Main Menu", "Power Setting", "Modulation", "Frequency MHz", "Address", "Settings", "Exit Menu!"}
+#define MENU_LABELS {"Main Menu", "Power Setting", "Modulation", "Address", "Frequency", "Settings", "Exit Menu!"}
 
 #define MENU_ITEM_LABELS {                                                          \
     {"Power", "Mod", "Address", "Freq", "Settings", "Exit Menu!"},                  \
@@ -28,13 +28,13 @@
     {"Long Slow", "Long Med", "Long Fast", "Med Slow", "Short Slow", "Short Fast"}, \
     {"", "", "", "", "", ""},                                                       \
     {"", "", "", "", "", ""},                                                       \
-    {"TX Lock", "Short PAUSE", "Write NV", "GPS off", "GPS at tx", "GPS on"},       \
+    {"TX Lock", "Sh Pause", "Write NV", "GPS off", "GPS at tx", "GPS on"},       \
     {"", "", "", "", "", ""}                                                        \
 }
 
 // scrolling goes from 0 to the following upper limits
-#define MAX_ADDRESS 256         // address must be lower than this
-#define MAX_FREQUENCY_INDEX 104 // 902.125 to 927.875 in 250Khz steps
+#define MAX_ADDRESS 254         // address must be lower than this
+#define MAX_FREQUENCY_INDEX 103 // 902.125 to 927.875 in 250Khz steps
 
 #define DX 2 // x offset for highlight rectangle
 #define DY 1 // y offset for highlight rectangle
