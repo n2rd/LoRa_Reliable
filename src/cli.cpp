@@ -13,6 +13,7 @@ Required commands
 
 CLI Command set
 
+    Wifi Credentials        /@ SSID, passcode
     Radio Address           /A                                              Default = 0
     Beacon Disable and      /B <OFF|ON>                                     Default = OFF
     TX Lockout
@@ -54,6 +55,7 @@ CLI Command set
                                     n=0 Server (client/server operation)
                                     n=1 Client (client/server operation)
                                     n=2 Peer (peer to peer operation)
+    Version                 /V                                
     Write NVRAM             /W
     Grid                    /X      4 or 6 character maidenhead grid square
     Short Pause             /Y <OFF|ON>                                     Default = OFF      
@@ -91,6 +93,7 @@ float frequency_array[] = {902.125,902.375,902.625,902.875,903.125,903.375,903.6
 
 //
 
+//=============================================================================
 void upcase(char* str) {
 
     int i;
@@ -103,6 +106,7 @@ void upcase(char* str) {
 }
 
 
+//=============================================================================
 void removeBlanks(char* str) {
     int i, j = 0;
 
@@ -114,6 +118,7 @@ void removeBlanks(char* str) {
     str[j] = '\0';
 }
 
+//=============================================================================
 bool is_numeric(const char* string) {
     const int string_len = strlen(string);
     for(int i = 0; i < string_len; ++i) {
@@ -123,7 +128,8 @@ bool is_numeric(const char* string) {
     return true;
   }
 
-  bool is_float(const char* string) {
+//=============================================================================
+bool is_float(const char* string) {
     int period_counter;
     const int string_len = strlen(string);
     period_counter = 0;
@@ -141,6 +147,7 @@ bool is_numeric(const char* string) {
   }
  
 
+//=============================================================================
 void cli_process_bool(int parameter_query, const char* param_name, char* param_command, bool* param_value ) {
     #define PRINTF_OK_BOOL "OK:%s = %s\r\n"
     #define PRINTF_NG_BOOL "NG:%s must be 'OFF' or 'ON'\r\n"
@@ -162,6 +169,7 @@ void cli_process_bool(int parameter_query, const char* param_name, char* param_c
     }
 }
 
+//=============================================================================
 void cli_process_int(int parameter_query, const char* param_name, char* param_command, int param_value_min, int param_value_max, int* param_value) {
     #define PRINTF_OK_INT "OK:%s = %u\r\n"
     #define PRINTF_NG_INT "NG:%s must be an integer >=%u and <=%u\r\n"
@@ -183,7 +191,8 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
 }
 
 
- void cli_process_index_float_value_unit(int parameter_query, const char* param_name, char* param_command, int param_index_min, int param_index_max, float indexed_array[], const char* param_units, int* param_index) {
+//=============================================================================
+void cli_process_index_float_value_unit(int parameter_query, const char* param_name, char* param_command, int param_index_min, int param_index_max, float indexed_array[], const char* param_units, int* param_index) {
     #define PRINTF_OK_FLOAT "OK:%s = %u (%3.3f %s)\r\n"
     #define PRINTF_NG_FLOAT "NG:%s must be an integer >=%u and <=%u\r\n"
     int index;
@@ -201,9 +210,10 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
             ps_st.printf(PRINTF_NG_FLOAT, param_name, param_index_min, param_index_max);
         }   
     }
- }
+}
 
- void cli_process_index_char_value_unit(int parameter_query, const char* param_name, char* param_command, int param_index_min, int param_index_max, char indexed_array[][20], int* param_index) {
+//=============================================================================
+void cli_process_index_char_value_unit(int parameter_query, const char* param_name, char* param_command, int param_index_min, int param_index_max, char indexed_array[][20], int* param_index) {
     #define PRINTF_OK_CHAR  "OK:%s = %u (%s)\r\n"
     #define PRINTF_NG_CHAR  "NG:%s must be an integer >=%u and <=%u\r\n"
     int index;
@@ -223,7 +233,7 @@ void cli_process_int(int parameter_query, const char* param_name, char* param_co
     }
  }
 
-
+//=============================================================================
 int cli_execute(const char* command_arg) {
 
 static bool local_PARMS_parameters_csv_output;
@@ -231,7 +241,6 @@ static bool local_PARMS_parameters_csv_output;
 PARAMETERS local_params;
 
 #define PRINTF_NG_NULL_ARG "NG:Arguement required and none provided\r\n"
-
 
 static char     callsign[10];
 static float    frequency; //depricated
@@ -252,18 +261,22 @@ static uint16_t grid4;          // (2B) 4 char grid square, encoded from 0 to 32
 static char     grid5;          // (1B) 1 char subsquare identifier, encoded as an ascii char 
 static char     grid6;          // (1B) 1 char subsquare identifier, encoded as an ascii char 
 
-char        command[50];
+static char ssid_str[33], passcode_str[64];
+int         ssid_i, passcode_i;
+
+char        command[50],command_original_case[50];
 char        cmd_code;
 char*       param_str[50];
 char        lat_str[20], lon_str[20];
 char        *lat_str_ptr = lat_str;
 char        *lon_str_ptr = lon_str;
 float       lat_sign,lon_sign;
+char        str_grid4_value[5];
 int         i, j;
 int         int_input;
 float       flt_input;
 int         status;
-bool        location_comma_found;
+bool        comma_found;
 int         lat_i, lon_i;
 bool        parameter_query;
 int         current_int_value;
@@ -278,6 +291,7 @@ char        grid4_str_value[5];
 
 
 strcpy(command, command_arg);
+strcpy(command_original_case, command_arg);     //preserve case for WiFi credentials
 
 if (command[0] == '/') {
     upcase(command);
@@ -292,27 +306,91 @@ if (command[0] == '/') {
 
     switch (cmd_code) {
 
+//      Wifi Credentials----------------------------------------------------------
+/*
+These SSIDs can be zero to 32 octets (32 bytes) long,[11] and are, for convenience, 
+usually in a natural language, such as English. The 802.11 standards prior to the 
+2012 edition did not define any particular encoding or representation for SSIDs, 
+hich were expected to be treated and handled as an arbitrary sequence of 0–32 octets 
+that are not limited to printable characters. IEEE Std 802.11-2012 defines a flag to 
+express that the SSID is UTF-8-encoded and could contain any Unicode text.[12] Wireless 
+network stacks must still be prepared to handle arbitrary values in the SSID field.
+
+1. A password is 8–63 characters long. A password of 14 or 15 characters would be 
+   long enough to defeat most brute-force guessing.
+2. Avoid Trailing and leading spaces (ASCII 0x20)
+3. Be careful with certain special characters, such as # % & " $ ￡
+*/
+    case '@':
+        if (parameter_query) {
+            ps_st.printf("OK:SSID = \"%s\"; Passcode = \"%s\"\r\n", ssid_str, passcode_str);
+        }
+        else {
+			command[0] = ' ';               //replace leading \ and command with blanks
+			command[1] = ' ';
+			removeBlanks(command);
+			
+            comma_found = false;
+            ssid_i     = 0;
+            passcode_i = 0;
+            ssid_str[0]     = '\0';
+            passcode_str[0] = '\0';
+            while (command_original_case[i] != '\0') {
+                if (command_original_case[i] != ',') {
+                    if (!comma_found) {
+                        if (ssid_i < sizeof(ssid_str)-1) {
+                            ssid_str[ssid_i] = command_original_case[i];
+                            ssid_i++;
+                        }
+                        else {
+                            ps_st.printf("NG:Internal WiFi SSID buffer exceeded\r\n");
+                            return 1;
+                        }
+                    }
+                    else {
+                        if (passcode_i < sizeof(passcode_str)-1) {
+                            passcode_str[passcode_i] = command_original_case[i];
+                            passcode_i++;
+                        }
+                        else {
+                            ps_st.printf("NG:Internal WiFi passcode buffer exceeded\r\n");
+                            return 1;
+                        }
+                   }
+                }
+                else {
+                        comma_found = true;
+                }
+                i++;
+            }
+            ssid_str[ssid_i]         = '\0';
+            passcode_str[passcode_i] = '\0';
+    
+            if (!comma_found) {
+                ps_st.printf("NG:WiFi SSID and Passoode requires comma separation between SSID & Passcode\r\n");
+                return 1;
+            }
+            ps_st.printf("OK:SSID = \"%s\"; Passcode = \"%s\"\r\n", ssid_str, passcode_str);
+
+        }
+
+       break;
+
 //      Radio Address----------------------------------------------------------
     case 'A':
-        current_int_value = PARMS.parameters.address;
         radio_address     = PARMS.parameters.address;
         cli_process_int(parameter_query, "Radio Address", command, 1, 254 , & radio_address);
-        if (current_int_value != radio_address) {
-            PARMS.parameters.address = radio_address;
-            manager.setThisAddress(radio_address);
-            driver.setHeaderFrom(radio_address);
-        }
+        PARMS.parameters.address = radio_address;
+        manager.setThisAddress(radio_address);
+        driver.setHeaderFrom(radio_address);
         break;
 
 //      TX Lock (Beacon disable) Off/On----------------------------------------
 
     case 'B':
-        current_int_value  = PARMS.parameters.tx_lock;    
         tx_lock_state      = PARMS.parameters.tx_lock;
         cli_process_bool(parameter_query, "TX Lock (Beacon Disable)", command, & tx_lock_state);
-        if (current_int_value != tx_lock_state){
-            PARMS.parameters.tx_lock = tx_lock_state;
-        }
+        PARMS.parameters.tx_lock = tx_lock_state;
         break;
      
 //      Call Sign--------------------------------------------------------------
@@ -326,9 +404,7 @@ if (command[0] == '/') {
                 strcpy(callsign, command); 
                 strcpy(current_str_value,callsign);
                 ps_st.printf("OK:Call sign = %s\r\n", callsign);
-                if (current_str_value != callsign) {
-                    strcpy(PARMS.parameters.callsign, callsign);
-                }    
+                strcpy(PARMS.parameters.callsign, callsign);
             }
         }
         else {
@@ -344,13 +420,10 @@ if (command[0] == '/') {
 //      Frequency--------------------------------------------------------------
     case 'F':
         if (command[0] != '\0') {
-            current_int_value = PARMS.parameters.frequency_index;
             frequency_index   = PARMS.parameters.frequency_index;
             cli_process_index_float_value_unit(parameter_query, "Frequency Index", command, 0, sizeof(frequency_array)/sizeof(frequency_array[0])-1, frequency_array , "MHz",  &frequency_index);
-            if (current_int_value != frequency_index) {
-                PARMS.parameters.frequency_index = frequency_index;
-                driver.setFrequency(frequency_array[frequency_index]);
-            }
+            PARMS.parameters.frequency_index = frequency_index;
+            driver.setFrequency(frequency_array[frequency_index]);
         }
         else {
             ps_st.printf(PRINTF_NG_NULL_ARG);
@@ -365,11 +438,9 @@ if (command[0] == '/') {
                 #define PRINTF_NG_GPS "NG:%u must be 0 for OFF, 1 for ON AT TX or 2 for ON\r\n"
     
     
-                current_int_value = PARMS.parameters.gps_state;
-                gps_index         = PARMS.parameters.gps_state;
+                gps_index = PARMS.parameters.gps_state;
                 if (parameter_query) {
-                    //ps_st.printf(PRINTF_OK_GPS, current_int_value, gps_power_state_name[current_int_value]);
-                    ps_st.printf(PRINTF_OK_GPS, current_int_value, GPS.getPowerStateName((GPSClass::PowerState) current_int_value));
+                    ps_st.printf(PRINTF_OK_GPS, PARMS.parameters.gps_state, GPS.getPowerStateName((GPSClass::PowerState) PARMS.parameters.gps_state));
                 }
                 else {
                     int_input = atoi(command);
@@ -394,12 +465,15 @@ if (command[0] == '/') {
 //      Help-------------------------------------------------------------------
     case 'H':
     case '?':
+        ps_st.printf("WiFi credentials                 /a<ssid>,<passcode>   Note: case\r\n");
+        ps_st.printf("                                   sensitive and spaces not permitted!\r\n");
         ps_st.printf("Radio Address                    /A <n>\r\n");
         ps_st.printf("Beacon Disable (TX Lockout)      /B <off>|<on>\r\n");
         ps_st.printf("Caallsign                        /C <callsign>\r\n");
         ps_st.printf("Reset radio to default state     /D\r\n");        
         ps_st.printf("Frequency                        /F <Frequency in MHz>\r\n");
-        ps_st.printf("GPS State                        /G 0 for OFF, 1 for ON FOR TX and 2 for ON<off>|<tx<on>\r\n");
+        ps_st.printf("GPS State                        /G 0 for OFF, 1 for ON FOR TX\r\n");
+        ps_st.printf("                                    and 2 for ON<off>|<tx<on>\r\n");
         ps_st.printf("Help Text                        /H\r\n");
         ps_st.printf("TX Interval (seconds)            /I <n>\r\n");
         ps_st.printf("Position                         /L <latitude >,<longitude>\r\n");
@@ -407,7 +481,8 @@ if (command[0] == '/') {
         ps_st.printf("Power index 0<=n<=6              /P <n>\r\n");
         ps_st.printf("USB Serial Output                /S <off>|<on>\r\n");
         ps_st.printf("Radio Type                       /T <n>\r\n");
-        ps_st.printf("Write no NVRAM                   /W\r\n");
+        ps_st.printf("Version number                   /V\r\n");
+        ps_st.printf("Write to NVRAM                   /W\r\n");
         ps_st.printf("Maidenhead grid square (4 or 6)  /X\r\n");
         ps_st.printf("Short TX Pause                   /Y <off>|<on>\r\n");
         ps_st.printf("CSV Output                       /Z <off>|<on>\r\n");
@@ -417,12 +492,9 @@ if (command[0] == '/') {
 //      Interval (transmit)----------------------------------------------------
 
     case 'I':
-        current_int_value = PARMS.parameters.tx_interval;
         tx_interval       = PARMS.parameters.tx_interval;
         cli_process_int(parameter_query, PARMS.Key.tx_interval, command, 10, 255 , & tx_interval);
-        if (current_int_value != tx_interval) {
-            PARMS.parameters.tx_interval = tx_interval;
-        }
+        PARMS.parameters.tx_interval = tx_interval;
         break;
 
 //      Location---------------------------------------------------------------
@@ -433,7 +505,7 @@ if (command[0] == '/') {
             ps_st.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
         }
         else {
-            location_comma_found = false;
+            comma_found = false;
             i = 0;
             lat_i = 0;
             lon_i = 0;
@@ -443,17 +515,7 @@ if (command[0] == '/') {
             lon_sign = 1;
             while (command[i] != '\0') {
                 if (command[i] != ',') {
-                    if (location_comma_found) {
-                        if (lon_i < sizeof(lon_str)-1) {
-                            lon_str[lon_i] = command[i];
-                            lon_i++;
-                        }
-                        else {
-                            ps_st.printf("NG:Internal longitude buffer exceeded\r\n");
-                            return 1;
-                        }
-                    }
-                    else {
+                    if (!comma_found) {
                         if (lat_i < sizeof(lat_str)-1) {
                             lat_str[lat_i] = command[i];
                             lat_i++;
@@ -463,9 +525,19 @@ if (command[0] == '/') {
                             return 1;
                         }
                     }
+                    else {
+                        if (lon_i < sizeof(lon_str)-1) {
+                            lon_str[lon_i] = command[i];
+                            lon_i++;
+                        }
+                        else {
+                            ps_st.printf("NG:Internal longitude buffer exceeded\r\n");
+                            return 1;
+                        }
+                    }
                 }
                 else {
-                        location_comma_found = true;
+                        comma_found = true;
                 }
                 i++;
             }
@@ -480,7 +552,7 @@ if (command[0] == '/') {
             lat_str[lat_i] = '\0';
             lon_str[lon_i] = '\0';
     
-            if (!location_comma_found) {
+            if (!comma_found) {
                 ps_st.printf("NG:Location requires comma separation between Lat & Lon\r\n");
                 return 1;
             }
@@ -499,10 +571,8 @@ if (command[0] == '/') {
                 ps_st.printf("NG:Longitude must be between -90 and 90\r\n");
                 return 1;
             }
-            if ((current_lat_value != lat_value) || (current_lon_value != lon_value)) {
-                    PARMS.parameters.lat_value = lat_value;
-                    PARMS.parameters.lon_value = lon_value;    
-            }
+            PARMS.parameters.lat_value = lat_value;
+            PARMS.parameters.lon_value = lon_value;    
             ps_st.printf("OK:Latitude = % f; Longitude = %f\r\n", lat_value, lon_value);
         }
 
@@ -511,14 +581,10 @@ if (command[0] == '/') {
 //      Modulation-------------------------------------------------------------
         case 'M':
             if (command[0] != '\0') {
-                current_int_value = PARMS.parameters.modulation_index;
                 modulation_index  = PARMS.parameters.modulation_index;
                 cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, sizeof(modulation_array)/sizeof(modulation_array[0])-1, modulation_array,  &modulation_index);
-                if (current_int_value != modulation_index) {
-                    //Change modulation index in the radio, save to RAM and NVRAM
-                    PARMS.parameters.modulation_index = modulation_index;
-                    setModemConfig(modulation_index); //SF Bandwith etc
-                }
+                PARMS.parameters.modulation_index = modulation_index;
+                setModemConfig(modulation_index); //SF Bandwith etc
             }
             else {
                 ps_st.printf(PRINTF_NG_NULL_ARG);
@@ -528,14 +594,10 @@ if (command[0] == '/') {
 //      Power------------------------------------------------------------------
         case 'P':
             if (command[0] != '\0') {
-                current_int_value = PARMS.parameters.power_index;
                 power_index       = PARMS.parameters.power_index;
                 cli_process_index_float_value_unit(parameter_query, "Power Index", command, 0, sizeof(power)/sizeof(power[0])-1, power , "dBm",  &power_index);
-                if (current_int_value != power_index) {
-                    //Change power index in the radio, save to RAM and NVRAM
-                    PARMS.parameters.power_index = power_index;
-                    driver.setTxPower(power[power_index]);
-                }
+                PARMS.parameters.power_index = power_index;
+                driver.setTxPower(power[power_index]);
             }
             else {
                 ps_st.printf(PRINTF_NG_NULL_ARG);
@@ -550,33 +612,32 @@ if (command[0] == '/') {
 //      Serial USB Output Off/On-----------------------------------
 
         case 'S':
-            current_int_value = serial_usb_state;
             cli_process_bool(parameter_query, "Serial USB Output", command, & serial_usb_state);
-            if (current_int_value != serial_usb_state) {
-            }
+            // set USB serial output state here
             break;
 
 //      Radio Type-------------------------------------------------------------
         case 'T':
             if (command[0] != '\0')
             {
-                //current_int_value = PARMS.parameters.radio_type;
                 radio_type        = PARMS.parameters.radioType;
-                current_int_value = radio_type;
                 cli_process_int(parameter_query, "Radio Type", command, 0, 2 , & radio_type);
-                if (current_int_value != radio_type) {
-                    PARMS.parameters.radioType = radio_type;
-                }
+                PARMS.parameters.radioType = radio_type;
             }
             else {
                 ps_st.printf(PRINTF_NG_NULL_ARG);
              }
             break;
 
+//      Version---------------------------------------------------------
+        case 'V':
+            ps_st.printf("OK: Version: %s\r\nOK: Build date: %s %s\r\n", "TBD", VERSION_DATE, VERSION_TIME); 
+            break;
+
 //      Write to NVRAM---------------------------------------------------------
         case 'W':
             PARMS.update(); // update current settings in parameters structure to nvs
-            ps_st.printf("OK: Non-volatile Storage updated with current values\r\n"); 
+            ps_st.printf("OK: Non-volatile storage updated with current values\r\n"); 
             break;
     
 //      Maidenhead Grid Square (4 or 6 characters)------------------------------
@@ -599,7 +660,7 @@ if (command[0] == '/') {
                     decode_grid4(current_uint16_value, current_str_value);
                     current_char_value1  = PARMS.parameters.grid5;
                     current_char_value2  = PARMS.parameters.grid6;
-                    ps_st.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)current_uint16_value, current_char_value1, current_char_value2);
+                    ps_st.printf("OK:Grid4=%s (%u). Grid5=%c, Grid6=%c\r\n", current_str_value, (unsigned int)PARMS.parameters.grid4, PARMS.parameters.grid5, PARMS.parameters.grid6);
                 }
                 else {
                     i = strlen(command);
@@ -664,11 +725,8 @@ if (command[0] == '/') {
             current_int_value = PARMS.parameters.short_pause;    
             short_pause_state = PARMS.parameters.short_pause;
             cli_process_bool(parameter_query, "Short Pause State", command, & short_pause_state);
-            if (current_int_value != short_pause_state){
-                PARMS.parameters.short_pause = short_pause_state;
-            }
-
-        break;
+            PARMS.parameters.short_pause = short_pause_state;
+            break;
 
 //      CSV Output Off/On------------------------------------------------------
 
@@ -676,19 +734,18 @@ if (command[0] == '/') {
             current_int_value = local_PARMS_parameters_csv_output;    
             csv_output_state  = local_PARMS_parameters_csv_output;
             cli_process_bool(parameter_query, "CSV Output State", command, & csv_output_state);
-            if (current_int_value != csv_output_state){
-                local_PARMS_parameters_csv_output = csv_output_state;
-            }
+            local_PARMS_parameters_csv_output = csv_output_state;
 
-break;
+            break;
 
 //      Invalid Command--------------------------------------------------------
         default:
-            ps_st.printf("NG:Unrecognized command %c [C, F, G, H, I, L, M, P, R]\r\n", cmd_code);
+            ps_st.printf("NG:Unrecognized command %c [@, A, B, C, F, G, H, I, L, M, P, S, T, V, W, X, Y, Z]\r\n", cmd_code);
         }
     }
     else {
-        ps_st.printf("NG:Leading backslash missing\r\n");
+        ps_st.printf("NG:Leading forward slash missing\r\n");
+
         return 1;
     }
 
