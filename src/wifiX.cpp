@@ -14,8 +14,11 @@ bool WifiClass::init()
         tryCount++;
     }
     if (tryCount == 8) {
+        Serial.println(); //End dots
         display.println("Failed to connect to");
         display.println(PARMS.parameters.wifiSSID);
+        Serial.println("Failed to connect to");
+        Serial.println(PARMS.parameters.wifiSSID);
         return false;
     }
     // Not sure these are needed --- should investigate what they do exactly
