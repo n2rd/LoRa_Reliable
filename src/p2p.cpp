@@ -16,14 +16,7 @@ extern bool menu_active;
 bool tx_lock = false;
 bool short_pause = false;
 
-
-//send and receive data
-//uint8_t data[] = "And hello back to you";
-// transmit buffer
-uint8_t data[20];
 // Dont put this on the stack: 
-// it is fragile, you will break it if you touch it
-// do not rename, etc.,  if you mess with it, you won't get anything that is received
 uint8_t buf[DRIVER_MAX_MESSAGE_LEN];
 
 //message management
@@ -121,25 +114,14 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
       messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[5];
       return;
     }
-    log_e("Got a fix TTF %lu lat %lf lon %lf",millis()-beforeFix, lat,lon);
-    ///////////// TESTING ///////////////
-    //lat = 43.147195; lon = -76.171003; //Ron's house FN13VD95LH Dif -0.334576 -0.669267
-    //lat = 0.000; lon = 180.000; 
+
     char *curMaidenheadGrid = GPS.latLonToMaidenhead(lat,lon, gridSize);
-    log_e("GPS Grid: %s %d",curMaidenheadGrid,strlen(curMaidenheadGrid));
     if (gridLocatorPtr != NULL)
       *gridLocatorPtr = curMaidenheadGrid;
     encode_grid4_to_buffer(curMaidenheadGrid,&messagePtr->data[messagePtr->len]);
     messagePtr->len+=2;
     messagePtr->data[messagePtr->len++] = (uint8_t)curMaidenheadGrid[4];
     messagePtr->data[messagePtr->len++] = (uint8_t)curMaidenheadGrid[5];
-    ///////////// TESTING ///////////////
-    //log_e("Grid: %s",curMaidenheadGrid);
-    //double newLat = 0, newLon = 0;
-    //GPS.maidenheadGridToLatLon(curMaidenheadGrid,&newLat, &newLon);
-    //log_e("Original: %lf %lf Converted: %lf %lf Dif: %lf %lf",lat, lon, newLat, newLon,lat-newLat,lon-newLon);
-    //Difference for 43.024377 -76.202852 converted to FN13va55pu is -1.338817 -2.677505
-    //free(curMaidenheadGrid);
   }
 }
 
@@ -155,7 +137,6 @@ void extractGrid6LocatorFromData(int startMsgDataIndex, uint8_t* data, int dataL
       locator[lindex++] = data[mindex++]; //6th locator character
       locator[lindex] = 0;
     }
-    log_e("Grid after add others: %s %d",locator,strlen(locator));
   } 
 }
 
@@ -172,24 +153,17 @@ void p2pLoop(void)
       if (manager.recvfrom(buf, &len, &from, &to, &id, &flags)) {
         uint8_t headerId = driver.headerId();
         if (to == RH_BROADCAST_ADDRESS) {
-          log_e("Received broadcast length = %d", len);
-          //we have a broadcast message
-          //display the message
+          //we have a broadcast message, so send reply back to sender
+          //display the broadcast message
           int snr = driver.lastSNR();
           int rssi = driver.lastRssi();
           if (!menu_active) {
-            //display.printf("Broadcast from %i #%i\n", from, (int)(buf[1]*256 + buf[0])); //Duplicative commented out
-            //display.printf("RSSI %i  SNR %i\n", rssi, snr); //SNR goes off screen so don't display it.
-            display.printf("B %u-%03u #%i RSSI %i\n", from, headerId, (int)(buf[1]*256 + buf[0]), rssi); //Do it all in one
+            display.printf("B %u-%03u #%i RSSI %i\n", from, headerId, (int)(buf[0]*256 + buf[1]), rssi); //Do it all in one
           }
-          //send reply back to sender
-          rssi = abs(rssi);
-          data[0] = static_cast<uint8_t>(rssi);
-          data[1] = static_cast<uint8_t>(snr);
           //add the signal report to the message queue
           message_t message;
-          message.data[0] = data[0];
-          message.data[1] = data[1];
+          message.data[0] = static_cast<uint8_t>(rssi);
+          message.data[1] = static_cast<uint8_t>(snr);
           message.len = 2;
           message.to = from;
           message.headerID = headerId;
@@ -202,22 +176,17 @@ void p2pLoop(void)
             csv_serial.debug("p2p",(char *)"Transmit queue full\n");
             csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
           }
-          //if (gridLocator != NULL)
-          //  log_e("Grid Locator: %s", gridLocator);
+
           char gridLocator[11];
           extractGrid6LocatorFromData(2, buf, len, gridLocator);
           csv_serial.data(GPS.getTimeStamp(), 'B', from, to, headerId, rssi, snr, gridLocator);
           csv_telnet.data(GPS.getTimeStamp(), 'B', from, to, headerId, rssi, snr, gridLocator);
         } else {
           //we have a signal report for us
-          log_e("Received SigRep length = %d", len);
-          int rssi = 0 - buf[0];
+          int rssi = (int8_t)buf[0];
           int snr = buf[1];
           if (!menu_active) {
-            display.printf("SR %u-%03u RSSI %i\n", from, headerId, rssi);
-            //display.printf("Signal Report from %i\n", from);
-            //display.printf("SigRep %u ", from);
-            //display.printf("RSSI %i SNR %i\n", rssi, snr);
+            display.printf("R %u-%03u RSSI %i\n", from, headerId, rssi);
           }
           char gridLocator[11];
           extractGrid6LocatorFromData(2, buf, len, gridLocator);
@@ -236,12 +205,10 @@ void p2pLoop(void)
   }
   if ((!tx_lock) && (((millis() - broadcast_time) > (effective_pause * 1000)))) {
      broadcast_time = millis();
-     data[0] = static_cast<uint8_t>(counter & 0xFF); //low byte
-     data[1] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
      //add the broadcast message to the message queue
           message_t message;
-          message.data[0] = data[0];
-          message.data[1] = data[1];
+          message.data[0] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
+          message.data[1] = static_cast<uint8_t>(counter & 0xFF); //low byte
           message.len = 2;
           message.headerID = ++transmit_headerId;
           message.to = RH_BROADCAST_ADDRESS;
@@ -263,16 +230,13 @@ void p2pLoop(void)
 
   //transmit the top message in the queue after random delay
   if ((!tx_lock) && ((millis() - tx_time) > random_delay)) {
-    //log_e("ATransmit Queue Depth: %d", transmit_queue.itemCount());
     if (!transmit_queue.isEmpty()) {
-      message_t message;
-      message = transmit_queue.dequeue();
-      //log_e("Queue Depth: %u",transmit_queue.itemCount());
+      message_t message = transmit_queue.dequeue();
       unsigned long curMicros = micros();
       manager.setHeaderId(message.headerID);
       manager.sendto(message.data, message.len, message.to);
       unsigned long transmitMicros = micros() - curMicros;
-      log_e("Transmit time: %ld", transmitMicros);
+      //log_e("Transmit time: %ld", transmitMicros);
       tx_time = millis();
       int max_delay;
       if (!short_pause){
@@ -281,8 +245,5 @@ void p2pLoop(void)
         max_delay = random_delay_generator(MAX_DELAY/2);  //short pause
       }
     } //if it is time to transmit a message
-  }
-  else {
-    //log_e("BTransmit Queue Depth: %d", transmit_queue.itemCount());
   }
 } //loop
