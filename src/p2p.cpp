@@ -149,8 +149,6 @@ void extractGrid6LocatorFromData(int startMsgDataIndex, uint8_t* data, int dataL
   uint16_t lindex = 4;
   if (dataLen >= (startMsgDataIndex+2)) {
     decode_grid4_from_buffer(&data[mindex],locator);
-    log_e("Grid after decode_grid4: %s",locator);
-    log_e("dataLen: %d index: %d",dataLen,(startMsgDataIndex+4));
     if (dataLen >= (startMsgDataIndex+4)) {
       mindex+=2;
       locator[lindex++] = data[mindex++]; //5th locator character
