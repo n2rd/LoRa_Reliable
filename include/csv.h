@@ -10,6 +10,7 @@ typedef struct CsvData {
     float rssi;
     float snr;
     char gridLocator[11];
+    double miles;
 } CSVDATA, *CSVDATAPTR;
 
 class CsvClass : public Print { //we derive from Print so that we can use printSplitter 
