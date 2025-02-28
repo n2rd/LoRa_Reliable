@@ -22,6 +22,8 @@ GPSClass GPS;
 GPSClass::GPSClass()
 {
   rtcIsSet = false;
+  lastLat = 0;
+  lastLon = 0;
   setup();
 }
 //
@@ -128,10 +130,13 @@ bool GPSClass::getLocation(double *lat, double *lng, double *alt, double *hdop) 
   if (gps_fix) {
     gps_start = millis();
 
+    lastLat = gps.location.lat();
+    lastLon = gps.location.lng();
+
     if (lat)
-      *lat = gps.location.lat();
+      *lat = lastLat;
     if (lng)
-      *lng = gps.location.lng();
+      *lng = lastLon;
     if (alt)
       *alt = gps.altitude.meters();
     if (hdop)
@@ -241,7 +246,6 @@ char* GPSClass::latLonToMaidenhead(double lat, double lon, int size = 6) {
 static char* complete_mh(char* locator) {
     static char locator2[11]; // = "LL55LL55LL";
     strcpy(locator2,"LL55LL55LL");
-    log_e("locator2: %s",locator2);
     int len = strlen(locator);
     if (len >= 10) return locator;
     memcpy(locator2, locator, strlen(locator));
@@ -305,5 +309,21 @@ double GPSClass::distance(double lat1, double lon1, double lat2, double lon2)
   double distanceInKilometers = earthRadius *c;
   double miles = distanceInKilometers / 1.6; //convert to miles
   return miles;
+}
+
+bool GPSClass::getLastLatLon(double *lat, double *lon)
+{
+  bool retVal = true;
+  if ((lastLat == 0) && (lastLon == 0)) {
+    //Lat/lon not set by GPS ... use fixed value
+    *lat = PARMS.parameters.lat_value;
+    *lon = PARMS.parameters.lon_value;
+    retVal = false;
+  }
+  else {
+    *lat = lastLat;
+    *lon = lastLon;
+  }
+  return retVal;
 }
 #endif //defined(HAS_GPS) && (HAS_GPS ==1)
