@@ -3,6 +3,7 @@
 
 #include "version.h"
 #include <Arduino.h>
+#include <stdlib.h>
 #include "myConfig.h"
 #include <SPI.h>
 #include <Preferences.h>
@@ -42,6 +43,7 @@
         #endif //defined(HAS_WIFI) && (HAS_WIFI == 1)
     #endif //defined(ESP32)
 #endif //USE_WIFI > 0
+#include "wifiX.h"
 
 extern CsvClass csv_telnet;
 extern CsvClass csv_serial;
@@ -54,8 +56,9 @@ extern void DisplayUpperRight(int count);
 extern void check_button();
 
 //
-// functions declarations of fucntions in main.cpp
+// functions declarations of fucntions in main.cpp 
 //
+void initializeNetwork();
 void DisplayUpperRight(int count);
 void toggleLED();
 #if HAS_GPS

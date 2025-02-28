@@ -12,24 +12,33 @@
 
 class GPSClass {
     public:
-        enum GPSPowerState {
+        typedef enum GPSPowerState {
             GPS_OFF = 0,
             GPS_TX = 1,
             GPS_ON = 2
-        } GPSPOWERSTATE;
-        typedef enum GPSPowerState PowerState;
+        } PowerState;
         // Constructor
         GPSClass();
         // Function declarations
         //void initGPS();  // Function to initialize the GPS module
         void onoff(PowerState state);  // Function to turn on or off the GPS 
+        PowerState onoffState();
         void setup();
+        void loop();
+        unsigned long getTimeStamp();
         bool getLocation(double *lat, double *lng, double *alt = NULL, double *hdop = NULL);
-        String latLonToMaidenhead(double latitude, double longitude, int precision);
+        char *latLonToMaidenhead(double latitude, double longitude, int precision);
+        void maidenheadGridToLatLon(char* grid,double *lat, double *lon);
         const char *getPowerStateName(PowerState state);
+        double distance(double lat1, double lon1, double lat2, double lon2);
+        bool getLastLatLon(double *lat, double *lon);
     private:
         //HardwareSerial GPSSerial;    //use Hardware UART1 for GPS
         TinyGPSPlus gps;
+        PowerState powerState;
+        bool rtcIsSet;
+        double lastLat;
+        double lastLon;
         #ifdef ARDUINO_ARCH_ESP32
         static void GPSTask(void *pvParameter);
         #endif //ARDUINO_ARCH_ESP32

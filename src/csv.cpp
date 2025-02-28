@@ -23,21 +23,43 @@ size_t CsvClass::write(const char* str) { //this outputs as info
     return strlen(str);
 }
 /*----------------------------------------------------*/
+void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId, char *gridLocator)
+{
+    char nul = 0;
+    double myLat,myLon,bcastLat,bcastLon;
+    double miles = -1;
+    if (gridLocator) {
+        GPS.maidenheadGridToLatLon(gridLocator,&bcastLat,&bcastLon);
+        GPS.getLastLatLon(&myLat, &myLon);
+        miles = GPS.distance(myLat, myLon, bcastLat, bcastLon);
+    }
+    printObject.printf(
+        "B, %ld, O, %3d, 255, %3u,    ,    , %s, %4.2lf\r\n",
+        timeStamp,
+        from,
+        headerId,
+        gridLocator == NULL ? &nul : gridLocator,
+        miles
+    );  
+}
+/*----------------------------------------------------*/
 void CsvClass::data(CSVDATAPTR data) 
 {
     printObject.printf(
-        "D, %ld, %c, %d, %d, %2u, %.0f, %.0f\r\n",
+        "D, %ld, %c, %3d, %3d, %3u, %3.0f, %3.0f, %s, %4.2lf\r\n",
         data->timeStamp,
         data->recvType,
         data->from,
         data->to,
         data->headerId,
         data->rssi,
-        data->snr
+        data->snr,
+        data->gridLocator,
+        data->miles
     );
 }
 /*----------------------------------------------------*/
-void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, uint8_t headerId, float rssi, float snr)
+void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, uint8_t headerId, float rssi, float snr, char* gridLocator)
 {
     CSVDATA datastruct;
     datastruct.timeStamp = timeStamp;
@@ -47,6 +69,20 @@ void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, uin
     datastruct.headerId = headerId;
     datastruct.rssi = rssi;
     datastruct.snr = snr;
+    if (gridLocator)
+        strncpy(datastruct.gridLocator, (const char *)gridLocator, 11);
+    else
+        datastruct.gridLocator[0] = 0;
+
+    double myLat,myLon, dataLat, dataLon;
+    double miles = -1;
+    if (gridLocator) {
+        GPS.maidenheadGridToLatLon(gridLocator,&dataLat,&dataLon);
+        GPS.getLastLatLon(&myLat, &myLon);
+        datastruct.miles = GPS.distance(myLat, myLon, dataLat, dataLon);
+    }
+    else datastruct.miles = -1;
+
     data(&datastruct);
 }
 /*----------------------------------------------------*/

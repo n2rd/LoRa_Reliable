@@ -5,13 +5,14 @@
 //////////////////////// OTA  stuff /////////////////////////
 #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
 /////// Async Version ///////
-
+bool otaActive = false;
 unsigned long ota_progress_millis = 0;
 
 void onOTAStart() {
   // Log when OTA has started
   Serial.println("OTA update started!");
-  // <Add your own code here>
+  driver.setModeIdle();
+  otaActive = true;
 }
 
 void onOTAProgress(size_t current, size_t final) {
@@ -29,32 +30,17 @@ void onOTAEnd(bool success) {
   } else {
     Serial.println("There was an error during OTA update!");
   }
-  // <Add your own code here>
+  driver.setMode(driver.RHModeRx);
+  otaActive = false;
 }
 
 void ota_setup(void) {
-  #warning "Move Wifi code out into its own place. as OTA might be off but want wifi on"
-  WiFi.mode(WIFI_STA);
-  WiFi.setHostname("Lora_Reliable");
-  WiFi.begin(WIFI_SSID, WIFI_PASSWD);
 
-  // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  // Not sure these are needed --- should investigate what they do exactly
-  WiFi.setAutoReconnect(true);
-  WiFi.persistent(true);
-
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(WIFI_SSID);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain", "Hi! This is Lora_reliable. ASYNC");
+    char buffer[100];
+    sprintf(buffer,"Hi! This is a Lora_reliable device.\r\n\r\nThis radio is #%u ASYNC",manager.thisAddress());
+    request->send(200, "text/plain",buffer);
   });
 
   // https://docs.elegantota.pro/getting-started/installation

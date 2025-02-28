@@ -1,4 +1,7 @@
 #include "main.h"
+
+bool menu_active = false;  //do not show radio messages on display when menu is active
+
 #if defined(HAS_ENCODER) && HAS_ENCODER == 1  //only include this file if we have encoder
 
 #include "AiEsp32RotaryEncoder.h"

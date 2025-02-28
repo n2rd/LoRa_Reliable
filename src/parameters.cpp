@@ -157,7 +157,19 @@ void ParametersClass::init() {
   } else { //use defaults and write to nvram
         parameters.address = DEFAULT_ADDRESS;
         preferences.putUInt(Key.address, parameters.address);
-  }     
+  }
+  if (preferences.isKey(Key.wifiSSID)) {
+      strcpy(parameters.wifiSSID, preferences.getString(Key.wifiSSID).c_str());
+  } else { //use defaults and write to nvram
+      strcpy(parameters.wifiSSID, WIFI_SSID);
+      preferences.putString(Key.wifiSSID, parameters.wifiSSID);
+  }
+  if (preferences.isKey(Key.wifiKey)) {
+      strcpy(parameters.wifiKey, preferences.getString(Key.wifiKey).c_str());
+  } else { //use defaults and write to nvram
+      strcpy(parameters.wifiKey, WIFI_PASSWD);
+      preferences.putString(Key.wifiKey, parameters.wifiKey);
+  }        
   preferences.end();
 }
 //
@@ -215,8 +227,13 @@ void ParametersClass::update() {
     if (preferences.getUInt(Key.radioType) != parameters.radioType) {
       preferences.putUInt(Key.radioType, parameters.radioType);
     }
+    if (strcmp(preferences.getString(Key.wifiSSID).c_str(), parameters.wifiSSID) != 0) {
+      preferences.putString(Key.wifiSSID, parameters.wifiSSID);
+    }
+    if (strcmp(preferences.getString(Key.wifiKey).c_str(), parameters.wifiKey) != 0) {
+      preferences.putString(Key.wifiKey, parameters.wifiKey);
+    }
     preferences.end();
-    log_e("end Parameter update()");
 }
 
 //

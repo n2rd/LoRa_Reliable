@@ -23,9 +23,8 @@
 #define RETRIES     3     //for sendtoWait
 
 // some state variables
-bool menu_active = false;
-bool tx_lock = false;
-bool short_pause = false;
+
+
 
 //
 
@@ -46,6 +45,10 @@ double lastLat = 0;
 double lastLon = 0;
 #endif //HAS_GPS
 
+void initializeNetwork() {
+  ota_setup();
+  telnet.setup();
+}
 /***********************************************************/
 /***********************************************************/
 void setup() 
@@ -57,11 +60,6 @@ void setup()
   pinMode(LED_BUILTIN, OUTPUT);
   SPI.begin(LORA_SCK,LORA_MISO,LORA_MOSI,LORA_CS);
   #endif
-
-  delay(5000);
-  ota_setup();
-  telnet.setup();
-
   //display init
   #ifndef ARDUINO_LILYGO_T3_V1_6_1
   heltec_display_power(true);
@@ -80,6 +78,10 @@ void setup()
   display.setFont(ArialMT_Plain_10);
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
+
+  if (WIFI.init()) {
+    initializeNetwork();
+  }
 
   //start the radio
   if (!manager.init()) 
@@ -129,20 +131,67 @@ void setup()
    rotary_setup();
 #endif
 }
-
+/***********************************************************/
+/***********************************************************/
+const int SIB_SIZE = 100;
+char sib[SIB_SIZE+1];
+int sibIndex = 0;
+void serial_input_loop()
+{
+  bool sendToCli = false;
+  do {
+    while(Serial.available()) {
+      if (sibIndex == 0)
+        Serial.println();
+      char ch = Serial.read();
+      sib[sibIndex] = ch;
+      if ((ch == '/') && (sibIndex == 0))
+        Serial.print("Command:/");
+      else
+        Serial.print(ch);
+      if ((ch == '\r') || (ch == '\n')) {
+        sib[sibIndex] = 0;
+        sendToCli = true;
+        break;
+      }
+      else if ((ch == 8) || (ch == 127)) {
+        if (sibIndex > 0) {
+          sib[--sibIndex] = 0;
+        }
+      }
+      if (sibIndex >= SIB_SIZE) {
+        sib[sibIndex] = 0;
+        break;
+      }
+      sibIndex++;
+    }
+    if (sendToCli) {
+      //log_e("executing cli %d '%s'",sibIndex,sib);
+      cli_execute(sib);
+      sibIndex = 0;
+      sendToCli = false;
+      sib[0]=0;
+    }
+  } while(sib[0] == '/'); 
+}
 /***********************************************************/
 /***********************************************************/
 void loop()
 {
   //first check the buttons
-  check_button();
+  if (!otaActive) {
+    check_button();
+    telnet.loop();
+    p2pLoop();
+    #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
+      rotary_loop();
+    #endif
+    #if HAS_GPS
+      GPS.loop();
+    #endif
+    serial_input_loop();
+  }
   ota_loop();
-  telnet.loop();
-  p2pLoop();
-
-  #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
-    rotary_loop();
-  #endif
 
 // #if HAS_GPS
 //   dumpLatLon();

@@ -9,15 +9,18 @@ typedef struct CsvData {
     uint8_t headerId;
     float rssi;
     float snr;
+    char gridLocator[11];
+    double miles;
 } CSVDATA, *CSVDATAPTR;
 
 class CsvClass : public Print { //we derive from Print so that we can use printSplitter 
     public:
         CsvClass(Print& _printObject);
         virtual size_t write(uint8_t c); //this outputs as info 
-        virtual size_t write(const char* str); //this outputs as info 
+        virtual size_t write(const char* str); //this outputs as info
+        void broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId, char *gridLocator);
         void data(CSVDATAPTR data);
-        void data(unsigned long timeStamp,char recvType, int from, int to, uint8_t headerID, float rssi, float snr);
+        void data(unsigned long timeStamp,char recvType, int from, int to, uint8_t headerID, float rssi, float snr, char* gridLocator = NULL);
         void info(const char *threeCharTag, char *data);
         void error(const char *threeCharTag, char *data);
         void fatalError(const char *threeCharTag, char *data);
