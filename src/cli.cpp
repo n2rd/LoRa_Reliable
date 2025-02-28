@@ -49,7 +49,11 @@ CLI Command set
                                     n=5 +18.0 dBm
                                     n=6 +22.0 dBm
     Quit (Telnet)           /Q
-    RF Signal Reports (CSV) /R <OFF|ON>                                     Default = TBD 
+    RF Signal Reports (CSV) /R <n>                                          Default = 0
+                                    n=0  PFF
+                                    n=1  SERIAL
+                                    n=2  TELNET
+                                    n=3  BOTH    
     Serial USB Output       /S <OFF|ON>                                     Default = on
     Radio Type              /T <n>                                          Default = 2
                                     n=0 Server (client/server operation)
@@ -80,7 +84,9 @@ uint16_t encode_grid4(String locator) {
 
 #define MODULATION_INDEX_MAX 9
 
-char gps_array[3][4] = {"Off", "TX", "On"};
+//char gps_array[3][4] = {"Off", "TX", "On"};
+char csv_array[4][20] = {"OFF", "SERIAL", "TELNET", "BOTH"};
+static u_int8_t  csv_index;
 char modulation_array[9][20] = {"Short Turbo", "Short Fast", "Short Slow", "Medium Fast", "Medium Slow", "Long Fast", "Long Moderate", "Long Slow", "Very Long Slow"};
 float frequency_array[] = {902.125,902.375,902.625,902.875,903.125,903.375,903.625,903.875,904.125,904.375,904.625,904.875,905.125,905.375,905.625,905.875,906.125,906.375,906.625,906.875,907.125,907.375,907.625,907.875,908.125,908.375,908.625,908.875,909.125,909.375,909.625,909.875,910.125,910.375,910.625,910.875,911.125,911.375,911.625,911.875,912.125,912.375,912.625,912.875,913.125,913.375,913.625,913.875,914.125,914.375,914.625,914.875,915.125,915.375,915.625,915.875,916.125,916.375,916.625,916.875,917.125,917.375,917.625,917.875,918.125,918.375,918.625,918.875,919.125,919.375,919.625,919.875,920.125,920.375,920.625,920.875,921.125,921.375,921.625,921.875,922.125,922.375,922.625,922.875,923.125,923.375,923.625,923.875,924.125,924.375,924.625,924.875,925.125,925.375,925.625,925.875,926.125,926.375,926.625,926.875,927.125,927.375,927.625,927.875};
 
@@ -233,7 +239,7 @@ void cli_process_index_char_value_unit(int parameter_query, const char* param_na
 //=============================================================================
 int cli_execute(const char* command_arg) {
 
-static bool local_PARMS_parameters_csv_output;
+static u_int8_t local_PARMS_parameters_csv_output;
 
 PARAMETERS local_params;
 
@@ -309,7 +315,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         if (parameter_query) {
             ps_st.printf("OK:SSID = \"%s\"; Passcode = \"%s\"\r\n",
                 PARMS.parameters.wifiSSID,
-                PARMS.parameters.wifiKey
+                "************"
                 );
         }
         else {
@@ -472,13 +478,13 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         ps_st.printf("Position                         /L <latitude >,<longitude>\r\n");
         ps_st.printf("Modulation index 0<=n<=8         /M <n>\r\n");
         ps_st.printf("Power index 0<=n<=6              /P <n>\r\n");
+        ps_st.printf("RF Signal Reports (CSV)          /R 0=Off, 1=Serial, 2=TELNET, 3=Both\r\n");
         ps_st.printf("USB Serial Output                /S <off>|<on>\r\n");
         ps_st.printf("Radio Type                       /T <n>\r\n");
         ps_st.printf("Version number                   /V\r\n");
         ps_st.printf("Write to NVRAM                   /W\r\n");
         ps_st.printf("Maidenhead grid square (4 or 6)  /X\r\n");
         ps_st.printf("Short TX Pause                   /Y <off>|<on>\r\n");
-        ps_st.printf("CSV Output                       /Z <off>|<on>\r\n");
         ps_st.printf("Commands case insensitive and blanks ignored\r\n");
         break;
 
@@ -600,8 +606,14 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
             ps_st.printf("OK:Quitting Telnet session\r\n");
             break;
 
-//      Serial USB Output Off/On-----------------------------------
+//      CSV Output Off/On------------------------------------------------------
+        case 'R':
+            csv_current_state  = local_PARMS_parameters_csv_output;     //need to use the system wide variable
+            cli_process_index_char_value_unit(parameter_query, "CSV Index", command, 0, sizeof(csv_array)/sizeof(csv_array[0])-1, csv_array,  & csv_current_state);
+            local_PARMS_parameters_csv_output = csv_current_state;      //need to use the system wide variable
+        break;
 
+//      Serial USB Output Off/On-----------------------------------
         case 'S':
             // get USB serial output state here
             cli_process_bool(parameter_query, "Serial USB Output", command, & current_state);
@@ -716,18 +728,9 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
             PARMS.parameters.short_pause = local_params.short_pause;
             break;
 
-//      CSV Output Off/On------------------------------------------------------
-
-        case 'Z':
-            csv_current_state  = local_PARMS_parameters_csv_output;     //need to use the system wide variable
-            cli_process_bool(parameter_query, "CSV Output State", command, & csv_current_state);
-            local_PARMS_parameters_csv_output = csv_current_state;      //need to use the system wide variable
-
-            break;
-
 //      Invalid Command--------------------------------------------------------
         default:
-            ps_st.printf("NG:Unrecognized command %c [@, A, B, C, F, G, H, I, L, M, P, S, T, V, W, X, Y, Z]\r\n", cmd_code);
+            ps_st.printf("NG:Unrecognized command %c [@, A, B, C, F, G, H, I, L, M, P, R, S, T, V, W, X, Y]\r\n", cmd_code);
         }
     }
     else {

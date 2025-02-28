@@ -27,7 +27,7 @@ void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId
 {
     char nul = 0;
     printObject.printf(
-        "B, %ld, O, %3d, 255, %3u,    ,    , %s\r\n",
+        "B, %ld, O, %3d, 255, %3u,     ,    , %s\r\n",
         timeStamp,
         from,
         headerId,
@@ -38,7 +38,7 @@ void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId
 void CsvClass::data(CSVDATAPTR data) 
 {
     printObject.printf(
-        "D, %ld, %c, %3d, %3d, %3u, %3.0f, %3.0f, %s\r\n",
+        "D, %ld, %c, %3d, %3d, %3u, %4.0f, %3.0f, %s\r\n",
         data->timeStamp,
         data->recvType,
         data->from,
