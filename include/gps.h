@@ -31,11 +31,14 @@ class GPSClass {
         void maidenheadGridToLatLon(char* grid,double *lat, double *lon);
         const char *getPowerStateName(PowerState state);
         double distance(double lat1, double lon1, double lat2, double lon2);
+        bool getLastLatLon(double *lat, double *lon);
     private:
         //HardwareSerial GPSSerial;    //use Hardware UART1 for GPS
         TinyGPSPlus gps;
         PowerState powerState;
         bool rtcIsSet;
+        double lastLat;
+        double lastLon;
         #ifdef ARDUINO_ARCH_ESP32
         static void GPSTask(void *pvParameter);
         #endif //ARDUINO_ARCH_ESP32
