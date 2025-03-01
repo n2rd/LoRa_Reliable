@@ -25,6 +25,7 @@
 #include "p2p.h"
 #include "gps.h"
 #include "menu.h"
+#include "bmp280sensor.h"
 #include <RHReliableDatagram.h>
 
 #if USE_WIFI >0

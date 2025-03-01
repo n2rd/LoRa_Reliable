@@ -130,6 +130,9 @@ void setup()
 #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
    rotary_setup();
 #endif
+  bmp280_setup();
+  Serial.printf("Temperature: %f\r\n",myBMP280.readTempF());
+  display.printf("Temperature: %f\r\n",myBMP280.readTempF());
 }
 /***********************************************************/
 /***********************************************************/
