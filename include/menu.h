@@ -3,7 +3,7 @@
 
 #include "Dialog_bolditalic_10.h"
 
-#define MENU_DEBUG 1
+#define MENU_DEBUG 0
 
 //
 // MENU Structure
@@ -56,8 +56,8 @@ void IRAM_ATTR readEncoderISR(); // Interrupt service routine for rotary encoder
 void act_item_init(); // Identify menu items that are activated
 void rotary_setup(); // Setup rotary encoder
 void rotary_loop(); // Loop for rotary encoder
-void menu(int m);
-void highlight_item(int menu, int old_item, int new_item);
+void menu();
+void highlight_item(int old_item, int new_item);
 void on_button_short_click();
 void on_button_long_click();
 void handle_rotary_button();
@@ -66,7 +66,7 @@ void draw_regular_menu(int max_items);
 void handle_rotary_button(); 
 void IRAM_ATTR readEncoderISR(); 
 void robot();
-bool activate(int cmenu, int citem);
+bool activate(int citem);
 void write_add(int add);
 void on_button_long_click();
 void on_button_short_click();
@@ -74,14 +74,14 @@ void menu_setup();
 void check_button(); //this is the user button on Heltec
 void rotary_loop();
 void menu(int m);
-void highlight_item(int menu, int old_item, int new_item);
+void highlight_item(int old_item, int new_item);
 void on_button_short_click();
 void on_button_long_click();
 void robot();
 void display_setup();
-void rolling_menu(int r_menu_num);
-void show_rolling_item(int r_menu_num, int position, int item_num);
-void draw_regular_menu(int menu, int max_items);
+void rolling_menu();
+void show_rolling_item(int position, int item_num);
+void draw_regular_menu(int max_items);
 
 extern SSD1306Wire display;
 // extern Heltec_ESP32 display;

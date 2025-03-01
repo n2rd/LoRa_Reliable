@@ -44,7 +44,11 @@ void act_item_init()
   if (MENU_DEBUG) Serial.printf("act_item_init: address %i\n", act_item[3]);
   act_item[4] = PARMS.parameters.frequency_index;
   if (MENU_DEBUG) Serial.printf("act_item_init: frequency %i\n", act_item[4]);
-  act_item[5] = PARMS.parameters.gps_state;
+  #ifdef HAS_GPS
+  act_item[5] = PARMS.parameters.gps_state + 3;
+  #else
+  act_item[5] = 0;
+  #endif
   if (MENU_DEBUG) Serial.printf("act_item_init: gps %i\n", act_item[5]);
   tx_lock = PARMS.parameters.tx_lock;
   if (MENU_DEBUG) Serial.printf("act_item_init: tx_lock %i\n", tx_lock);
@@ -77,14 +81,14 @@ void rotary_loop()
   //dont print anything unless value changed
   if (rotary.encoderChanged()) {
 	  int new_item = rotary.readEncoder();
-	  if (MENU_DEBUG) Serial.printf("encoder changed %i\n", new_item);
-	  if (cur_menu != ADD_MENU && cur_menu != FREQ_MENU) {  //if regular menu
-	    menu(cur_menu);
-	    highlight_item(cur_menu, cur_item[cur_menu], new_item);
+	  if (MENU_DEBUG) Serial.printf("encoder changed %i cur_menu %i curitem %i\n", new_item, cur_menu, cur_item[cur_menu]);
+	  if (!(cur_menu == ADD_MENU || cur_menu == FREQ_MENU)) {  //if regular menu
+	    menu();
+	    highlight_item(cur_item[cur_menu], new_item);
 	    cur_item[cur_menu] = new_item;
 	  } else {
       cur_item[cur_menu] = new_item;
-      rolling_menu(cur_menu);
+      rolling_menu();
 	  }
   }
   handle_rotary_button();
@@ -96,39 +100,39 @@ void rotary_loop()
 // the three rows are identified by position -1, 0, 1
 // the indexes for items roll in a circle in both directions 
 // going from zero and maximum value and back
-void rolling_menu(int r_menu_num)
+void rolling_menu()
 {  
+  if (MENU_DEBUG) Serial.printf("rolling_menu %i\n", cur_menu);
   display.clear();
-  cur_menu = r_menu_num;
   //menu header
   display.setFont(ArialMT_Plain_16);
   display.setColor(WHITE);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.drawString(64, 0, menu_label[r_menu_num]);
+  display.drawString(64, 0, menu_label[cur_menu]);
 
   //first determine the upper limit
   int max_index = 0;
-  if (cur_menu = ADD_MENU) {
+  if (cur_menu == ADD_MENU) {
     max_index = MAX_ADDRESS;
-  } else if (cur_menu = FREQ_MENU) { 
+  } else if (cur_menu == FREQ_MENU) { 
     max_index = MAX_FREQUENCY_INDEX;
   }
 
   // -1 position
   if (cur_item[cur_menu] > 0) {
-    show_rolling_item(r_menu_num, -1, cur_item[cur_menu]-1);
+    show_rolling_item(-1, cur_item[cur_menu]-1);
   } else {
-    show_rolling_item(r_menu_num, -1, max_index);
+    show_rolling_item(-1, max_index);
   }
 
   // 0 position
-  show_rolling_item(r_menu_num, 0, cur_item[cur_menu]);
+  show_rolling_item(0, cur_item[cur_menu]);
 
   // +1 position
   if (cur_item[cur_menu] == max_index) {
-    show_rolling_item(r_menu_num, 1, 0);
+    show_rolling_item(1, 0);
   } else {
-    show_rolling_item(r_menu_num, 1, cur_item[cur_menu] + 1);
+    show_rolling_item(1, cur_item[cur_menu] + 1);
   }
   display.display();
 }
@@ -136,8 +140,9 @@ void rolling_menu(int r_menu_num)
 //shows the rolling menu item
 // puts the current item in a highlight box
 // activated item is shown in bold italic font
-void show_rolling_item(int r_menu_num, int position, int item_num) //position -1, 0, 1
+void show_rolling_item(int position, int item_num) //position -1, 0, 1
 {
+  if (MENU_DEBUG) Serial.printf("menu %i, show_rolling_item %i %i\n", cur_menu, position, item_num);
   display.setColor(WHITE);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
   int y = 32 + position * 15;
@@ -147,38 +152,38 @@ void show_rolling_item(int r_menu_num, int position, int item_num) //position -1
     display.setFont(ArialMT_Plain_10);
   }
   char item_str[10];
-  if (r_menu_num == ADD_MENU) {
+  if (cur_menu == ADD_MENU) {
     sprintf(item_str, "%i", item_num);
-  } else if (r_menu_num == FREQ_MENU) {
+  } else if (cur_menu == FREQ_MENU) {
     sprintf(item_str, "%i", 902125 + 250 * item_num);
   }
   display.drawString(64, y, item_str);
   // if it is the center one, highlight it
   if (position == 0) {
-    display.drawRect(48, 33, 32, 12);
+    display.drawRect(32, 33, 64, 12);
   }
 }
 
 //draws the menu on the screen
 // used the regular menu structure for non-rolling menus
 //   this is the default case
-void menu(int menu_num) //only for non-address menus
+void menu() //pick the menu type
 {
-  if (MENU_DEBUG) Serial.printf("menu %i\n", menu_num);
+  if (MENU_DEBUG) Serial.printf("menu %i\n", cur_menu);
   menu_active = true;
-  switch (menu_num) {
+  switch (cur_menu) {
     case ADD_MENU:
-      rolling_menu(menu_num);
+      rolling_menu();
       break;
     case FREQ_MENU:
-      rolling_menu(menu_num);
+      rolling_menu();
       break;
     case EXIT_MENU:
       //exit menu and back to regular radio display
       break;
     case SET_MENU:
       #ifdef HAS_GPS
-      draw_regular_menu(menu_num, MAX_ITEMS);
+      draw_regular_menu(MAX_ITEMS);
       #else
       draw_regular_menu(MAX_ITEMS - 3);
       #endif
@@ -197,13 +202,13 @@ void menu(int menu_num) //only for non-address menus
       display.display();
       break;
     default: //all other menus, including main menu
-      draw_regular_menu(menu_num, MAX_ITEMS);
+      draw_regular_menu(MAX_ITEMS);
   }
 }
 
 //as the user turns the rotary knob, a new item becomes the current item
 //this highlights the current item by drawing a box around it
-void highlight_item(int menu, int old_item, int new_item)
+void highlight_item(int old_item, int new_item)
 {
   //first erase the current item highlight
   display.setColor(BLACK);
@@ -220,10 +225,10 @@ void highlight_item(int menu, int old_item, int new_item)
 // for example, if the power level is changed in the menu, the new power level is set on the radio
 // it does not write to nvram unless that menu item is picked in the settings menu
 // so the changes are temporary until the settings are saved to nvram
-bool activate(int cmenu, int citem)
+bool activate(int citem)
 {
   bool status = true; //it will be set to false if there is an error
-  if (cmenu == MAIN_MENU) {  
+  if (cur_menu == MAIN_MENU) {  
     // activated in main menu, no radio actions, just go to correct menu
     bool circleValues = true;
     int secondary_menu_number = citem + 1;  //menu number is main menu item number + 1
@@ -240,10 +245,9 @@ bool activate(int cmenu, int citem)
         rotary.setBoundaries(1, ADDRESS_MAX, circleValues); //minValue, maxValue, circleValues true|false (when max go to min and vice versa)
         rotary.disableAcceleration(); //disable acceleration 
         rotary.reset(cur_item[cur_menu]); //sets the current value for the rotary encoder to the activated value
-        rolling_menu(cur_menu);
+        rolling_menu();
         break;
       case FREQ_MENU: //FREQ_MENU
-        if (MENU_DEBUG) Serial.println("going to frequency menu");
         //show the current address
         cur_menu = FREQ_MENU;
         cur_item[cur_menu] = act_item[cur_menu]; //set the activated item as the default selected item
@@ -251,7 +255,8 @@ bool activate(int cmenu, int citem)
         rotary.setBoundaries(0, FREQUENCY_INDEX_MAX, circleValues); //minValue, maxValue, circleValues true|false (when max go to min and vice versa)
         rotary.disableAcceleration(); //disable acceleration 
         rotary.reset(cur_item[cur_menu]); //sets the current value for the rotary encoder to the activated value
-        rolling_menu(cur_menu);
+        if (MENU_DEBUG) Serial.printf("going to rolling menu %i\n", cur_menu);
+        rolling_menu();
         break;
       case EXIT_MENU: //Exit to radio
         if (MENU_DEBUG) Serial.println("Exiting menu");
@@ -271,7 +276,7 @@ bool activate(int cmenu, int citem)
         if (MENU_DEBUG) Serial.println("going to settings menu");
         cur_menu = SET_MENU;
         cur_item[cur_menu] = act_item[cur_menu]; //set the activated item as the default selected item
-        menu(cur_menu);  //draw the current menu
+        menu();  //draw the current menu
         #ifdef HAS_GPS
         //set up for address changes with the rotary knob
         rotary.setBoundaries(0, MENU_ARRAY_SIZE - 1, circleValues); //minValue, maxValue, circleValues true|false (when max go to min and vice versa)
@@ -286,13 +291,12 @@ bool activate(int cmenu, int citem)
         rotary.disableAcceleration(); //disable acceleration 
         //rotaryEncoder.setAcceleration(250); //or set the value - larger number = more accelearation; 0 or 1 means disabled acceleration
 	      // go to submenu
-        cur_menu = citem + 1;  //menu number is main menu item number + 1
-	      menu(cur_menu); //go to the submenu
+        cur_menu = secondary_menu_number;  //menu number is main menu item number + 1
+	      menu(); //go to the submenu
     } //switch
   } else { //secondary menu item, activate on radio
-    cur_menu = cmenu;
-    cur_item[cmenu] = citem;
-	  act_item[cmenu] = citem;  //activate this on the radio
+    cur_item[cur_menu] = citem;
+	  act_item[cur_menu] = citem;  //activate this on the radio
     //now save in preferences and activate on radio
     bool new_status;
     if (MENU_DEBUG) Serial.printf("in activate cur_menu %i %s cur_item %i %s\n", cur_menu, menu_label[cur_menu], cur_item[cur_menu], item_label[cur_menu][cur_item[cur_menu]]);
@@ -342,16 +346,22 @@ void on_button_short_click()
 {
   //select and activate menu item
   if (MENU_DEBUG) Serial.printf("Short click cur_menu %i %s cur_item %i %s\n", cur_menu, menu_label[cur_menu], cur_item[cur_menu], item_label[cur_menu][cur_item[cur_menu]]);
-  if (!activate(cur_menu, cur_item[cur_menu])) Serial.println("Failed to activate");
-	if (!(cur_menu == MAIN_MENU && cur_item[cur_menu] + 1 == EXIT_MENU)) menu(cur_menu); //show the menu again unless exiting
+  if (!activate(cur_item[cur_menu])) Serial.println("Failed to activate");
+	//if (!(cur_menu == MAIN_MENU && cur_item[cur_menu] + 1 == EXIT_MENU)) menu(cur_menu); //show the menu again unless exiting
 }
+
 void on_button_long_click()
 {
   if (MENU_DEBUG) Serial.println("long click\n");
   cur_menu = 0;
   menu_active = true;
   act_item_init(); //pick up the activated values, needed for the main menu items
-  menu(0);
+  //setup rotary encoder for main menu
+  bool circleValues = true;
+  rotary.setBoundaries(0, MAX_ITEMS - 1, circleValues); //minValue, maxValue, circleValues true|false (when max go to min and vice versa)
+  rotary.disableAcceleration(); //disable acceleration
+  rotary.reset(0); //set the current value for the rotary encoder to the activated value
+  menu();
 }
 
 void robot()
@@ -360,11 +370,11 @@ void robot()
   int old = 0;
   for (int i = 0; i < 6; i++) 
   {
-    highlight_item(0, old, i);
+    highlight_item(old, i);
   	delay(1000);
    	old = i;
   }
-  highlight_item(0,5,0);
+  highlight_item(5,0);
 }
 
 // #ifndef ROTARY_H
@@ -402,29 +412,29 @@ void handle_rotary_button() {
   wasButtonDown = false;
 }
  
-void draw_regular_menu(int menu_num, int max_items){
+void draw_regular_menu(int max_items){
       display.clear();
       //menu header
       display.setFont(ArialMT_Plain_16);
       display.setColor(WHITE);
       display.setTextAlignment(TEXT_ALIGN_CENTER);
-      display.drawString(64, 0, menu_label[menu_num]);
+      display.drawString(64, 0, menu_label[cur_menu]);
 
       //now for the items
       display.setTextAlignment(TEXT_ALIGN_LEFT);
       display.setFont(ArialMT_Plain_10);
       for (int i=0; i< MAX_ITEMS; i++) 
       {
-	    if (menu_num != MAIN_MENU && i == act_item[menu_num]) {
+	    if (cur_menu != MAIN_MENU && i == act_item[cur_menu]) {
           display.setFont(Dialog_bolditalic_10); //different font for the activated value in non main menu
 	    } else {
           display.setFont(ArialMT_Plain_10);
 	    }
-	    display.drawString(pos[i][0], pos[i][1], item_label[menu_num][i]);
+	    display.drawString(pos[i][0], pos[i][1], item_label[cur_menu][i]);
       };
   
       //higlight the current item 
-      display.drawRect(pos[cur_item[menu_num]][0] - DX, pos[cur_item[menu_num]][1] - DY, 50, 15);
+      display.drawRect(pos[cur_item[cur_menu]][0] - DX, pos[cur_item[cur_menu]][1] - DY, 50, 15);
       display.display();
 }
 #endif //HAS_ENCODER
