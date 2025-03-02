@@ -28,11 +28,11 @@ bool WifiClass::init()
     Serial.println("");
     Serial.print("Connected to ");
     Serial.println(PARMS.parameters.wifiSSID);
-    Serial.print("IP address: ");
+    Serial.print("IP: ");
     Serial.println(WiFi.localIP());
     display.print("Connected to ");
     display.println(PARMS.parameters.wifiSSID);
-    display.print("IP address: ");
+    display.print("IP: ");
     display.println(WiFi.localIP());
     return true;
 }
