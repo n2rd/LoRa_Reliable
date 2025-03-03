@@ -28,6 +28,8 @@
 #include "bmp280sensor.h"
 #include <RHReliableDatagram.h>
 
+#include "wm5500.h"
+
 #if USE_WIFI >0
     #if defined(ESP32)
         #if defined(HAS_WIFI) && (HAS_WIFI == 1)

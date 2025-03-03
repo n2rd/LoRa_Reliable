@@ -209,5 +209,18 @@ extern float power[POWER_INDEX_MAX];
     button.waitForRelease();
 #endif
 
+#ifndef HAS_WM5500
+#define HAS_WM5500 0
+#endif //HAS_WM5500
+
+#if HAS_WM5500
+#define WM5500_MISO 3
+#define WM5500_MOSI 40
+#define WM5500_SCLK 39
+#define WM5500_CS   38
+#define WM5500_RST  4
+#define WM5500_INT  2
+#endif //HAS_WM5500
+
 #endif //!defined(ARDUINO_LILYGO_T3_V1_6_1)
 #endif //!defined(myheltec_h)
