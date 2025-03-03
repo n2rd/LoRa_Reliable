@@ -210,7 +210,7 @@ extern float power[POWER_INDEX_MAX];
 #endif
 
 #ifndef HAS_WM5500
-#define HAS_WM5500 0
+#define HAS_WM5500 1
 #endif //HAS_WM5500
 
 #if HAS_WM5500

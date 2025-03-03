@@ -133,6 +133,20 @@ void setup()
   bmp280_setup();
   Serial.printf("Temperature: %f\r\n",myBMP280.readTempF());
   display.printf("Temperature: %f\r\n",myBMP280.readTempF());
+
+  log_e("About to call WM5500.setup() explicity");
+  WM5500.setup();
+  log_e("abiyt ti call WM5500.getEthernet().linkStatus()");
+  EthernetLinkStatus ls = WM5500.getEthernet().linkStatus();
+
+  if (ls == EthernetLinkStatus::LinkOFF) {
+    Serial.println("Link Status is LinkOFF");
+  } else if (ls == EthernetLinkStatus::LinkON) {
+    Serial.println("Link Status is LinkON");
+  } else {
+    Serial.println("Link Status is unknown");
+  }
+  log_e("Exiting Arduino setup()");
 }
 /***********************************************************/
 /***********************************************************/
