@@ -78,7 +78,9 @@ GPSClass::PowerState GPSClass::onoffState()
 void GPSClass::loop()
 {
   while (GPSSerial.available() > 0) {
-    gps.encode(GPSSerial.read());
+    char ch = GPSSerial.read();
+    //Serial.print(ch);
+    gps.encode(ch);
   }
   if (!rtcIsSet) {
     if (gps.time.isUpdated() && gps.time.isValid()
