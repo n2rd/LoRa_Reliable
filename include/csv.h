@@ -25,12 +25,12 @@ class CsvClass : public Print { //we derive from Print so that we can use printS
         void error(const char *threeCharTag, char *data);
         void fatalError(const char *threeCharTag, char *data);
         void debug(const char *threeCharTag, char *data);
-        void setOutputOnOff(bool state);
+        void setOutputEnabled(bool state);
     private:
         void output(char leadingChar,const char *tag, char *data);
         /*bool checkOutput();*/
         Print& printObject;
-        bool outputOnOff;
+        bool outputEnabled;
 };
 #if 0
 class CsvPrintSplitter : public CsvClass {

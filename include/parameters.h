@@ -89,6 +89,8 @@ typedef struct ParametersStruct {
     uint8_t  radioType; //Radio Type ... the meaning of the values: 0,1,2 needs to be clarified
     char     wifiSSID[33]; //32+null
     char     wifiKey[63+1]; //+ null;
+    bool     serialCSVEnabled;
+    bool     telnetCSVEnabled;
 } PARAMETERS;
 
 //for opening nvram preferences
@@ -134,6 +136,8 @@ class ParametersClass {
       const char* radioType = "radioType";
       const char* wifiSSID = "WifiSSID";
       const char* wifiKey = "WifiKey";
+      const char* serialCSVEnabled = "SerCSVEnabled";
+      const char* telnetCSVEnabled = "TelCSVEnabled";
     } Key;
   private:
     static Preferences preferences;

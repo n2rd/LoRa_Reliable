@@ -170,7 +170,21 @@ void ParametersClass::init() {
       strcpy(parameters.wifiKey, WIFI_PASSWD);
       preferences.putString(Key.wifiKey, parameters.wifiKey);
   }        
-  preferences.end();
+  if (preferences.isKey(Key.serialCSVEnabled)) {
+      // Preferences exist, read from it and put into mypreferences
+      parameters.serialCSVEnabled = preferences.getUInt(Key.serialCSVEnabled);
+} else { //use defaults and write to nvram
+      parameters.serialCSVEnabled = true;
+      preferences.putUInt(Key.serialCSVEnabled, parameters.serialCSVEnabled);
+}
+if (preferences.isKey(Key.telnetCSVEnabled)) {
+      // Preferences exist, read from it and put into mypreferences
+      parameters.telnetCSVEnabled = preferences.getUInt(Key.telnetCSVEnabled);
+} else { //use defaults and write to nvram
+      parameters.telnetCSVEnabled = true;
+      preferences.putUInt(Key.telnetCSVEnabled, parameters.telnetCSVEnabled);
+}
+preferences.end();
 }
 //
 //@brief update nvs from parameters if they have changed

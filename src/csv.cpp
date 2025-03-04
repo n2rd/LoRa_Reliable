@@ -1,7 +1,7 @@
 #include "main.h"
 
 /*----------------------------------------------------*/
-CsvClass::CsvClass(Print& _printObject) : printObject(_printObject), outputOnOff(true)
+CsvClass::CsvClass(Print& _printObject) : printObject(_printObject), outputEnabled(true)
     {}
 /*----------------------------------------------------*/
 uint count = 0;
@@ -22,11 +22,11 @@ bool CsvClass::checkOutput()
 }
 */    
 /*----------------------------------------------------*/
-#define CHECKOUTPUT if(!outputOnOff) return
+#define CHECKOUTPUT if(!outputEnabled) return
 /*----------------------------------------------------*/
-void CsvClass::setOutputOnOff(bool state)
+void CsvClass::setOutputEnabled(bool state)
 {
-    outputOnOff = state;
+    outputEnabled = state;
 }
 
 /*----------------------------------------------------*/

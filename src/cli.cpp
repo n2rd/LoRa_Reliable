@@ -49,12 +49,11 @@ CLI Command set
                                     n=5 +18.0 dBm
                                     n=6 +22.0 dBm
     Quit (Telnet)           /Q
-    RF Signal Reports (CSV) /R <n>                                          Default = 0
-                                    n=0  PFF
+    RF Signal Reports (CSV) /R <n>                                          Default = 3
+                                    n=0  OFF
                                     n=1  SERIAL
                                     n=2  TELNET
                                     n=3  BOTH    
-    Serial USB Output       /S <OFF|ON>                                     Default = on
     Radio Type              /T <n>                                          Default = 2
                                     n=0 Server (client/server operation)
                                     n=1 Client (client/server operation)
@@ -479,7 +478,6 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         ps_st.printf("Modulation index 0<=n<=8         /M <n>\r\n");
         ps_st.printf("Power index 0<=n<=6              /P <n>\r\n");
         ps_st.printf("RF Signal Reports (CSV)          /R 0=Off, 1=Serial, 2=TELNET, 3=Both\r\n");
-        ps_st.printf("USB Serial Output                /S <off>|<on>\r\n");
         ps_st.printf("Radio Type                       /T <n>\r\n");
         ps_st.printf("Version number                   /V\r\n");
         ps_st.printf("Write to NVRAM                   /W\r\n");
@@ -608,16 +606,14 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
 //      CSV Output Off/On------------------------------------------------------
         case 'R':
-            csv_current_state  = local_PARMS_parameters_csv_output;     //need to use the system wide variable
+            csv_current_state = 0;
+            if (PARMS.parameters.serialCSVEnabled) csv_current_state = csv_current_state += 1;
+            if (PARMS.parameters.telnetCSVEnabled) csv_current_state = csv_current_state += 2;
             cli_process_index_char_value_unit(parameter_query, "CSV Index", command, 0, sizeof(csv_array)/sizeof(csv_array[0])-1, csv_array,  & csv_current_state);
-            local_PARMS_parameters_csv_output = csv_current_state;      //need to use the system wide variable
-        break;
-
-//      Serial USB Output Off/On-----------------------------------
-        case 'S':
-            // get USB serial output state here
-            cli_process_bool(parameter_query, "Serial USB Output", command, & current_state);
-            // set USB serial output state here
+            PARMS.parameters.serialCSVEnabled = (csv_current_state % 2) == 1;
+            PARMS.parameters.telnetCSVEnabled = int (csv_current_state / 2) == 1;
+            csv_serial.setOutputEnabled(PARMS.parameters.serialCSVEnabled);
+            csv_telnet.setOutputEnabled(PARMS.parameters.telnetCSVEnabled);
             break;
 
 //      Radio Type-------------------------------------------------------------
@@ -730,7 +726,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
 //      Invalid Command--------------------------------------------------------
         default:
-            ps_st.printf("NG:Unrecognized command %c [@, A, B, C, F, G, H, I, L, M, P, R, S, T, V, W, X, Y]\r\n", cmd_code);
+            ps_st.printf("NG:Unrecognized command %c [@, A, B, C, F, G, H, I, L, M, P, R, T, V, W, X, Y]\r\n", cmd_code);
         }
     }
     else {
