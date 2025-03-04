@@ -131,9 +131,10 @@ void setup()
    rotary_setup();
 #endif
   bmp280_setup();
-  Serial.printf("Temperature: %f\r\n",myBMP280.readTempF());
-  display.printf("Temperature: %f\r\n",myBMP280.readTempF());
-
+  if (bmp280isPresent) {
+    Serial.printf("Temperature: %f\r\n",myBMP280.readTempF());
+    display.printf("Temperature: %f\r\n",myBMP280.readTempF());
+  }
   csv_telnet.setOutputEnabled(PARMS.parameters.telnetCSVEnabled);
   csv_serial.setOutputEnabled(PARMS.parameters.serialCSVEnabled);
   //log_e("exiting setup()");

@@ -23,6 +23,13 @@
 #include "SparkFunBME280.h"
 BME280 myBMP280;
 void scanI2CBus();
+static bool isPresent = false;
+
+bool bmp280isPresent()
+{
+  return bmp280isPresent;
+}
+
 
 void bmp280_setup()
 {
@@ -30,26 +37,37 @@ void bmp280_setup()
   //scanI2CBus();
   myBMP280.setI2CAddress(0x76);
   bool devicePresentResult = myBMP280.beginI2C(Wire1);
-  Serial.print("DevicePresentResult = "); Serial.println(devicePresentResult);
-  uint8_t  result = myBMP280.begin();
-  if ( result == 0x58) //0x58 for bmp 0x60 for bme device
-    Serial.println("myBMP280 begin() returned true");
-  else
-    Serial.println("myBMP280 begin() returned false");
-
-  //myBMP280.setReferencePressure(101200); //Adjust the sea level pressure used for altitude calculations??
-  BME280_SensorMeasurements measurements;
-  myBMP280.readAllMeasurements(&measurements);
-  Serial.print("Humidity: ");
-  Serial.println(measurements.humidity);
-  Serial.print("Pressure: ");
-  Serial.println(measurements.pressure);
-  Serial.print("Temperature: ");
-  Serial.println(measurements.temperature);
+  //Serial.print("DevicePresentResult = "); Serial.println(devicePresentResult);
+  if (devicePresentResult) {
+    uint8_t  result = myBMP280.begin();
+    if ( result == 0x58) //0x58 for bmp 0x60 for bme device
+      Serial.println("BMP280 detected");
+    else if ( result == 0x60) //0x58 for bmp 0x60 for bme device
+      Serial.println("BME280 detected");
+    else {
+      Serial.println("No BMP280 or BME280 detected");
+      isPresent = false;
+      return;
+    }
+    isPresent = true;
+    /*
+    //myBMP280.setReferencePressure(101200); //Adjust the sea level pressure used for altitude calculations??
+    BME280_SensorMeasurements measurements;
+    myBMP280.readAllMeasurements(&measurements);
+    //Serial.print("Humidity: ");
+    //Serial.println(measurements.humidity);
+    Serial.print("Pressure: ");
+    Serial.println(measurements.pressure);
+    Serial.print("Temperature: ");
+    Serial.println(measurements.temperature);
+    */
+  }
+  else {
+    Serial.println("No BMP280 or BME280 detected");
+  }
 }
-
+#if 0
 #define WIRE Wire1
-
 void scanI2CBus() {
   byte error, address;
   int nDevices;
@@ -92,3 +110,4 @@ void scanI2CBus() {
   else
     Serial.println("done\n");
 }
+#endif //0
