@@ -10,7 +10,7 @@ class wm5500Class {
         void setup();
         EthernetClass& getEthernet();
     private:
-        SPIClass spi;
+        SPIClass* spi;
         EthernetClass myEthernet;
 };
 

@@ -55,7 +55,7 @@ void setup()
 {
   Serial.begin(115200);
   while (!Serial) ; // Wait for serial port to be available
-
+  log_e("Running on Core: %d",xPortGetCoreID());
   #ifdef ARDUINO_LILYGO_T3_V1_6_1
   pinMode(LED_BUILTIN, OUTPUT);
   SPI.begin(LORA_SCK,LORA_MISO,LORA_MOSI,LORA_CS);
@@ -82,6 +82,21 @@ void setup()
   if (WIFI.init()) {
     initializeNetwork();
   }
+
+
+  log_e("About to call WM5500.setup() explicity");
+  WM5500.setup();
+  log_e("about to call WM5500.getEthernet().linkStatus()");
+  EthernetLinkStatus ls = WM5500.getEthernet().linkStatus();
+
+  if (ls == EthernetLinkStatus::LinkOFF) {
+    Serial.println("Link Status is LinkOFF");
+  } else if (ls == EthernetLinkStatus::LinkON) {
+    Serial.println("Link Status is LinkON");
+  } else {
+    Serial.println("Link Status is unknown");
+  }
+
 
   //start the radio
   if (!manager.init()) 
@@ -134,18 +149,6 @@ void setup()
   Serial.printf("Temperature: %f\r\n",myBMP280.readTempF());
   display.printf("Temperature: %f\r\n",myBMP280.readTempF());
 
-  log_e("About to call WM5500.setup() explicity");
-  WM5500.setup();
-  log_e("abiyt ti call WM5500.getEthernet().linkStatus()");
-  EthernetLinkStatus ls = WM5500.getEthernet().linkStatus();
-
-  if (ls == EthernetLinkStatus::LinkOFF) {
-    Serial.println("Link Status is LinkOFF");
-  } else if (ls == EthernetLinkStatus::LinkON) {
-    Serial.println("Link Status is LinkON");
-  } else {
-    Serial.println("Link Status is unknown");
-  }
   log_e("Exiting Arduino setup()");
 }
 /***********************************************************/
