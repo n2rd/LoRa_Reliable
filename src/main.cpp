@@ -133,6 +133,10 @@ void setup()
   bmp280_setup();
   Serial.printf("Temperature: %f\r\n",myBMP280.readTempF());
   display.printf("Temperature: %f\r\n",myBMP280.readTempF());
+
+  //csv_telnet.setOutputOnOff(false);
+  //csv_serial.setOutputOnOff(false);
+  //log_e("exiting setup()");
 }
 /***********************************************************/
 /***********************************************************/

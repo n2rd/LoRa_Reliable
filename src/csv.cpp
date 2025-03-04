@@ -1,12 +1,37 @@
 #include "main.h"
 
 /*----------------------------------------------------*/
-CsvClass::CsvClass(Print& _printObject) : printObject(_printObject) {}
+CsvClass::CsvClass(Print& _printObject) : printObject(_printObject), outputOnOff(true)
+    {}
 /*----------------------------------------------------*/
 uint count = 0;
 char buffer[100];
+/*----------------------------------------------------*/
+/*
+bool CsvClass::checkOutput()
+{
+    if (&printObject == &Serial) {
+        //Got a Serial print object
+        return serialOnOff;
+    } 
+    else if (&printObject == &telnet) {
+        //Got a telnet print object
+        return telnetOnOff;
+    }
+    return false;
+}
+*/    
+/*----------------------------------------------------*/
+#define CHECKOUTPUT if(!outputOnOff) return
+/*----------------------------------------------------*/
+void CsvClass::setOutputOnOff(bool state)
+{
+    outputOnOff = state;
+}
 
+/*----------------------------------------------------*/
 size_t CsvClass::write(uint8_t c) { //this outputs as info
+
     buffer[count++] = c;
     buffer[count] = 0;
     if ((c == 0) || (c== '\n') || (c== '\r') ||(count > (sizeof(buffer)-2)))
@@ -25,6 +50,7 @@ size_t CsvClass::write(const char* str) { //this outputs as info
 /*----------------------------------------------------*/
 void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId, char *gridLocator)
 {
+    CHECKOUTPUT;
     char nul = 0;
     double myLat,myLon,bcastLat,bcastLon;
     double miles = -1;
@@ -45,6 +71,7 @@ void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId
 /*----------------------------------------------------*/
 void CsvClass::data(CSVDATAPTR data) 
 {
+    CHECKOUTPUT;
     printObject.printf(
         "D, %ld, %c, %3d, %3d, %3u, %4.0f, %3.0f, %s, %4.2lf\r\n",
         data->timeStamp,
@@ -61,6 +88,7 @@ void CsvClass::data(CSVDATAPTR data)
 /*----------------------------------------------------*/
 void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, uint8_t headerId, float rssi, float snr, char* gridLocator)
 {
+    CHECKOUTPUT;
     CSVDATA datastruct;
     datastruct.timeStamp = timeStamp;
     datastruct.recvType = recvType;
@@ -88,22 +116,25 @@ void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, uin
 /*----------------------------------------------------*/
 void CsvClass::output(char leadingChar,const char *tag, char *data)
 {
+    CHECKOUTPUT;
     printObject.printf("%c,%s,%s\r\n",leadingChar,tag,data);
-
 }
 /*----------------------------------------------------*/
 void CsvClass::info(const char *tag, char *data)
 {
+    CHECKOUTPUT;
     output('I',tag,data);
 }
 /*----------------------------------------------------*/
 void CsvClass::error(const char *tag, char *data)
 {
+    CHECKOUTPUT;
     output('E',tag,data);
 }
 /*----------------------------------------------------*/
 void CsvClass::fatalError(const char *tag, char *data)
 {
+    CHECKOUTPUT;
     output('E',tag,data);
     #warning "HALT/REBOOT needs to be implemented"
     //HALT/REBOOT here after disconnecting telnet session and ???
@@ -111,6 +142,7 @@ void CsvClass::fatalError(const char *tag, char *data)
 /*----------------------------------------------------*/
 void CsvClass::debug(const char *tag, char *data)
 {
+    CHECKOUTPUT;
     output('G',tag,data);
 }
 /*----------------------------------------------------*/
