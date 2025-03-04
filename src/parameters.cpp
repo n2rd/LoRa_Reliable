@@ -247,6 +247,12 @@ void ParametersClass::update() {
     if (strcmp(preferences.getString(Key.wifiKey).c_str(), parameters.wifiKey) != 0) {
       preferences.putString(Key.wifiKey, parameters.wifiKey);
     }
+    if (preferences.getUInt(Key.serialCSVEnabled) != parameters.serialCSVEnabled) {
+      preferences.putUInt(Key.serialCSVEnabled, parameters.serialCSVEnabled);
+    }
+    if (preferences.getUInt(Key.telnetCSVEnabled) != parameters.telnetCSVEnabled) {
+      preferences.putUInt(Key.telnetCSVEnabled, parameters.telnetCSVEnabled);
+    }
     preferences.end();
 }
 
