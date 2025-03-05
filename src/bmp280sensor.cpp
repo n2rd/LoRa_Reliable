@@ -25,13 +25,13 @@ BME280 myBMP280;
 void scanI2CBus();
 static bool isPresent = false;
 
-bool bmp280isPresent()
+bool bmp280_isPresent()
 {
-  return bmp280isPresent;
+  return isPresent;
 }
 
 
-void bmp280_setup()
+bool bmp280_setup()
 {
   Wire1.begin(41U,42U,400000);
   //scanI2CBus();
@@ -47,7 +47,7 @@ void bmp280_setup()
     else {
       Serial.println("No BMP280 or BME280 detected");
       isPresent = false;
-      return;
+      return false;
     }
     isPresent = true;
     /*
@@ -61,9 +61,11 @@ void bmp280_setup()
     Serial.print("Temperature: ");
     Serial.println(measurements.temperature);
     */
+    return true;
   }
   else {
     Serial.println("No BMP280 or BME280 detected");
+    return false;
   }
 }
 #if 0
