@@ -14,23 +14,14 @@
 
 // SETUP Parameters
 //
-#define ADDRESS_MAX 9 //use 1 for server, others are all clients
-//#define MY_ADDRESS 1      //Raj
-//#define MY_ADDRESS 2    //Raj
-//#define MY_ADDRESS 3    //Keith
-//#define MY_ADDRESS 4    //Keith
-//#define MY_ADDRESS 5    //Ron
-//#define MY_ADDRESS 6    //Ron
-//#define MY_ADDRESS 7     //open
-#define MY_ADDRESS 8    //open
-//#define MY_ADDRESS 9    //open
+#define MY_ADDRESS 11   //open
 
 //
 //Peer to Peer Messaging
 //
 //#define DEBUG  1 //comment this line out for production
-#define DEFAULT_FREQUENCY 905.2
-#define DEFAULT_POWER_INDEX 6     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
+#define DEFAULT_FREQUENCY 915.0
+#define DEFAULT_POWER_INDEX 0     //see table below, index 0 is -9dBm, index 6 is +22dBm max 
 #define DEFAULT_MODULATION_INDEX 5      //see LoRa settings table below
 
 //#define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout

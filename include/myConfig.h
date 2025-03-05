@@ -42,18 +42,16 @@
 #define DEFAULT_MODULATION_INDEX 5 // see LoRa settings table below
 #define DEFAULT_POWER_INDEX 4 // see power table in main.cpp, index 0 is -9dBm, index 6 is +22dBm max
 #define DEFAULT_TX_INTERVAL 30 // 0 to 255 seconds
-#define DEFAULT_ADDRESS 4 // 2 to 255 for client or peer to peer, use 1 for server
+#define DEFAULT_ADDRESS 11 // 2 to 255 for client or peer to peer, use 1 for server
 
 #define SERVER_ADDRESS 1 // Do not change
 
-#define HAS_ENCODER 1
+#define HAS_ENCODER 0
 #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
-#include "menu.h" //for rotary encoder and menu
 #endif
 
 #define HAS_GPS 1
 #ifdef HAS_GPS
-#include "gps.h"
 #endif
 
 #define HAS_HARDWARE_ETHERNET_PORT 0
