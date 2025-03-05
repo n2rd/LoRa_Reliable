@@ -1,10 +1,10 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#include "myConfig.h"
 #include "version.h"
 #include <Arduino.h>
 #include <stdlib.h>
-#include "myConfig.h"
 #include <SPI.h>
 #include <Preferences.h>
 
