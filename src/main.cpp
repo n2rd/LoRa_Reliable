@@ -80,27 +80,10 @@ IPAddress eth_dns(192, 168, 1, 1);		// *** CHANGE THIS to match YOUR DNS server.
 IPAddress eth_gw(192, 168, 1, 1);		// *** CHANGE THIS to match YOUR Gateway (router).     ***
 IPAddress eth_mask(255, 255, 255, 0);		// mask
 
-#include "ESPTelnet.h"
-IPAddress ip;
-uint16_t  port = 23;
-void onTelnetInput(String str); 
-void onTelnetConnectionAttempt(String ip);
-void onTelnetConnection(String ip);
-void onTelnetDisconnection(String ip);
-void onTelnetError(String error);
-void setupTelnet();   
-void errorMsg(String error, bool restart);
-void onTelnetConnect(String ip); 
-void onTelnetDisconnect(String ip);
-void onTelnetInput(String str);
-void onTelnetConnectionAttempt(String ip);
-void onTelnetConnection(String ip);
-void onTelnetDisconnection(String ip);
-void onTelnetReconnect(String ip); 
+// ESPTelnet telnet;
 
-
-ESPTelnet telnet;
-
+//now trying telnetstream2 library by Ameer
+#include "TelnetStream2.h"
 
 // SETUP Parameters
 //
@@ -233,30 +216,16 @@ void setup()
 
   delay(5000);
 
-  //Ethernet setup using Ethernet library by various 
-  // Use Ethernet.init(pin) to configure the CS pin.
-//   Ethernet.init(ETH_CS);           // GPIO38 on the ESP32.
-//   WizReset();
-//   Serial.println("Starting ETHERNET connection...");
-//   Ethernet.begin(eth_mac);
-// //  Ethernet.begin(eth_mac, eth_ip, eth_dns, eth_gw, eth_mask);
-
-//   delay(2000);
-//   Serial.print("Ethernet IP is: ");
-//   Serial.println(Ethernet.localIP());
-
 //now using esp32_w5500 webserver library by khoing
 // To be called before ETH.begin()
   ESP32_W5500_onEvent();
 
   // start the ethernet connection and the server:
   // Use DHCP dynamic IP and random mac
-  //bool begin(int MISO_GPIO, int MOSI_GPIO, int SCLK_GPIO, int CS_GPIO, int INT_GPIO, int SPI_CLOCK_MHZ,
-  //           int SPI_HOST, uint8_t *W6100_Mac = W6100_Default_Mac);
   ETH.begin( ETH_MISO, ETH_MOSI, ETH_SCK, ETH_CS, ETH_INT, ETH_SPI_CLOCK_MHZ, ETH_SPI_HOST );
-  delay(10000);
-  setupTelnet();
-  telnet.println("Hello from ESP32 using telnet");
+  
+  //now trying telnetstream2 library by Ameer
+  TelnetStream2.begin();
 
   //display init
   heltec_display_power(true);
@@ -315,8 +284,10 @@ void loop()
           int snr = driver.lastSNR();
           int rssi = driver.lastRssi();
           both.printf("Broadcast from %i #%i\n", from, (int)(buf[1]*256 + buf[0]));
+          TelnetStream2.printf("Broadcast from %i #%i\n", from, (int)(buf[1]*256 + buf[0]));
           //both.printf("%iB #%i ", from, (int)(buf[1]*256 + buf[0]));
           both.printf("RSSI %i  SNR %i\n", rssi, snr);
+          TelnetStream2.printf("RSSI %i  SNR %i\n", rssi, snr);
           //send reply back to sender
           rssi = abs(rssi);
           data[0] = static_cast<uint8_t>(rssi);
@@ -427,78 +398,5 @@ void check_button()
     display.displayOff();
     // Deep sleep (has wait for release so we don't wake up immediately)
     heltec_deep_sleep();
-  }
-}
-
-void errorMsg(String error, bool restart = false) {
-  Serial.println(error);
-  if (restart) {
-    Serial.println("Rebooting now...");
-    delay(2000);
-    ESP.restart();
-    delay(2000);
-  }
-}
-
-/* ------------------------------------------------- */
-
-void setupTelnet() {  
-  // passing on functions for various telnet events
-  telnet.onConnect(onTelnetConnect);
-  telnet.onConnectionAttempt(onTelnetConnectionAttempt);
-  telnet.onReconnect(onTelnetReconnect);
-  telnet.onDisconnect(onTelnetDisconnect);
-  telnet.onInputReceived(onTelnetInput);
-
-  Serial.print("- Telnet: ");
-  if (telnet.begin(port)) {
-    Serial.println("running");
-  } else {
-    Serial.println("error.");
-    errorMsg("Will reboot...");
-  }
-}
-
-/* ------------------------------------------------- */
-
-// (optional) callback functions for telnet events
-void onTelnetConnect(String ip) {
-  Serial.print("- Telnet: ");
-  Serial.print(ip);
-  Serial.println(" connected");
-  
-  telnet.println("\nWelcome " + telnet.getIP());
-  telnet.println("(Use ^] + q  to disconnect.)");
-}
-
-void onTelnetDisconnect(String ip) {
-  Serial.print("- Telnet: ");
-  Serial.print(ip);
-  Serial.println(" disconnected");
-}
-
-void onTelnetReconnect(String ip) {
-  Serial.print("- Telnet: ");
-  Serial.print(ip);
-  Serial.println(" reconnected");
-}
-
-void onTelnetConnectionAttempt(String ip) {
-  Serial.print("- Telnet: ");
-  Serial.print(ip);
-  Serial.println(" tried to connected");
-}
-
-void onTelnetInput(String str) {
-  // checks for a certain command
-  if (str == "ping") {
-    telnet.println("> pong"); 
-    Serial.println("- Telnet: pong");
-  // disconnect the client
-  } else if (str == "bye") {
-    telnet.println("> disconnecting you...");
-    telnet.disconnectClient();
-  } else {
-    telnet.println(str);
   }
 }
