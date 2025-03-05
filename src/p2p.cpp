@@ -70,7 +70,7 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
   double lat = 0, lon = 0;
   bool hasFix;
   if (GPS.onoffState() == GPS.GPS_OFF) {
-      log_e("GPS powered off - using fixed location");
+      log_d("GPS powered off - using fixed location");
       char* fixedMaidenheadGrid;
       fixedMaidenheadGrid = 
         GPS.latLonToMaidenhead(
@@ -78,7 +78,7 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
           PARMS.parameters.lon_value,
           6
           );
-      log_e("Fixed lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,fixedMaidenheadGrid);
+      log_d("Fixed lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,fixedMaidenheadGrid);
       if (gridLocatorPtr != NULL)
         *gridLocatorPtr = fixedMaidenheadGrid;
       encode_grid4_to_buffer(fixedMaidenheadGrid,&messagePtr->data[messagePtr->len]);
@@ -94,7 +94,7 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
     } while(!hasFix || ((millis()-beforeFix) > GPS_FIX_TIMEOUT));
     if (!hasFix || ((lat == 0.0) && (lon == 0.0))) {
       //Couldn't get a fix
-      log_e("GPS powered on but no fix in timeout- using fixed");
+      log_d("GPS powered on but no fix in timeout- using fixed");
       //Stuff fixed into ?? 
       char* fixedMaidenheadGrid;
       fixedMaidenheadGrid = 
@@ -106,7 +106,7 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
       if (gridLocatorPtr != NULL)
         *gridLocatorPtr = fixedMaidenheadGrid;
 
-      log_e("Fixed lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,fixedMaidenheadGrid);
+      log_d("Fixed lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,fixedMaidenheadGrid);
       encode_grid4_to_buffer(fixedMaidenheadGrid,&messagePtr->data[messagePtr->len]);
       messagePtr->len+=2;
       messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[4];
@@ -115,6 +115,7 @@ void addGrid6LocatorIntoMsg(message_t* messagePtr, char **gridLocatorPtr = NULL)
     }
 
     char *curMaidenheadGrid = GPS.latLonToMaidenhead(lat,lon, gridSize);
+    log_d("GPS lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,curMaidenheadGrid);
     if (gridLocatorPtr != NULL)
       *gridLocatorPtr = curMaidenheadGrid;
     encode_grid4_to_buffer(curMaidenheadGrid,&messagePtr->data[messagePtr->len]);
@@ -205,7 +206,7 @@ void p2pLoop(void)
   if ((!tx_lock) && (((millis() - broadcast_time) > (effective_pause * 1000)))) {
      broadcast_time = millis();
      //add the broadcast message to the message queue
-          int8_t temp = bmp280isPresent ? (int8_t) myBMP280.readTempF() : 0xFF;
+          int8_t temp = bmp280_isPresent() ? (int8_t) myBMP280.readTempF() : 0xFF;
           message_t message;
           message.data[0] = 0;  //static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
           message.data[1] = temp; //static_cast<uint8_t>(counter & 0xFF); //low byte
@@ -236,7 +237,7 @@ void p2pLoop(void)
       manager.setHeaderId(message.headerID);
       manager.sendto(message.data, message.len, message.to);
       unsigned long transmitMicros = micros() - curMicros;
-      //log_e("Transmit time: %ld", transmitMicros);
+      log_d("Transmit time: %ld", transmitMicros);
       tx_time = millis();
       int max_delay;
       if (!short_pause){
