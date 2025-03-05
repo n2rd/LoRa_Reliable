@@ -11,6 +11,35 @@
 //version
 #define VERSION __DATE__  " "  __TIME__
 
+//Ethernet SPI
+#define ETH_SPI_HOST SPI3_HOST
+#define ETH_SPI_CLOCK_MHZ 25
+#define ETH_INT 2
+#define ETH_MISO 3
+#define ETH_MOSI 40
+#define ETH_SCK 39
+#define ETH_CS 38
+#define ETH_RST 4
+
+#include "Ethernet.h"
+
+/*
+ * W5500 "hardware" MAC address.
+ */
+uint8_t eth_mac[] = { 0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF };
+
+/*
+ * Define the static network settings for this gateway's ETHERNET connection
+ * on your LAN.  These values must match YOUR SPECIFIC LAN.  The "eth_IP"
+ * is the IP address for this gateway's ETHERNET port.
+ */
+IPAddress eth_ip(192, 168, 1, 146);		// *** CHANGE THIS to something relevant for YOUR LAN. ***
+IPAddress eth_masK(255, 255, 255, 0);		// Subnet mask.
+IPAddress eth_dns(192, 168, 1, 1);		// *** CHANGE THIS to match YOUR DNS server.           ***
+IPAddress eth_gw(192, 168, 1, 1);		// *** CHANGE THIS to match YOUR Gateway (router).     ***
+IPAddress eth_mask(255, 255, 255, 0);		// mask
+
+void WizReset();
 
 // SETUP Parameters
 //
@@ -142,6 +171,19 @@ void setup()
   while (!Serial) ; // Wait for serial port to be available
 
   delay(5000);
+
+  //Ethernet setup
+  // Use Ethernet.init(pin) to configure the CS pin.
+  Ethernet.init(ETH_CS);           // GPIO38 on the ESP32.
+  WizReset();
+  Serial.println("Starting ETHERNET connection...");
+  Ethernet.begin(eth_mac);
+//  Ethernet.begin(eth_mac, eth_ip, eth_dns, eth_gw, eth_mask);
+
+  delay(2000);
+  Serial.print("Ethernet IP is: ");
+  Serial.println(Ethernet.localIP());
+
 
   //display init
   heltec_display_power(true);
@@ -316,3 +358,16 @@ void check_button()
     heltec_deep_sleep();
   }
 }
+
+void WizReset() {
+    Serial.print("Resetting Wiz W5500 Ethernet Board...  ");
+    pinMode(ETH_RST, OUTPUT);
+    digitalWrite(ETH_RST, HIGH);
+    delay(250);
+    digitalWrite(ETH_RST, LOW);
+    delay(50);
+    digitalWrite(ETH_RST, HIGH);
+    delay(350);
+    Serial.println("Done.");
+}
+
