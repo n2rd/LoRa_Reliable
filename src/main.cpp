@@ -12,6 +12,7 @@
 #define VERSION __DATE__  " "  __TIME__
 
 //Ethernet SPI
+#define _ETHERNET_WEBSERVER_LOGLEVEL_       3
 #define ETH_SPI_HOST SPI3_HOST
 #define ETH_SPI_CLOCK_MHZ 25
 #define ETH_INT 2
@@ -21,7 +22,46 @@
 #define ETH_CS 38
 #define ETH_RST 4
 
-#include "Ethernet.h"
+#define DEBUG_ETHERNET_WEBSERVER_PORT       Serial
+#define _ETHERNET_WEBSERVER_LOGLEVEL_       3
+#include <WebServer_ESP32_W5500.h>
+WebServer server(80);
+// Enter a MAC address and IP address for your controller below.
+#define NUMBER_OF_MAC      20
+
+byte mac[][NUMBER_OF_MAC] =
+{
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x01 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0x02 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x03 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0x04 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x05 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0x06 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x07 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0x08 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x09 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0x0A },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x0B },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0x0C },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x0D },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0x0E },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x0F },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0x10 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x11 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0x12 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0x13 },
+  { 0xDE, 0xAD, 0xBE, 0xEF, 0xBE, 0x14 },
+};
+
+// Select the IP address according to your local network
+IPAddress myIP(192, 168, 1, 146);
+IPAddress myGW(192, 168, 1, 1);
+IPAddress mySN(255, 255, 255, 0);
+
+// Google DNS Server IP
+IPAddress myDNS(8, 8, 8, 8);
+//#include "Ethernet.h"
+
 
 /*
  * W5500 "hardware" MAC address.
@@ -172,18 +212,27 @@ void setup()
 
   delay(5000);
 
-  //Ethernet setup
+  //Ethernet setup using Ethernet library by various 
   // Use Ethernet.init(pin) to configure the CS pin.
-  Ethernet.init(ETH_CS);           // GPIO38 on the ESP32.
-  WizReset();
-  Serial.println("Starting ETHERNET connection...");
-  Ethernet.begin(eth_mac);
-//  Ethernet.begin(eth_mac, eth_ip, eth_dns, eth_gw, eth_mask);
+//   Ethernet.init(ETH_CS);           // GPIO38 on the ESP32.
+//   WizReset();
+//   Serial.println("Starting ETHERNET connection...");
+//   Ethernet.begin(eth_mac);
+// //  Ethernet.begin(eth_mac, eth_ip, eth_dns, eth_gw, eth_mask);
 
-  delay(2000);
-  Serial.print("Ethernet IP is: ");
-  Serial.println(Ethernet.localIP());
+//   delay(2000);
+//   Serial.print("Ethernet IP is: ");
+//   Serial.println(Ethernet.localIP());
 
+//now using esp32_w5500 webserver library by khoing
+// To be called before ETH.begin()
+  ESP32_W5500_onEvent();
+
+  // start the ethernet connection and the server:
+  // Use DHCP dynamic IP and random mac
+  //bool begin(int MISO_GPIO, int MOSI_GPIO, int SCLK_GPIO, int CS_GPIO, int INT_GPIO, int SPI_CLOCK_MHZ,
+  //           int SPI_HOST, uint8_t *W6100_Mac = W6100_Default_Mac);
+  ETH.begin( ETH_MISO, ETH_MOSI, ETH_SCK, ETH_CS, ETH_INT, ETH_SPI_CLOCK_MHZ, ETH_SPI_HOST );
 
   //display init
   heltec_display_power(true);
