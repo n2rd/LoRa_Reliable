@@ -131,7 +131,7 @@ void setup()
    rotary_setup();
 #endif
   bmp280_setup();
-  if (bmp280isPresent) {
+  if (bmp280_isPresent()) {
     Serial.printf("Temperature: %f\r\n",myBMP280.readTempF());
     display.printf("Temperature: %f\r\n",myBMP280.readTempF());
   }
