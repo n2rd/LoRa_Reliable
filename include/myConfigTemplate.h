@@ -44,6 +44,8 @@
 #define DEFAULT_POWER_INDEX    
 #define DEFAULT_TX_INTERVAL   
 #define DEFAULT_ADDRESS    
+
+#define DEFAULT_GPS_BAUDRATE 9600 //M100 ublox is 115200
   
 // Other configuration on a per unit basis will be here
 //uncomment the folowing defines to override the defaults in main.cpp
@@ -58,7 +60,7 @@
     //
 #endif
 
-#define HAS_GPS 0
+// #define HAS_GPS 0 //HAS_GPS deprecated no longer used
 #define HAS_HARDWARE_ETHERNET_PORT 0
 #if defined(HAS_HARDWARE_ETHERNET_PORT) && (HAS_HARDWARE_ETHERNET_PORT == 1)
     #define GPS_METHOD_SPI
