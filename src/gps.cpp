@@ -1,8 +1,12 @@
 #include "main.h"
-#if defined(HAS_GPS) && (HAS_GPS ==1)
+
 #ifndef TESTGPS_TASK
-#define TESTGPS_TASK 0
+#define TESTGPS_TASK 1
 #endif //TESTGPS_TASK
+
+#ifndef DEFAULT_GPS_BAUDRATE
+#define DEFAULT_GPS_BAUDRATE 9600
+#endif //DEFAULT_GPS_BAUDRATE
 
 // TIME esp32 internal RTC
 #include <ESP32Time.h>  //includes time.h, uses the RTC built into ESP32
@@ -12,7 +16,9 @@ ESP32Time rtc(0);  // stay on UTC, neg or pos offset in seconds
 #define GPS_DEBUG 0
 #endif //GPS_DEBUG
 
+#if defined(ARDUINO_ARCH_ESP32) && TESTGPS_TASK == 0
 static HardwareSerial GPSSerial(2);    //use Hardware UART1 for GPS
+#endif
 
 GPSClass GPS;
 
@@ -35,12 +41,36 @@ TaskHandle_t GPSTaskHandle;
 
 void GPSClass::GPSTask(void *pvParameter)
 {
-  while (true) {
-    GPSClass* me = (GPSClass *)pvParameter;
-    while (GPSSerial.available() > 0) {
-      me->gps.encode(GPSSerial.read());
+  GPSClass* me = (GPSClass *)pvParameter;
+  HardwareSerial *gpsSerialPtr = new HardwareSerial(2);
+  delay(10000);
+  if (gpsSerialPtr != NULL) {
+    gpsSerialPtr->begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+    while (true) {
+      while (gpsSerialPtr->available() > 0) {
+        me->gps.encode(gpsSerialPtr->read());
+        if (me->gps.time.isUpdated()) {
+          if (!me->rtcIsSet) {
+            if (me->gps.time.isUpdated() && me->gps.time.isValid()
+              && me->gps.date.isUpdated() && me->gps.date.isValid()) {
+              rtc.setTime(
+                me->gps.time.second(),
+                me->gps.time.minute(),
+                me->gps.time.hour(),
+                me->gps.date.day(),
+                me->gps.date.month(),
+                me->gps.date.year(),
+                0
+              );
+              me->rtcIsSet = true;
+            }
+          }
+        }
+      }
+      //delay(10);
+      vTaskDelay(10 / portTICK_PERIOD_MS);
+      //yield();
     }
-    //yield();
   }
 }
 #endif //ARDUINO_ARCH_ESP32
@@ -49,9 +79,10 @@ void GPSClass::setup() {
   pinMode(GPS_ON_PIN, OUTPUT);  
   digitalWrite(GPS_ON_PIN, HIGH);//supply power to the GPS
   powerState = GPS_ON;
-  GPSSerial.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
   #if defined(ARDUINO_ARCH_ESP32) && TESTGPS_TASK == 1
     xTaskCreatePinnedToCore(GPSTask,"GPSTask",10000,this,1,&GPSTaskHandle, xPortGetCoreID() == 1 ? 0 : 1);
+  #else
+    GPSSerial.begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
   #endif //ARDUINO_ARCH_ESP32
 }
 
@@ -77,24 +108,30 @@ GPSClass::PowerState GPSClass::onoffState()
 
 void GPSClass::loop()
 {
+#if defined(ARDUINO_ARCH_ESP32) && TESTGPS_TASK == 0
   while (GPSSerial.available() > 0) {
-    gps.encode(GPSSerial.read());
-  }
-  if (!rtcIsSet) {
-    if (gps.time.isUpdated() && gps.time.isValid()
-      && gps.date.isUpdated() && gps.date.isValid()) {
-      rtc.setTime(
-        gps.time.second(),
-        gps.time.minute(),
-        gps.time.hour(),
-        gps.date.day(),
-        gps.date.month(),
-        gps.date.year(),
-        0
-      );
-      rtcIsSet = true;
+    char ch = GPSSerial.read();
+    //Serial.print(ch);
+    gps.encode(ch);
+    if (gps.time.isUpdated()) {
+      if (!rtcIsSet) {
+        if (gps.time.isUpdated() && gps.time.isValid()
+          && gps.date.isUpdated() && gps.date.isValid()) {
+          rtc.setTime(
+            gps.time.second(),
+            gps.time.minute(),
+            gps.time.hour(),
+            gps.date.day(),
+            gps.date.month(),
+            gps.date.year(),
+            0
+          );
+          rtcIsSet = true;
+        }
+      }
     }
   }
+#endif
 }
 
 unsigned long GPSClass::getTimeStamp()
@@ -109,21 +146,14 @@ unsigned long GPSClass::getTimeStamp()
 bool GPSClass::getLocation(double *lat, double *lng, double *alt, double *hdop) {
   bool gps_fix = false;
   unsigned long gps_start = millis();
-  if (GPS_DEBUG) Serial.print("GPS:");
   
-  #if !defined(ARDUINO_ARCH_ESP32) || TESTGPS_TASK == 2
-  while (GPSSerial.available() > 0) {
-    gps.encode(GPSSerial.read());
-  }
-  #endif //!defined(ARDUINO_ARCH_ESP32) || TESTGPS_TASK == 0
-
-  loop(); //Need this here otherwise it doesn't work even if called in main loop why?????
+  loop();
 
   gps_fix = gps.location.isUpdated() && gps.location.isValid();
   
   if (!gps_fix && (millis() - gps_start) > GPS_TIMEOUT * 1000) {
     display.println("GPS: No fix\n");
-    log_e("GPS NO Fix");
+    log_d("GPS NO Fix");
     gps_start = millis();
   } 
 
@@ -326,4 +356,3 @@ bool GPSClass::getLastLatLon(double *lat, double *lon)
   }
   return retVal;
 }
-#endif //defined(HAS_GPS) && (HAS_GPS ==1)
