@@ -102,7 +102,7 @@ unsigned long GPSClass::getTimeStamp()
   if (rtcIsSet)
     return rtc.getLocalEpoch();
   else
-    return millis();
+    return millis() / 1000;
 }
 
 
