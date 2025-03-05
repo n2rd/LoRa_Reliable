@@ -205,9 +205,10 @@ void p2pLoop(void)
   if ((!tx_lock) && (((millis() - broadcast_time) > (effective_pause * 1000)))) {
      broadcast_time = millis();
      //add the broadcast message to the message queue
+          int8_t temp = bmp280isPresent ? (int8_t) myBMP280.readTempF() : 0xFF;
           message_t message;
-          message.data[0] = static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
-          message.data[1] = static_cast<uint8_t>(counter & 0xFF); //low byte
+          message.data[0] = 0;  //static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
+          message.data[1] = temp; //static_cast<uint8_t>(counter & 0xFF); //low byte
           message.len = 2;
           message.headerID = ++transmit_headerId;
           message.to = RH_BROADCAST_ADDRESS;
