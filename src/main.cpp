@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "WiFi.h"
 // Example sketch showing how to create a simple peer to peer messaging network, single hop
 // with acknowledgements to RF95_reliable_datagram_client and server
 // Contributed by Charles-Henri Hallard based on sample RF95_reliable_datagram_client and server
@@ -79,7 +80,27 @@ IPAddress eth_dns(192, 168, 1, 1);		// *** CHANGE THIS to match YOUR DNS server.
 IPAddress eth_gw(192, 168, 1, 1);		// *** CHANGE THIS to match YOUR Gateway (router).     ***
 IPAddress eth_mask(255, 255, 255, 0);		// mask
 
-void WizReset();
+#include "ESPTelnet.h"
+IPAddress ip;
+uint16_t  port = 23;
+void onTelnetInput(String str); 
+void onTelnetConnectionAttempt(String ip);
+void onTelnetConnection(String ip);
+void onTelnetDisconnection(String ip);
+void onTelnetError(String error);
+void setupTelnet();   
+void errorMsg(String error, bool restart);
+void onTelnetConnect(String ip); 
+void onTelnetDisconnect(String ip);
+void onTelnetInput(String str);
+void onTelnetConnectionAttempt(String ip);
+void onTelnetConnection(String ip);
+void onTelnetDisconnection(String ip);
+void onTelnetReconnect(String ip); 
+
+
+ESPTelnet telnet;
+
 
 // SETUP Parameters
 //
@@ -233,6 +254,9 @@ void setup()
   //bool begin(int MISO_GPIO, int MOSI_GPIO, int SCLK_GPIO, int CS_GPIO, int INT_GPIO, int SPI_CLOCK_MHZ,
   //           int SPI_HOST, uint8_t *W6100_Mac = W6100_Default_Mac);
   ETH.begin( ETH_MISO, ETH_MOSI, ETH_SCK, ETH_CS, ETH_INT, ETH_SPI_CLOCK_MHZ, ETH_SPI_HOST );
+  delay(10000);
+  setupTelnet();
+  telnet.println("Hello from ESP32 using telnet");
 
   //display init
   heltec_display_power(true);
@@ -240,8 +264,6 @@ void setup()
   display.init();
   display.setContrast(255);
   display.flipScreenVertically();
-
-
   //start the radio
   if (manager.init()) 
   {
@@ -408,15 +430,75 @@ void check_button()
   }
 }
 
-void WizReset() {
-    Serial.print("Resetting Wiz W5500 Ethernet Board...  ");
-    pinMode(ETH_RST, OUTPUT);
-    digitalWrite(ETH_RST, HIGH);
-    delay(250);
-    digitalWrite(ETH_RST, LOW);
-    delay(50);
-    digitalWrite(ETH_RST, HIGH);
-    delay(350);
-    Serial.println("Done.");
+void errorMsg(String error, bool restart = false) {
+  Serial.println(error);
+  if (restart) {
+    Serial.println("Rebooting now...");
+    delay(2000);
+    ESP.restart();
+    delay(2000);
+  }
 }
 
+/* ------------------------------------------------- */
+
+void setupTelnet() {  
+  // passing on functions for various telnet events
+  telnet.onConnect(onTelnetConnect);
+  telnet.onConnectionAttempt(onTelnetConnectionAttempt);
+  telnet.onReconnect(onTelnetReconnect);
+  telnet.onDisconnect(onTelnetDisconnect);
+  telnet.onInputReceived(onTelnetInput);
+
+  Serial.print("- Telnet: ");
+  if (telnet.begin(port)) {
+    Serial.println("running");
+  } else {
+    Serial.println("error.");
+    errorMsg("Will reboot...");
+  }
+}
+
+/* ------------------------------------------------- */
+
+// (optional) callback functions for telnet events
+void onTelnetConnect(String ip) {
+  Serial.print("- Telnet: ");
+  Serial.print(ip);
+  Serial.println(" connected");
+  
+  telnet.println("\nWelcome " + telnet.getIP());
+  telnet.println("(Use ^] + q  to disconnect.)");
+}
+
+void onTelnetDisconnect(String ip) {
+  Serial.print("- Telnet: ");
+  Serial.print(ip);
+  Serial.println(" disconnected");
+}
+
+void onTelnetReconnect(String ip) {
+  Serial.print("- Telnet: ");
+  Serial.print(ip);
+  Serial.println(" reconnected");
+}
+
+void onTelnetConnectionAttempt(String ip) {
+  Serial.print("- Telnet: ");
+  Serial.print(ip);
+  Serial.println(" tried to connected");
+}
+
+void onTelnetInput(String str) {
+  // checks for a certain command
+  if (str == "ping") {
+    telnet.println("> pong"); 
+    Serial.println("- Telnet: pong");
+  // disconnect the client
+  } else if (str == "bye") {
+    telnet.println("> disconnecting you...");
+    telnet.disconnectClient();
+  } else {
+    telnet.println(str);
+  }
+}
