@@ -53,11 +53,13 @@ void GPSClass::GPSTask(void *pvParameter)
 {
   GPSClass* me = (GPSClass *)pvParameter;
   HardwareSerial *gpsSerialPtr = new HardwareSerial(2);
-  delay(10000);
   if (gpsSerialPtr != NULL) {
     gpsSerialPtr->begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
     gpsSerialPtr->onReceiveError(hsErrorCb);
+    me->currentBaudRate = DEFAULT_GPS_BAUDRATE;
+    delay(10000);
     static char baudTestBuffer[100];
+    me->setBaudTestBufferPtr(baudTestBuffer);
     int btbIndex = 0;
     while (gpsSerialPtr->available()) {
       baudTestBuffer[btbIndex++] = gpsSerialPtr->read();
@@ -70,16 +72,22 @@ void GPSClass::GPSTask(void *pvParameter)
     }
     if (!hsErrorOccurred) {
         //Check the buffer if we have. searching for "$GN". if we don't have it switch baud rates.
-        char* subStr = strstr(baudTestBuffer,"$GN");
+        char* subStr = strstr(baudTestBuffer,"$GP");
+        if (subStr == NULL)
+          subStr = strstr(baudTestBuffer,"$GL");
+        me->baudTestBufferLen = btbIndex; //strlen(baudTestBuffer);
         if (!subStr) {
           //not found so switch baud rate
+          me->baudSwitchReason = 0;
           goto switchBaudRate;
         }
     }
     else {
       //switch to the next baud rate;
+      me->baudSwitchReason = 1;
 switchBaudRate:
       uint32_t newBaudRate = (gpsSerialPtr->baudRate() == 9600) ? 115200 : 9600;
+      me->currentBaudRate = newBaudRate;
       gpsSerialPtr->end();
       gpsSerialPtr->begin(newBaudRate, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
       gpsSerialPtr->flush(false);
@@ -98,7 +106,7 @@ switchBaudRate:
                 me->gps.date.day(),
                 me->gps.date.month(),
                 me->gps.date.year(),
-                0 //(me->gps.time.centisecond() * (1000 *10)) + (me->gps.time.age() * 1000)
+                (me->gps.time.centisecond() * (1000 *10)) + (me->gps.time.age() * 1000)
               );
               me->rtcIsSet = true;
             }
@@ -135,6 +143,8 @@ void GPSClass::setup() {
     GPSSerial.begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
   #endif //ARDUINO_ARCH_ESP32
   timeCheckValue = millis() + timeCheckValueCheckValue;
+  baudSwitchReason = -1;
+  baudTestBufferLen = -1;
 }
 
 

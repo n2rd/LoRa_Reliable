@@ -34,10 +34,17 @@ class GPSClass {
         bool getLastLatLon(double *lat, double *lon);
         bool getRtcIsSet() { return rtcIsSet; }
         int getTimeDiff() { return timeDiff; }
+        uint32_t getBaudRate() { return currentBaudRate; }
+        void setBaudTestBufferPtr(char *baudTestBufferPtrArg) {baudTestBufferPtr = baudTestBufferPtrArg; }
+        char* getBaudTestBufferPtr() { return baudTestBufferPtr; }
+        int baudSwitchReason;
+        int baudTestBufferLen;
     private:
         //HardwareSerial GPSSerial;    //use Hardware UART1 for GPS
+        uint32_t currentBaudRate;
         TinyGPSPlus gps;
         PowerState powerState;
+        char* baudTestBufferPtr;
         bool rtcIsSet;
         double lastLat;
         double lastLon;
