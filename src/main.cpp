@@ -200,6 +200,8 @@ void loop()
     serial_input_loop();
   }
   ota_loop();
+  if (!GPS.getRtcIsSet())
+    log_d("Time not set by GPS or needs correcting diff: %d",GPS.getTimeDiff());
 
 // #if HAS_GPS
 //   dumpLatLon();

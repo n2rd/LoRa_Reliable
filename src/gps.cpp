@@ -38,6 +38,16 @@ GPSClass::GPSClass()
 
 #if defined(ARDUINO_ARCH_ESP32) && TESTGPS_TASK == 1
 TaskHandle_t GPSTaskHandle;
+unsigned long timeCheckValue = 0;
+const unsigned long timeCheckValueCheckValue = 10000;
+bool hsErrorOccurred = false;
+
+void hsErrorCb(hardwareSerial_error_t hsError) 
+{
+  if ((hsError == UART_FRAME_ERROR) || (hsError == UART_PARITY_ERROR)) {
+    hsErrorOccurred = true;
+  }
+}
 
 void GPSClass::GPSTask(void *pvParameter)
 {
@@ -46,6 +56,34 @@ void GPSClass::GPSTask(void *pvParameter)
   delay(10000);
   if (gpsSerialPtr != NULL) {
     gpsSerialPtr->begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+    gpsSerialPtr->onReceiveError(hsErrorCb);
+    static char baudTestBuffer[100];
+    int btbIndex = 0;
+    while (gpsSerialPtr->available()) {
+      baudTestBuffer[btbIndex++] = gpsSerialPtr->read();
+      if (btbIndex == (sizeof(baudTestBuffer) - 2)) {
+        baudTestBuffer[sizeof(baudTestBuffer) - 1] =0;
+        break;
+      }
+      if (hsErrorOccurred)
+        break;
+    }
+    if (!hsErrorOccurred) {
+        //Check the buffer if we have. searching for "$GN". if we don't have it switch baud rates.
+        char* subStr = strstr(baudTestBuffer,"$GN");
+        if (!subStr) {
+          //not found so switch baud rate
+          goto switchBaudRate;
+        }
+    }
+    else {
+      //switch to the next baud rate;
+switchBaudRate:
+      uint32_t newBaudRate = (gpsSerialPtr->baudRate() == 9600) ? 115200 : 9600;
+      gpsSerialPtr->end();
+      gpsSerialPtr->begin(newBaudRate, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+      gpsSerialPtr->flush(false);
+    }
     while (true) {
       while (gpsSerialPtr->available() > 0) {
         me->gps.encode(gpsSerialPtr->read());
@@ -54,15 +92,27 @@ void GPSClass::GPSTask(void *pvParameter)
             if (me->gps.time.isUpdated() && me->gps.time.isValid()
               && me->gps.date.isUpdated() && me->gps.date.isValid()) {
               rtc.setTime(
-                me->gps.time.second(),
+                me->gps.time.second() + (me->gps.time.age() /1000),
                 me->gps.time.minute(),
                 me->gps.time.hour(),
                 me->gps.date.day(),
                 me->gps.date.month(),
                 me->gps.date.year(),
-                0
+                0 //(me->gps.time.centisecond() * (1000 *10)) + (me->gps.time.age() * 1000)
               );
               me->rtcIsSet = true;
+            }
+          }
+          else { //rtc is set
+            // Check the time every timeCheckCounterCheckValue times we come here. mainly happens when updating firmware.
+            if (millis() >= timeCheckValue) {
+              timeCheckValue = millis() + timeCheckValueCheckValue;
+              uint8_t gpsSeconds = me->gps.time.second() + (me->gps.time.age() / 1000);
+              //unsigned long rtcMillis = rtc.getMillis();
+              int rtcSeconds = rtc.getSecond();
+              me->timeDiff = (rtcSeconds *1000 + rtc.getMillis()) - (gpsSeconds*1000 + me->gps.time.centisecond() * 10);
+              if (abs(me->timeDiff) > 800)
+                me->rtcIsSet = false;
             }
           }
         }
@@ -84,6 +134,7 @@ void GPSClass::setup() {
   #else
     GPSSerial.begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
   #endif //ARDUINO_ARCH_ESP32
+  timeCheckValue = millis() + timeCheckValueCheckValue;
 }
 
 
