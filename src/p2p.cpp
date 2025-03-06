@@ -8,7 +8,7 @@
 //#define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 
 // Pause between transmited packets in seconds.
-#define PAUSE       20  // client, time between transmissions
+#define PAUSE       PARMS.parameters.tx_interval // client, time between transmissions
 #define TIMEOUT     200  //for sendtoWait
 
 // some state variables
