@@ -233,8 +233,8 @@ void p2pLoop(void)
   if ((!tx_lock) && ((millis() - tx_time) > random_delay)) {
     if (!transmit_queue.isEmpty()) {
       message_t message = transmit_queue.dequeue();
-      unsigned long curMicros = micros();
       manager.setHeaderId(message.headerID);
+      unsigned long curMicros = micros();
       manager.sendto(message.data, message.len, message.to);
       unsigned long transmitMicros = micros() - curMicros;
       log_d("Transmit time: %ld", transmitMicros);
