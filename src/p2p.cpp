@@ -150,7 +150,7 @@ void p2pLoop(void)
       uint8_t to;
       uint8_t id;
       uint8_t flags;
-      if (manager.recvfrom(buf, &len, &from, &to, &id, &flags)) {
+      while (manager.recvfrom(buf, &len, &from, &to, &id, &flags)) {
         uint8_t headerId = driver.headerId();
         if (to == RH_BROADCAST_ADDRESS) {
           //we have a broadcast message, so send reply back to sender
