@@ -75,6 +75,8 @@ void GPSClass::GPSTask(void *pvParameter)
         char* subStr = strstr(baudTestBuffer,"$GP");
         if (subStr == NULL)
           subStr = strstr(baudTestBuffer,"$GL");
+        if (subStr == NULL)
+          subStr = strstr(baudTestBuffer,"$GN");
         me->baudTestBufferLen = btbIndex; //strlen(baudTestBuffer);
         if (!subStr) {
           //not found so switch baud rate
