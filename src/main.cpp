@@ -200,11 +200,11 @@ void loop()
     serial_input_loop();
   }
   ota_loop();
-  if (!GPS.getRtcIsSet()) {
-    log_d("Time not set by GPS or needs correcting diff: %d",GPS.getTimeDiff());
-    if (GPS.getBaudTestBufferPtr())
-      log_d("Baud: %d  Reason: %d BufLen %d Buffer: %s",GPS.getBaudRate(),GPS.baudSwitchReason,GPS.baudTestBufferLen,GPS.getBaudTestBufferPtr());
-  }
+  //if (!GPS.getRtcIsSet()) {
+    //log_d("Time not set by GPS or needs correcting diff: %d",GPS.getTimeDiff());
+    //if (GPS.getBaudTestBufferPtr())
+    //  log_d("Baud: %d  Reason: %d BufLen %d Buffer: %s",GPS.getBaudRate(),GPS.baudSwitchReason,GPS.baudTestBufferLen,GPS.getBaudTestBufferPtr());
+  //}
 // #if HAS_GPS
 //   dumpLatLon();
 // #endif //HAS_GPS
