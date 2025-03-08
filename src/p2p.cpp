@@ -304,10 +304,7 @@ void transmitAQueuedMsg()
       messagePtr = transmit_queue.getHeadPtr();
       uint32_t currentTime = millis();
       //log_d("Delay till %u millis. current millis = %u",messagePtr->transmitTime,millis());
-      if (messagePtr->transmitTime > currentTime) {
-        //log_d("Delay %u millis till transmit time",messagePtr->transmitTime - millis());
-        //delay(messagePtr->transmitTime - millis());
-      } else {
+      if (messagePtr->transmitTime <= currentTime) {
         message = transmit_queue.dequeue();
         manager.setHeaderId(message.headerID);
         //unsigned long curMicros = micros();
