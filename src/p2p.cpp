@@ -244,6 +244,7 @@ void addGrid6LocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr
     messagePtr->len+=2;
     messagePtr->data[messagePtr->len++] = (uint8_t)curMaidenheadGrid[4];
     messagePtr->data[messagePtr->len++] = (uint8_t)curMaidenheadGrid[5];
+    strcpy(messagePtr->gridLocator, curMaidenheadGrid);
   }
 }
 //--------------------------------------------------------------------------------------------------
@@ -314,15 +315,15 @@ void transmitAQueuedMsg()
         if (message.to == RH_BROADCAST_ADDRESS) {
           //TODO Queue the broadcast CSV ouput up
           MUTEX_LOCK(csvOutputMutex);
-          csv_serial.broadcast(GPS.getTimeStamp(), from, transmit_headerId, message.gridLocator);
-          csv_telnet.broadcast(GPS.getTimeStamp(), from, transmit_headerId, message.gridLocator);
+          csv_serial.broadcast(GPS.getTimeStamp(), from, message.headerID, message.gridLocator);
+          csv_telnet.broadcast(GPS.getTimeStamp(), from, message.headerID, message.gridLocator);
           MUTEX_UNLOCK(csvOutputMutex);
         }
         else { // message is a signal report
           //TODO Queue the signal report CSV ouput up
           MUTEX_LOCK(csvOutputMutex);
-          csv_serial.signalReport(GPS.getTimeStamp(), from, message.to, transmit_headerId, message.gridLocator);
-          csv_telnet.signalReport(GPS.getTimeStamp(), from, message.to, transmit_headerId, message.gridLocator);
+          csv_serial.signalReport(GPS.getTimeStamp(), from, message.to, message.headerID, message.gridLocator);
+          csv_telnet.signalReport(GPS.getTimeStamp(), from, message.to, message.headerID, message.gridLocator);
           MUTEX_UNLOCK(csvOutputMutex);
         }
       }
