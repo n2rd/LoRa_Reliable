@@ -19,6 +19,7 @@ class CsvClass : public Print { //we derive from Print so that we can use printS
         virtual size_t write(uint8_t c); //this outputs as info 
         virtual size_t write(const char* str); //this outputs as info
         void broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId, char *gridLocator);
+        void signalReport(unsigned long timeStamp, uint8_t from, uint8_t to , uint8_t headerId, char *gridLocator);
         void data(CSVDATAPTR data);
         void data(unsigned long timeStamp,char recvType, int from, int to, uint8_t headerID, float rssi, float snr, char* gridLocator = NULL);
         void info(const char *threeCharTag, char *data);

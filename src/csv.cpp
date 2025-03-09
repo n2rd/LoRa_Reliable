@@ -69,6 +69,28 @@ void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId
         );  
 }
 /*----------------------------------------------------*/
+void CsvClass::signalReport(unsigned long timeStamp,uint8_t from, uint8_t to , uint8_t headerId, char *gridLocator)
+{
+    CHECKOUTPUT;
+    char nul = 0;
+    double myLat,myLon,bcastLat,bcastLon;
+    double miles = -1;
+    if (gridLocator) {
+        GPS.maidenheadGridToLatLon(gridLocator,&bcastLat,&bcastLon);
+        GPS.getLastLatLon(&myLat, &myLon);
+        miles = GPS.distance(myLat, myLon, bcastLat, bcastLon);
+    }
+    printObject.printf(
+        "R, %ld, R, %3d, %3d, %3u,     ,    , %s, %4.2lf\r\n",
+        timeStamp,
+        from,
+        to,
+        headerId,
+        gridLocator == NULL ? &nul : gridLocator,
+        miles
+        );  
+}
+/*----------------------------------------------------*/
 void CsvClass::data(CSVDATAPTR data) 
 {
     CHECKOUTPUT;

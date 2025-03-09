@@ -36,6 +36,7 @@ typedef struct {
   uint8_t len;
   uint8_t headerID;
   uint8_t data[DRIVER_MAX_MESSAGE_LEN];
+  char    gridLocator[11];
 } transmitMessage_t;
 
 
@@ -198,6 +199,7 @@ void addGrid6LocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr
       messagePtr->len+=2;
       messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[4];
       messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[5];
+      strcpy(messagePtr->gridLocator, fixedMaidenheadGrid);
       return;
   }
   else {
@@ -230,6 +232,7 @@ void addGrid6LocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr
       messagePtr->len+=2;
       messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[4];
       messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[5];
+      strcpy(messagePtr->gridLocator, fixedMaidenheadGrid);
       return;
     }
 
@@ -274,16 +277,9 @@ void queueABroadcastMsg()
     message.transmitTime = millis(); /* transmit now! */
     //Add maidenheadGrid6
     char* gridLocator;
-    addGrid6LocatorIntoMsg(&message, &gridLocator);
+    addGrid6LocatorIntoMsg(&message);
     if (!transmit_queue.isFull()) {
       transmit_queue.enqueue(message, message.transmitTime);
-      uint8_t from = manager.thisAddress();
-
-      //TODO - queue the broadcast output for display in p2pTaskDisplayCSV
-      MUTEX_LOCK(csvOutputMutex);
-      csv_serial.broadcast(GPS.getTimeStamp(), from, transmit_headerId, gridLocator);
-      csv_telnet.broadcast(GPS.getTimeStamp(), from, transmit_headerId, gridLocator);
-      MUTEX_UNLOCK(csvOutputMutex);
     } else {
       MUTEX_LOCK(csvOutputMutex);
       csv_serial.debug("p2p",(char *)"Transmit queue full\n");
@@ -312,7 +308,23 @@ void transmitAQueuedMsg()
         //while(driver.mode() == 3) delayMicroseconds(100);
         //unsigned long transmitMicros = micros() - curMicros;
         //log_d("Transmit time: %ld µs", transmitMicros);
+        uint8_t from = manager.thisAddress();
         tx_time = millis();
+        log_d("Before outputing a csv B or R %3d",message.to );
+        if (message.to == RH_BROADCAST_ADDRESS) {
+          //TODO Queue the broadcast CSV ouput up
+          MUTEX_LOCK(csvOutputMutex);
+          csv_serial.broadcast(GPS.getTimeStamp(), from, transmit_headerId, message.gridLocator);
+          csv_telnet.broadcast(GPS.getTimeStamp(), from, transmit_headerId, message.gridLocator);
+          MUTEX_UNLOCK(csvOutputMutex);
+        }
+        else { // message is a signal report
+          //TODO Queue the signal report CSV ouput up
+          MUTEX_LOCK(csvOutputMutex);
+          csv_serial.signalReport(GPS.getTimeStamp(), from, message.to, transmit_headerId, message.gridLocator);
+          csv_telnet.signalReport(GPS.getTimeStamp(), from, message.to, transmit_headerId, message.gridLocator);
+          MUTEX_UNLOCK(csvOutputMutex);
+        }
       }
     } //if it is time to transmit a message
   }
