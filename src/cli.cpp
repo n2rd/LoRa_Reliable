@@ -62,6 +62,7 @@ CLI Command set
                                     Version                 /V                                
     
     Promiscuous Mode        /U  <OFF|ON>                                    Default = OFF
+                                Note: Special compile required
 
                                     Write NVRAM             /W
     Grid                    /X      4 or 6 character maidenhead grid square
@@ -238,8 +239,27 @@ void cli_process_index_char_value_unit(int parameter_query, const char* param_na
         }   
     }
  }
+ 
+ //=============================================================================
+int cli_show_all() {
+    int i;
 
-//=============================================================================
+    char command[4];
+    char commands[]={'@','A', 'B', 'C', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
+
+    for (i=0, i < sizeof(commands)/sizeof(commands[0]), i++ ) {
+        command[0] = '/';
+        command[1] = commands[i];
+        command[2] = '?';
+        command[3] = '\0';
+
+        cli_execute(command);
+    }
+
+    return 0;
+}
+
+ //=============================================================================
 int cli_execute(const char* command_arg) {
 
 static u_int8_t local_PARMS_parameters_csv_output;
@@ -424,7 +444,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
     case 'F':
         if (command[0] != '\0') {
             local_params.frequency_index   = PARMS.parameters.frequency_index;
-            cli_process_index_float_value_unit(parameter_query, "Frequency Index", command, 0, sizeof(frequency_array)/sizeof(frequency_array[0])-1, frequency_array , "MHz",  & local_params.frequency_index);
+            cli_process_index_float_value_unit(parameter_query, "Frequency", command, 0, sizeof(frequency_array)/sizeof(frequency_array[0])-1, frequency_array , "MHz",  & local_params.frequency_index);
             PARMS.parameters.frequency_index = local_params.frequency_index;
             driver.setFrequency(frequency_array[local_params.frequency_index]);
         }
@@ -437,8 +457,8 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
     case 'G':
         #if HAS_GPS == 1
             if (command[0] != '\0') {
-                #define PRINTF_OK_GPS "OK:%u (%s)\r\n"
-                #define PRINTF_NG_GPS "NG:%u must be 0 for OFF, 1 for ON AT TX or 2 for ON\r\n"
+                #define PRINTF_OK_GPS "OK:GPS = %u (%s)\r\n"
+                #define PRINTF_NG_GPS "NG:GPS = %u must be 0 for OFF, 1 for ON AT TX or 2 for ON\r\n"
     
     
                 local_params.gps_state = PARMS.parameters.gps_state;
@@ -485,6 +505,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         ps_st.printf("RF Signal Reports (CSV)          /R 0=Off, 1=Serial, 2=TELNET, 3=Both\r\n");
         ps_st.printf("Radio Type                       /T <n>\r\n");
         ps_st.printf("Promiscuous Mode                 /U <off>|<on>\r\n");
+        ps_st.printf("                                    Note: Special compile required\r\n");
         ps_st.printf("Version number                   /V\r\n");
         ps_st.printf("Write to NVRAM                   /W\r\n");
         ps_st.printf("Maidenhead grid square (4 or 6)  /X\r\n");
@@ -583,7 +604,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         case 'M':
             if (command[0] != '\0') {
                 local_params.modulation_index  = PARMS.parameters.modulation_index;
-                cli_process_index_char_value_unit(parameter_query, "Modulation Index", command, 0, sizeof(modulation_array)/sizeof(modulation_array[0])-1, modulation_array,  & local_params.modulation_index);
+                cli_process_index_char_value_unit(parameter_query, "Modulation", command, 0, sizeof(modulation_array)/sizeof(modulation_array[0])-1, modulation_array,  & local_params.modulation_index);
                 PARMS.parameters.modulation_index = local_params.modulation_index;
                 setModemConfig(local_params.modulation_index); //SF Bandwith etc
             }
@@ -596,7 +617,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         case 'P':
             if (command[0] != '\0') {
                 local_params.power_index = PARMS.parameters.power_index;
-                cli_process_index_float_value_unit(parameter_query, "Power Index", command, 0, sizeof(power)/sizeof(power[0])-1, power , "dBm",  & local_params.power_index);
+                cli_process_index_float_value_unit(parameter_query, "Power", command, 0, sizeof(power)/sizeof(power[0])-1, power , "dBm",  & local_params.power_index);
                 PARMS.parameters.power_index = local_params.power_index;
                 driver.setTxPower(power[local_params.power_index]);
             }
@@ -615,7 +636,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
             csv_current_state = 0;
             if (PARMS.parameters.serialCSVEnabled) csv_current_state = csv_current_state += 1;
             if (PARMS.parameters.telnetCSVEnabled) csv_current_state = csv_current_state += 2;
-            cli_process_index_char_value_unit(parameter_query, "CSV Index", command, 0, sizeof(csv_array)/sizeof(csv_array[0])-1, csv_array,  & csv_current_state);
+            cli_process_index_char_value_unit(parameter_query, "CSV Output", command, 0, sizeof(csv_array)/sizeof(csv_array[0])-1, csv_array,  & csv_current_state);
             PARMS.parameters.serialCSVEnabled = (csv_current_state % 2) == 1;
             PARMS.parameters.telnetCSVEnabled = int (csv_current_state / 2) == 1;
             csv_serial.setOutputEnabled(PARMS.parameters.serialCSVEnabled);

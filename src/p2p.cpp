@@ -15,7 +15,6 @@
 
 // some state variables
 extern bool menu_active;
-bool tx_lock = false;
 bool short_pause = false;
 int effective_pause = PAUSE;
 
@@ -86,11 +85,19 @@ TaskHandle_t p2pTaskHandle;
 
 DECLARE_MUTEX(csvOutputMutex);
 DECLARE_MUTEX(receivedQueueMutex);
+DECLARE_MUTEX(transmitQueueMutex);
 //--------------------------------------------------------------------------------------------------
-bool checkQueueForItem(){
+bool checkReceiveQueueForItem(){
   MUTEX_LOCK(receivedQueueMutex);
   bool bRet = !receive_queue.isEmpty();
   MUTEX_UNLOCK(receivedQueueMutex);
+  return bRet;
+}
+//--------------------------------------------------------------------------------------------------
+bool checkTransmitQueueForItem(){
+  MUTEX_LOCK(transmitQueueMutex);
+  bool bRet = !transmit_queue.isEmpty();
+  MUTEX_UNLOCK(transmitQueueMutex);
   return bRet;
 }
 //--------------------------------------------------------------------------------------------------
@@ -98,7 +105,7 @@ void p2pTaskDisplayCSV(void *pvParameter)
 {
   do {
     recvMessage_t receivedMsg;
-    while (checkQueueForItem()) {
+    while (checkReceiveQueueForItem()) {
       int rssi;
       int snr;
       MUTEX_LOCK(receivedQueueMutex);
@@ -127,13 +134,17 @@ void p2pTaskDisplayCSV(void *pvParameter)
         }
         csvChar = 'B';
       } else {
-        //we have a signal report for us
+        //we have a signal report for us or another address (if in promiscuous mode)
         rssi = (int8_t)receivedMsg.packet[0];
         snr = receivedMsg.packet[1];
+
+        if (to == PARMS.parameters.address) 
+          csvChar = 'S';
+        else
+          csvChar = 'P';
         if (!menu_active) {
-          display.printf("R %u-%03u RSSI %i\n", from, headerId, rssi);
+          display.printf("%c %u-%03u RSSI %i\n",csvChar, from, headerId, rssi);
         }
-        csvChar = 'S';
       }
       MUTEX_LOCK(csvOutputMutex);
       csv_serial.data(receivedMsg.timeStamp, csvChar, from, to, headerId, rssi, snr, gridLocator);
@@ -143,33 +154,7 @@ void p2pTaskDisplayCSV(void *pvParameter)
     delay(25);
   } while(true);
 }
-//--------------------------------------------------------------------------------------------------
-void p2pSetup(void) 
-{
-  //random delay for the next transmisson
-  random_delay = random_delay_generator(MAX_DELAY);
-  MUTEX_INIT(csvOutputMutex);
-  MUTEX_INIT(receivedQueueMutex);
-  xTaskCreatePinnedToCore(p2pTaskDisplayCSV,"P2PTaskDisplayCSV",10000,NULL,2,&p2pTaskHandle, xPortGetCoreID());
-  /*
-  ReversePriorityQueue<uint64_t> testQueue(MAX_QUEUE);
-  log_d("Starting  enqueue test");
-  int count = 30;
-  do {
-    //uint32_t ran = esp_random();
-    uint64_t ran = getRandom300msecSlot();
-    log_d("%02d enqueue random value: %llu",count, ran);
-    testQueue.enqueue(ran,ran);
-  } while (count--);
-  log_d("Starting dequeue test");
-  count = 1;
-  while (!testQueue.isEmpty()) {
-    uint64_t ran = testQueue.dequeue();
-    log_d("%02d dequeue random value: %llu",count++, ran);
-  }
-  log_d("Done Queue test");
-  */
-}
+
 //--------------------------------------------------------------------------------------------------
 uint64_t getRandom300msecSlot()
 {
@@ -265,7 +250,7 @@ void extractGrid6LocatorFromData(int startMsgDataIndex, uint8_t* data, int dataL
 //--------------------------------------------------------------------------------------------------
 void queueABroadcastMsg()
 {
-  if ((!tx_lock) && (((millis() - broadcast_time) > (effective_pause * 1000)))) {
+  if (((millis() - broadcast_time) > (effective_pause * 1000))) {
     broadcast_time = millis();
     //add the broadcast message to the message queue
     int8_t temp = bmp280_isPresent() ? (int8_t) myBMP280.readTempF() : 0xFF;
@@ -279,9 +264,12 @@ void queueABroadcastMsg()
     //Add maidenheadGrid6
     char* gridLocator;
     addGrid6LocatorIntoMsg(&message);
+    MUTEX_LOCK(transmitQueueMutex);
     if (!transmit_queue.isFull()) {
       transmit_queue.enqueue(message, message.transmitTime);
+      MUTEX_UNLOCK(transmitQueueMutex);
     } else {
+      MUTEX_UNLOCK(transmitQueueMutex);
       MUTEX_LOCK(csvOutputMutex);
       csv_serial.debug("p2p",(char *)"Transmit queue full\n");
       csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
@@ -293,17 +281,16 @@ void queueABroadcastMsg()
 //--------------------------------------------------------------------------------------------------
 void transmitAQueuedMsg()
 {
-  //transmit the top message in the queue after random delay getRandom300msecSlot
-  //if ((!tx_lock) && ((millis() - tx_time) > random_delay)) {
-  if ((!tx_lock) && !transmit_queue.isEmpty()) {
-    if (!transmit_queue.isEmpty()) {
-      transmitMessage_t message, *messagePtr;
-      messagePtr = transmit_queue.getHeadPtr();
-      uint32_t currentTime = millis();
-      //log_d("Delay till %u millis. current millis = %u",messagePtr->transmitTime,millis());
-      if (messagePtr->transmitTime <= currentTime) {
-        message = transmit_queue.dequeue();
-        manager.setHeaderId(message.headerID);
+  //transmit the top message in the queue at it's delay getRandom300msecSlot time
+  if (!transmit_queue.isEmpty()) {
+    transmitMessage_t message, *messagePtr;
+    messagePtr = transmit_queue.getHeadPtr();
+    uint32_t currentTime = millis();
+    //log_d("Delay till %u millis. current millis = %u",messagePtr->transmitTime,millis());
+    if (messagePtr->transmitTime <= currentTime) {
+      message = transmit_queue.dequeue();
+      manager.setHeaderId(message.headerID);
+      if (!PARMS.parameters.tx_lock) { //skip sending of the queued message.
         //unsigned long curMicros = micros();
         manager.sendto(message.data, message.len, message.to);
         //while(driver.mode() == 3) delayMicroseconds(100);
@@ -327,8 +314,8 @@ void transmitAQueuedMsg()
           MUTEX_UNLOCK(csvOutputMutex);
         }
       }
-    } //if it is time to transmit a message
-  }
+    }
+  } //if it is time to transmit a message
 }
 //--------------------------------------------------------------------------------------------------
 void listenForMessage()
@@ -371,10 +358,12 @@ void listenForMessage()
         message.headerID = headerId;
         message.transmitTime = getRandom300msecSlot();
         addGrid6LocatorIntoMsg(&message);
-
+        MUTEX_LOCK(transmitQueueMutex);
         if (!transmit_queue.isFull()) {
           transmit_queue.enqueue(message, message.transmitTime);
+          MUTEX_UNLOCK(transmitQueueMutex);
         } else {
+          MUTEX_UNLOCK(transmitQueueMutex);
           MUTEX_LOCK(csvOutputMutex);
           csv_serial.debug("p2p",(char *)"Transmit queue full\n");
           csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
@@ -387,11 +376,47 @@ void listenForMessage()
         receivedMsg.rssi = rssi;
         receivedMsg.snr = snr;
         MUTEX_LOCK(receivedQueueMutex);
-        receive_queue.enqueue(receivedMsg);
-        MUTEX_UNLOCK(receivedQueueMutex);
+        if (!receive_queue.isFull()) {
+          receive_queue.enqueue(receivedMsg);
+          MUTEX_UNLOCK(receivedQueueMutex);
+        } else {
+          MUTEX_UNLOCK(receivedQueueMutex);
+          MUTEX_LOCK(csvOutputMutex);
+          csv_serial.debug("p2p",(char *)"Transmit queue full\n");
+          csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
+          MUTEX_UNLOCK(csvOutputMutex); 
+        }
       }
     } //received a message
   } //message available
+}
+//--------------------------------------------------------------------------------------------------
+void p2pSetup(void) 
+{
+  //random delay for the next transmisson
+  random_delay = random_delay_generator(MAX_DELAY);
+  MUTEX_INIT(csvOutputMutex);
+  MUTEX_INIT(receivedQueueMutex);
+  MUTEX_INIT(transmitQueueMutex);
+  xTaskCreatePinnedToCore(p2pTaskDisplayCSV,"P2PTaskDisplayCSV",10000,NULL,2,&p2pTaskHandle, xPortGetCoreID());
+  /*
+  ReversePriorityQueue<uint64_t> testQueue(MAX_QUEUE);
+  log_d("Starting  enqueue test");
+  int count = 30;
+  do {
+    //uint32_t ran = esp_random();
+    uint64_t ran = getRandom300msecSlot();
+    log_d("%02d enqueue random value: %llu",count, ran);
+    testQueue.enqueue(ran,ran);
+  } while (count--);
+  log_d("Starting dequeue test");
+  count = 1;
+  while (!testQueue.isEmpty()) {
+    uint64_t ran = testQueue.dequeue();
+    log_d("%02d dequeue random value: %llu",count++, ran);
+  }
+  log_d("Done Queue test");
+  */
 }
 //--------------------------------------------------------------------------------------------------
 void p2pLoop(void)

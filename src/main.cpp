@@ -108,7 +108,12 @@ void setup()
   driver.setPayloadCRC(true);
   driver.setCADTimeout(DEFAULT_CAD_TIMEOUT);  //Carrier Activity Detect Timeout 
 #else
-// This doesn't work on the heltec SX1262 driver yet
+// CAD doesn't work on the heltec SX1262 driver yet
+  //The below is a protected function but not called anywhere.  //TODO: Investigate datasheet to see if this is useful.
+  //driver.setRxBoostMode(bool boost, bool retain)
+  #if defined(RH_PROMISCUOUS_MODE) && (RH_PROMISCUOUS_MODE == 1)
+  driver.setPromiscuous(true); PARMS.parameters.tx_lock = 99;
+  #endif
 #endif
 
   // Battery

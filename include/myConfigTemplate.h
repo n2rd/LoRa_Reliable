@@ -43,7 +43,9 @@
 #define DEFAULT_MODULATION_INDEX    
 #define DEFAULT_POWER_INDEX    
 #define DEFAULT_TX_INTERVAL   
-#define DEFAULT_ADDRESS    
+#define DEFAULT_ADDRESS
+
+//#define RH_PROMISCUOUS_MODE                 1     //Enable complation of promiscuous mode code
 
 #define DEFAULT_GPS_BAUDRATE 9600 //M100 ublox is 115200
   
