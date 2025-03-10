@@ -58,8 +58,12 @@ CLI Command set
                                     n=0 Server (client/server operation)
                                     n=1 Client (client/server operation)
                                     n=2 Peer (peer to peer operation)
-    Version                 /V                                
-    Write NVRAM             /W
+    
+                                    Version                 /V                                
+    
+    Promiscuous Mode        /U  <OFF|ON>                                    Default = OFF
+
+                                    Write NVRAM             /W
     Grid                    /X      4 or 6 character maidenhead grid square
     Short Pause             /Y <OFF|ON>                                     Default = OFF      
 */
@@ -239,6 +243,7 @@ void cli_process_index_char_value_unit(int parameter_query, const char* param_na
 int cli_execute(const char* command_arg) {
 
 static u_int8_t local_PARMS_parameters_csv_output;
+static u_int8_t local_promiscuous_mode;
 
 PARAMETERS local_params;
 
@@ -479,6 +484,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         ps_st.printf("Power index 0<=n<=6              /P <n>\r\n");
         ps_st.printf("RF Signal Reports (CSV)          /R 0=Off, 1=Serial, 2=TELNET, 3=Both\r\n");
         ps_st.printf("Radio Type                       /T <n>\r\n");
+        ps_st.printf("Promiscuous Mode                 /U <off>|<on>\r\n");
         ps_st.printf("Version number                   /V\r\n");
         ps_st.printf("Write to NVRAM                   /W\r\n");
         ps_st.printf("Maidenhead grid square (4 or 6)  /X\r\n");
@@ -629,6 +635,14 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
              }
             break;
 
+//      Promiscuous Mode
+        case 'U':
+            //local_params.tx_lock      = PARMS.parameters.tx_lock;
+            cli_process_bool(parameter_query, "Promiscuous Mode", command, & local_promiscuous_mode);
+            //PARMS.parameters.tx_lock = local_params.tx_lock;
+
+             break;
+
 //      Version---------------------------------------------------------
         case 'V':
             ps_st.printf("OK: Version: %s\r\nOK: Build date: %s %s\r\n", "TBD", VERSION_DATE, VERSION_TIME); 
@@ -726,7 +740,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
 //      Invalid Command--------------------------------------------------------
         default:
-            ps_st.printf("NG:Unrecognized command %c [@, A, B, C, F, G, H, I, L, M, P, R, T, V, W, X, Y]\r\n", cmd_code);
+            ps_st.printf("NG:Unrecognized command %c [@, A, B, C, F, G, H, I, L, M, P, R, T, U, V, W, X, Y]\r\n", cmd_code);
         }
     }
     else {
