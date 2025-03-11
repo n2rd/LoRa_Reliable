@@ -97,10 +97,6 @@ void setup()
   PARMS.set_modulation();
   PARMS.set_address();
 
-  //#define DEBUG_INCOMING_PACKETS
-  #if defined(DEBUG_INCOMING_PACKETS) && defined(ARDUINO_LILYGO_T3_V1_6_1)
-  driver.setPromiscuous(true);
-  #endif
   //You can optionally require this module to wait until Channel Activity
   // Detection shows no activity on the channel before transmitting by setting
   // the CAD timeout to non-zero:
@@ -111,11 +107,10 @@ void setup()
 // CAD doesn't work on the heltec SX1262 driver yet
   //The below is a protected function but not called anywhere.  //TODO: Investigate datasheet to see if this is useful.
   //driver.setRxBoostMode(bool boost, bool retain)
-  #if defined(RH_PROMISCUOUS_MODE) && (RH_PROMISCUOUS_MODE == 1)
-  driver.setPromiscuous(true); PARMS.parameters.tx_lock = 99;
-  #endif
 #endif
 
+  driver.setPromiscuous(PARMS.parameters.promiscuousEnabled);
+  
   // Battery
   float vbat = heltec_vbat();
   ps_all.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));

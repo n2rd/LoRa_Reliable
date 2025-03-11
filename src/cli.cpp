@@ -643,8 +643,8 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
             local_params.promiscuousEnabled      = PARMS.parameters.promiscuousEnabled;
             cli_process_bool(parameter_query, "Promiscuous Mode", command, & local_params.promiscuousEnabled);
             PARMS.parameters.promiscuousEnabled = local_params.promiscuousEnabled;
-
-             break;
+            driver.setPromiscuous(local_params.promiscuousEnabled);
+            break;
 
 //      Version---------------------------------------------------------
         case 'V':
