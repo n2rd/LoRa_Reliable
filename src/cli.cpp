@@ -247,7 +247,8 @@ int cli_show_all() {
     char command[4];
     char commands[]={'@','A', 'B', 'C', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
 
-    for (i=0, i < sizeof(commands)/sizeof(commands[0]), i++ ) {
+    for (i=0; i < sizeof(commands)/sizeof(commands[0]); ++i) 
+    {
         command[0] = '/';
         command[1] = commands[i];
         command[2] = '?';
