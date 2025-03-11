@@ -32,6 +32,7 @@ uint32_t double_button_time = 0.0;
 typedef struct {
   uint32_t transmitTime;
   uint8_t to;
+  uint8_t from;
   uint8_t len;
   uint8_t headerID;
   uint8_t data[DRIVER_MAX_MESSAGE_LEN];
@@ -53,7 +54,6 @@ typedef struct {
 } recvMessage_t;
 #define MAX_QUEUE 50  //max queue size
 ReversePriorityQueue<transmitMessage_t> transmit_queue(MAX_QUEUE);
-//ArduinoQueue<transmitMessage_t> transmit_queue(MAX_QUEUE);
 ArduinoQueue<recvMessage_t> receive_queue(MAX_QUEUE);
 
 uint8_t transmit_headerId = 0;
@@ -86,6 +86,7 @@ TaskHandle_t p2pTaskHandle;
 DECLARE_MUTEX(csvOutputMutex);
 DECLARE_MUTEX(receivedQueueMutex);
 DECLARE_MUTEX(transmitQueueMutex);
+DECLARE_MUTEX(radioHeadMutex);
 //--------------------------------------------------------------------------------------------------
 bool checkReceiveQueueForItem(){
   MUTEX_LOCK(receivedQueueMutex);
@@ -248,34 +249,37 @@ void extractGrid6LocatorFromData(int startMsgDataIndex, uint8_t* data, int dataL
   } 
 }
 //--------------------------------------------------------------------------------------------------
-void queueABroadcastMsg()
+void queueABroadcastMsg(uint8_t from = RH_BROADCAST_ADDRESS, unsigned long timeToSend = -1)
 {
-  //if ((millis() - broadcast_time) >= effective_pause) {
-    //broadcast_time = millis();
-    //add the broadcast message to the message queue
-    int8_t temp = bmp280_isPresent() ? (int8_t) myBMP280.readTempF() : 0xFF;
-    transmitMessage_t message;
-    message.data[0] = 0;  //static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
-    message.data[1] = temp; //static_cast<uint8_t>(counter & 0xFF); //low byte
-    message.len = 2;
-    message.headerID = ++transmit_headerId;
-    message.to = RH_BROADCAST_ADDRESS;
+  //add the broadcast message to the message queue
+  int8_t temp = bmp280_isPresent() ? (int8_t) myBMP280.readTempF() : 0xFF;
+  transmitMessage_t message;
+  message.data[0] = 0;  //static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
+  message.data[1] = temp; //static_cast<uint8_t>(counter & 0xFF); //low byte
+  message.len = 2;
+  message.headerID = ++transmit_headerId;
+  message.to = RH_BROADCAST_ADDRESS;
+  if (from == RH_BROADCAST_ADDRESS)
+    from = PARMS.parameters.address;
+  message.from = from;
+  if (timeToSend == -1)
     message.transmitTime = millis(); /* transmit now! */
-    //Add maidenheadGrid6
-    char* gridLocator;
-    addGrid6LocatorIntoMsg(&message);
-    MUTEX_LOCK(transmitQueueMutex);
-    if (!transmit_queue.isFull()) {
-      transmit_queue.enqueue(message, message.transmitTime);
-      MUTEX_UNLOCK(transmitQueueMutex);
-    } else {
-      MUTEX_UNLOCK(transmitQueueMutex);
-      MUTEX_LOCK(csvOutputMutex);
-      csv_serial.debug("p2p",(char *)"Transmit queue full\n");
-      csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
-      MUTEX_UNLOCK(csvOutputMutex);
-    }
-  //} //broadcast message
+  else
+    message.transmitTime = timeToSend;
+  //Add maidenheadGrid6
+  char* gridLocator;
+  addGrid6LocatorIntoMsg(&message);
+  MUTEX_LOCK(transmitQueueMutex);
+  if (!transmit_queue.isFull()) {
+    transmit_queue.enqueue(message, message.transmitTime);
+    MUTEX_UNLOCK(transmitQueueMutex);
+  } else {
+    MUTEX_UNLOCK(transmitQueueMutex);
+    MUTEX_LOCK(csvOutputMutex);
+    csv_serial.debug("p2p",(char *)"Transmit queue full\n");
+    csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
+    MUTEX_UNLOCK(csvOutputMutex);
+  }
 }
 //--------------------------------------------------------------------------------------------------
 void transmitAQueuedMsg()
@@ -290,11 +294,22 @@ void transmitAQueuedMsg()
     if (messagePtr->transmitTime <= currentTime) {
       message = transmit_queue.dequeue();
       MUTEX_UNLOCK(transmitQueueMutex);
-      manager.setHeaderId(message.headerID);
       if (!PARMS.parameters.tx_lock) { //skip sending of the queued message.
         //unsigned long curMicros = micros();
-        manager.sendto(message.data, message.len, message.to);
-        //while(driver.mode() == 3) delayMicroseconds(100);
+        MUTEX_LOCK(radioHeadMutex);
+        manager.setHeaderId(message.headerID);
+        manager.setHeaderFrom(message.from);
+        bool mgrRet = manager.sendto(message.data, message.len, message.to);
+        MUTEX_UNLOCK(radioHeadMutex);
+        if (!mgrRet)
+          log_e("manager.sendto(..) failed");
+        MUTEX_LOCK(radioHeadMutex);
+        while(driver.mode() == RHGenericDriver::RHModeTx) delayMicroseconds(100);
+        RHGenericDriver::RHMode curMode = driver.mode();
+        //log_d("Mode after TX is %d", curMode);
+        if (driver.mode() == RHGenericDriver::RHModeIdle)
+          driver.setModeRx();
+        MUTEX_UNLOCK(radioHeadMutex);
         //unsigned long transmitMicros = micros() - curMicros;
         //log_d("Transmit time: %ld µs", transmitMicros);
         uint8_t from = manager.thisAddress();
@@ -323,13 +338,16 @@ void transmitAQueuedMsg()
 //--------------------------------------------------------------------------------------------------
 void listenForMessage()
 {
-  while (manager.available()) { //message has come in
-  
+  MUTEX_LOCK(radioHeadMutex);
+  bool isAvailable = manager.available();
+  MUTEX_UNLOCK(radioHeadMutex);
+  while (isAvailable) { //message has come in
     uint8_t len = sizeof(buf);
     uint8_t from;
     uint8_t to;
     uint8_t id;
     uint8_t flags;
+    MUTEX_LOCK(radioHeadMutex);
     while (manager.recvfrom(buf, &len, &from, &to, &id, &flags)) {
       uint8_t headerId = driver.headerId();
       recvMessage_t receivedMsg;
@@ -391,7 +409,11 @@ void listenForMessage()
         }
       }
     } //received a message
-  } //message available
+    MUTEX_UNLOCK(radioHeadMutex);
+    MUTEX_LOCK(radioHeadMutex);
+    isAvailable = manager.available();
+    MUTEX_UNLOCK(radioHeadMutex);
+  } //while message available
 }
 //--------------------------------------------------------------------------------------------------
 TaskHandle_t qabTaskHandle;
@@ -411,7 +433,46 @@ void queueABroadcastMsgTask(void *pvParameter)
   }
 }
 //--------------------------------------------------------------------------------------------------
-void p2pSetup(void) 
+TaskHandle_t tqmTaskHandle;
+void transmitAQueuedMsgTask(void *pvParameter)
+{
+  const TickType_t xFrequency = 100; //1000;
+  log_d("TransmitQueue period is %ld ticks",xFrequency);
+  while (true) {
+    TickType_t xLastWakeTime;
+    BaseType_t xWasDelayed;
+    xLastWakeTime = xTaskGetTickCount ();
+    transmitAQueuedMsg();
+    xWasDelayed = xTaskDelayUntil( &xLastWakeTime, xFrequency );
+    if (xWasDelayed > 1)
+      log_e("Transmitting queued messages was delayed by %ld ticks",xWasDelayed);
+    //vTaskDelay(PAUSE / portTICK_PERIOD_MS);
+  }
+}
+//--------------------------------------------------------------------------------------------------
+TaskHandle_t itrxTaskHandle;
+void IdleToRxTask(void *pvParameter)
+{
+  const TickType_t xFrequency = 10;
+  log_d("IdleToRxTask period is %ld ticks",xFrequency);
+  while (true) {
+    TickType_t xLastWakeTime;
+    BaseType_t xWasDelayed;
+    xLastWakeTime = xTaskGetTickCount ();
+
+    RHGenericDriver::RHMode currentMode = driver.mode();
+    if (currentMode == RHGenericDriver::RHModeIdle) {
+      //log_d("SX1262 is in idle (standby) switching to ModeRX");
+      driver.setModeRx();
+    }
+
+    xWasDelayed = xTaskDelayUntil( &xLastWakeTime, xFrequency );
+    if (xWasDelayed > 1)
+      log_e("Transmitting queued messages was delayed by %ld ticks",xWasDelayed);
+  }
+}
+//--------------------------------------------------------------------------------------------------
+void p2pSetup(bool broadcastOnlyArg) 
 {
   // every PAUSE seconds add a broadcast message to the message queue to be sent
   // if short_aouse is true then the pause interval is cut by half
@@ -428,7 +489,10 @@ void p2pSetup(void)
   MUTEX_INIT(receivedQueueMutex);
   MUTEX_INIT(transmitQueueMutex);
   xTaskCreatePinnedToCore(p2pTaskDisplayCSV,"P2PTaskDisplayCSV",10000,NULL,2,&p2pTaskHandle, xPortGetCoreID());
-  xTaskCreatePinnedToCore(queueABroadcastMsgTask,"P2PTaskQABM",10000,NULL,2,&qabTaskHandle, xPortGetCoreID());
+  if (!broadcastOnlyArg)
+    xTaskCreatePinnedToCore(queueABroadcastMsgTask,"P2PTaskQABM",10000,NULL,2,&qabTaskHandle, xPortGetCoreID());
+  xTaskCreatePinnedToCore(transmitAQueuedMsgTask,"P2PTaskTQM",10000,NULL,2,&tqmTaskHandle, xPortGetCoreID());
+  //xTaskCreatePinnedToCore(IdleToRxTask,"P2PTaskITR",5000,NULL,2,&itrxTaskHandle, xPortGetCoreID());
   /*
   ReversePriorityQueue<uint64_t> testQueue(MAX_QUEUE);
   log_d("Starting  enqueue test");
@@ -449,15 +513,14 @@ void p2pSetup(void)
   */
 }
 //--------------------------------------------------------------------------------------------------
+//unsigned long lastLoop = micros();
 void p2pLoop(void)
 {
+  //log_e("loop time %ld in micros",micros() - lastLoop);
+  //lastLoop = micros();
   //unsigned long topOfLoop = micros();
   //listening for others
-  RHGenericDriver::RHMode currentMode = driver.mode();
-  if (currentMode == RHGenericDriver::RHModeIdle) {
-    log_d("SX1262 is in idle (standby) switching to ModeRX");
-    driver.setModeRx();
-  }
+
 
   listenForMessage();
 
@@ -465,7 +528,26 @@ void p2pLoop(void)
   //queueABroadcastMsg();
 
   //transmit the top message in the queue after random delay
-  transmitAQueuedMsg();
+  //transmitAQueuedMsg();
   //log_e("Loop time is %ld", micros() - topOfLoop);
+  //yield();
+  vTaskDelay(1);
+}
+//--------------------------------------------------------------------------------------------------
+void broadcastOnlyLoop()
+{
+  /*
+  static bool deletedBroadcastTask = false;
+  if (!deletedBroadcastTask) {
+    vTaskDelete(qabTaskHandle);
+    deletedBroadcastTask = true;
+  }
+  */
+  //MUTEX_LOCK(transmitQueueMutex);
+  for (uint8_t i = 1; i < 30; i++) {
+    queueABroadcastMsg(i,(i*100)+millis()+10000);
+  }
+  //MUTEX_UNLOCK(transmitQueueMutex);
+  vTaskDelay(1);
 }
 //--------------------------------------------------------------------------------------------------

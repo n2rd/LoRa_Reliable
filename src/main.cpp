@@ -36,6 +36,7 @@ PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
 
 RHDatagram manager(driver, 0);  
+bool broadcastOnly = false;
 
 #if HAS_GPS
 double lastLat = 0;
@@ -93,6 +94,8 @@ void setup()
   PARMS.set_power();
   PARMS.set_modulation();
   PARMS.set_address();
+  if(PARMS.parameters.radioType == 1)
+    broadcastOnly = true;
 
   //You can optionally require this module to wait until Channel Activity
   // Detection shows no activity on the channel before transmitting by setting
@@ -112,7 +115,7 @@ void setup()
   float vbat = heltec_vbat();
   ps_all.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));
 
-  p2pSetup();
+  p2pSetup(broadcastOnly);
 
 #ifdef DUMP_PARTITIONS
   dumpPartitions();
@@ -183,11 +186,17 @@ void serial_input_loop()
 /***********************************************************/
 void loop()
 {
+  static bool doneBroadcasting = false;
   //first check the buttons
   if (!otaActive) {
     check_button();
     telnet.loop();
-    p2pLoop();
+    if (broadcastOnly && !doneBroadcasting) {
+      broadcastOnlyLoop();
+      doneBroadcasting = true;
+    }
+    else
+      p2pLoop();
     #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
       rotary_loop();
     #endif
