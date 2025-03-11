@@ -238,30 +238,11 @@ void cli_process_index_char_value_unit(int parameter_query, const char* param_na
             ps_st.printf(PRINTF_NG_CHAR , param_name, param_index_min, param_index_max);
         }   
     }
- }
- 
- //=============================================================================
-int cli_show_all() {
-    int i;
-
-    char command[4];
-    char commands[]={'@','A', 'B', 'C', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
-
-    for (i=0; i < sizeof(commands)/sizeof(commands[0]); ++i) 
-    {
-        command[0] = '/';
-        command[1] = commands[i];
-        command[2] = '?';
-        command[3] = '\0';
-
-        cli_execute(command);
-    }
-
-    return 0;
 }
-
- //=============================================================================
-int cli_execute(const char* command_arg) {
+ 
+//=============================================================================
+int cli_execute_command(const char* command_arg) {
+//int cli_execute(const char* command_arg) {
 
 static u_int8_t local_PARMS_parameters_csv_output;
 static u_int8_t local_promiscuous_mode;
@@ -488,7 +469,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
 //      Help-------------------------------------------------------------------
     case 'H':
-    case '?':
+    //case '?':
         ps_st.printf("WiFi credentials                 /a<ssid>,<passcode>   Note: case\r\n");
         ps_st.printf("                                   sensitive and spaces not permitted!\r\n");
         ps_st.printf("Radio Address                    /A <n>\r\n");
@@ -774,4 +755,34 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
     return 0;
 }
 
-
+//=============================================================================
+int cli_execute(const char* command_arg) {
+    //int cli_show_all(const char* command_arg) {
+        int i;
+    
+        char command[50],command_original_case[50];
+        char command_query[4];
+        char command_codes[]={'@','A', 'B', 'C', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
+    
+        strcpy(command, command_arg);
+    
+        if ((command[0] == '/') && command[1] == '?') {
+    
+            for (i=0; i < sizeof(command_codes)/sizeof(command_codes[0]); ++i) 
+            {
+                command[0] = '/';
+                command[1] = command_codes[i];
+                command[2] = '?';
+                command[3] = '\0';
+    
+                cli_execute_command(command);
+            }
+        }
+        else {
+            return cli_execute_command(command_arg);
+        }
+    
+        return 0;
+    }
+    
+    
