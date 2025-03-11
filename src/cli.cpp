@@ -640,9 +640,9 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
 //      Promiscuous Mode
         case 'U':
-            //local_params.tx_lock      = PARMS.parameters.tx_lock;
-            cli_process_bool(parameter_query, "Promiscuous Mode", command, & local_promiscuous_mode);
-            //PARMS.parameters.tx_lock = local_params.tx_lock;
+            local_params.promiscuousEnabled      = PARMS.parameters.promiscuousEnabled;
+            cli_process_bool(parameter_query, "Promiscuous Mode", command, & local_params.promiscuousEnabled);
+            PARMS.parameters.promiscuousEnabled = local_params.promiscuousEnabled;
 
              break;
 

@@ -22,6 +22,7 @@
 #define POWER_INDEX 11
 #define TX_INTERVAL 12
 #define ADDRESS 13
+#define PROMISCUOUS 14
 
 //array sizes
 #define FREQUENCY_INDEX_MAX 103  //0 is 902.125, 103 is 927.875
@@ -71,6 +72,9 @@
 #ifndef DEFAULT_ADDRESS
 #define DEFAULT_ADDRESS 4   
 #endif
+#ifndef DEFAULT_PROMISCUOUS
+#define DEFAULT_PROMISCUOUS 0
+#endif
 // organized into a struct
 typedef struct ParametersStruct {
     char     callsign[10];    // (10B) 9 char max
@@ -91,6 +95,7 @@ typedef struct ParametersStruct {
     char     wifiKey[63+1]; //+ null;
     bool     serialCSVEnabled;
     bool     telnetCSVEnabled;
+    uint8_t  promiscuousEnabled;
 } PARAMETERS;
 
 //for opening nvram preferences
@@ -138,6 +143,7 @@ class ParametersClass {
       const char* wifiKey = "WifiKey";
       const char* serialCSVEnabled = "SerCSVEnabled";
       const char* telnetCSVEnabled = "TelCSVEnabled";
+      const char* promiscuousEnabled = "PromisEnabled";
     } Key;
   private:
     static Preferences preferences;

@@ -44,6 +44,7 @@
 #define DEFAULT_POWER_INDEX    
 #define DEFAULT_TX_INTERVAL   
 #define DEFAULT_ADDRESS
+#define DEFAULT_PROMISCUOUS
 
 //#define RH_PROMISCUOUS_MODE                 1     //Enable complation of promiscuous mode code
 

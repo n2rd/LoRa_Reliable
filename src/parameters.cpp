@@ -184,6 +184,13 @@ if (preferences.isKey(Key.telnetCSVEnabled)) {
       parameters.telnetCSVEnabled = true;
       preferences.putUInt(Key.telnetCSVEnabled, parameters.telnetCSVEnabled);
 }
+if (preferences.isKey(Key.promiscuousEnabled)) {
+      // Preferences exist, read from it and put into mypreferences
+      parameters.promiscuousEnabled = preferences.getUInt(Key.promiscuousEnabled);
+} else { //use defaults and write to nvram
+      parameters.promiscuousEnabled = false;
+      preferences.putUInt(Key.promiscuousEnabled, parameters.promiscuousEnabled);
+}
 preferences.end();
 }
 //
@@ -252,6 +259,9 @@ void ParametersClass::update() {
     }
     if (preferences.getUInt(Key.telnetCSVEnabled) != parameters.telnetCSVEnabled) {
       preferences.putUInt(Key.telnetCSVEnabled, parameters.telnetCSVEnabled);
+    }
+    if (preferences.getUInt(Key.promiscuousEnabled) != parameters.promiscuousEnabled) {
+      preferences.putUInt(Key.promiscuousEnabled, parameters.promiscuousEnabled);
     }
     preferences.end();
 }
