@@ -16,7 +16,7 @@
 // some state variables
 extern bool menu_active;
 bool short_pause = false;
-int effective_pause = PAUSE;
+unsigned long effective_pause = 0;
 
 // Dont put this on the stack: 
 uint8_t buf[DRIVER_MAX_MESSAGE_LEN];
@@ -250,8 +250,8 @@ void extractGrid6LocatorFromData(int startMsgDataIndex, uint8_t* data, int dataL
 //--------------------------------------------------------------------------------------------------
 void queueABroadcastMsg()
 {
-  if (((millis() - broadcast_time) > (effective_pause * 1000))) {
-    broadcast_time = millis();
+  //if ((millis() - broadcast_time) >= effective_pause) {
+    //broadcast_time = millis();
     //add the broadcast message to the message queue
     int8_t temp = bmp280_isPresent() ? (int8_t) myBMP280.readTempF() : 0xFF;
     transmitMessage_t message;
@@ -275,20 +275,21 @@ void queueABroadcastMsg()
       csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
       MUTEX_UNLOCK(csvOutputMutex);
     }
-    //counter++;
-  } //broadcast message
+  //} //broadcast message
 }
 //--------------------------------------------------------------------------------------------------
 void transmitAQueuedMsg()
 {
   //transmit the top message in the queue at it's delay getRandom300msecSlot time
-  if (!transmit_queue.isEmpty()) {
+  if (checkTransmitQueueForItem()) {
     transmitMessage_t message, *messagePtr;
+    MUTEX_LOCK(transmitQueueMutex);
     messagePtr = transmit_queue.getHeadPtr();
     uint32_t currentTime = millis();
     //log_d("Delay till %u millis. current millis = %u",messagePtr->transmitTime,millis());
     if (messagePtr->transmitTime <= currentTime) {
       message = transmit_queue.dequeue();
+      MUTEX_UNLOCK(transmitQueueMutex);
       manager.setHeaderId(message.headerID);
       if (!PARMS.parameters.tx_lock) { //skip sending of the queued message.
         //unsigned long curMicros = micros();
@@ -298,7 +299,6 @@ void transmitAQueuedMsg()
         //log_d("Transmit time: %ld µs", transmitMicros);
         uint8_t from = manager.thisAddress();
         tx_time = millis();
-        log_d("Before outputing a csv B or R %3d",message.to );
         if (message.to == RH_BROADCAST_ADDRESS) {
           //TODO Queue the broadcast CSV ouput up
           MUTEX_LOCK(csvOutputMutex);
@@ -314,6 +314,9 @@ void transmitAQueuedMsg()
           MUTEX_UNLOCK(csvOutputMutex);
         }
       }
+    }
+    else {
+      MUTEX_UNLOCK(transmitQueueMutex);
     }
   } //if it is time to transmit a message
 }
@@ -391,14 +394,41 @@ void listenForMessage()
   } //message available
 }
 //--------------------------------------------------------------------------------------------------
+TaskHandle_t qabTaskHandle;
+void queueABroadcastMsgTask(void *pvParameter)
+{
+  const TickType_t xFrequency = effective_pause / portTICK_PERIOD_MS;
+  log_e("Broadcasting period is %ld ticks",xFrequency);
+  while (true) {
+    TickType_t xLastWakeTime;
+    BaseType_t xWasDelayed;
+    xLastWakeTime = xTaskGetTickCount ();
+    queueABroadcastMsg();
+    xWasDelayed = xTaskDelayUntil( &xLastWakeTime, xFrequency );
+    if (xWasDelayed > 1)
+      log_e("Broadcasting a message was delayed by %ld ticks",xWasDelayed);
+    //vTaskDelay(PAUSE / portTICK_PERIOD_MS);
+  }
+}
+//--------------------------------------------------------------------------------------------------
 void p2pSetup(void) 
 {
+  // every PAUSE seconds add a broadcast message to the message queue to be sent
+  // if short_aouse is true then the pause interval is cut by half
+  // this is to facilitate testing
+  if (short_pause) {
+    effective_pause = PAUSE * 1000 / 2;
+  }
+  else {
+    effective_pause = PAUSE * 1000;
+  }
   //random delay for the next transmisson
   random_delay = random_delay_generator(MAX_DELAY);
   MUTEX_INIT(csvOutputMutex);
   MUTEX_INIT(receivedQueueMutex);
   MUTEX_INIT(transmitQueueMutex);
   xTaskCreatePinnedToCore(p2pTaskDisplayCSV,"P2PTaskDisplayCSV",10000,NULL,2,&p2pTaskHandle, xPortGetCoreID());
+  xTaskCreatePinnedToCore(queueABroadcastMsgTask,"P2PTaskQABM",10000,NULL,2,&qabTaskHandle, xPortGetCoreID());
   /*
   ReversePriorityQueue<uint64_t> testQueue(MAX_QUEUE);
   log_d("Starting  enqueue test");
@@ -421,21 +451,21 @@ void p2pSetup(void)
 //--------------------------------------------------------------------------------------------------
 void p2pLoop(void)
 {
-  // every PAUSE seconds add a broadcast message to the message queue to be sent
-  // if short_aouse is true then the pause interval is cut by half
-  // this is to facilitate testing
-  effective_pause = PAUSE;
-  if (short_pause) {
-    effective_pause = PAUSE / 2;
-  }
+  //unsigned long topOfLoop = micros();
   //listening for others
+  RHGenericDriver::RHMode currentMode = driver.mode();
+  if (currentMode == RHGenericDriver::RHModeIdle) {
+    log_d("SX1262 is in idle (standby) switching to ModeRX");
+    driver.setModeRx();
+  }
+
   listenForMessage();
 
   //Queue up a Broadcast Message to be sent if it's at it's send interval
-  queueABroadcastMsg();
+  //queueABroadcastMsg();
 
   //transmit the top message in the queue after random delay
   transmitAQueuedMsg();
-
+  //log_e("Loop time is %ld", micros() - topOfLoop);
 }
 //--------------------------------------------------------------------------------------------------
