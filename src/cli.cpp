@@ -648,7 +648,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
             if (command[0] != '\0')
             {
                 local_params.radioType = PARMS.parameters.radioType;
-                cli_process_int(parameter_query, "Radio Type", command, 0, 2 , & local_params.radioType);
+                cli_process_int(parameter_query, "Radio Type", command, 0, 3 , & local_params.radioType);
                 PARMS.parameters.radioType = local_params.radioType;
             }
             else {
