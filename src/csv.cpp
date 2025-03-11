@@ -60,7 +60,7 @@ void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId
         miles = GPS.distance(myLat, myLon, bcastLat, bcastLon);
     }
     printObject.printf(
-        "B, %ld, O, %3d, 255, %3u,     ,    , %s, %4.2lf\r\n",
+        "B, %10ld, O, %3d, 255, %3u,     ,    , %s, %4.2lf\r\n",
         timeStamp,
         from,
         headerId,
@@ -81,7 +81,7 @@ void CsvClass::signalReport(unsigned long timeStamp,uint8_t from, uint8_t to , u
         miles = GPS.distance(myLat, myLon, bcastLat, bcastLon);
     }
     printObject.printf(
-        "R, %ld, R, %3d, %3d, %3u,     ,    , %s, %4.2lf\r\n",
+        "R, %10ld, R, %3d, %3d, %3u,     ,    , %s, %4.2lf\r\n",
         timeStamp,
         from,
         to,
@@ -95,7 +95,7 @@ void CsvClass::data(CSVDATAPTR data)
 {
     CHECKOUTPUT;
     printObject.printf(
-        "D, %ld, %c, %3d, %3d, %3u, %4.0f, %3.0f, %s, %4.2lf\r\n",
+        "D, %10ld, %c, %3d, %3d, %3u, %4.0f, %3.0f, %s, %4.2lf\r\n",
         data->timeStamp,
         data->recvType,
         data->from,
