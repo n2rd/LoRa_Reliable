@@ -35,10 +35,7 @@ PrintSplitter ps_both(Serial, display);
 PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
 
-//It's possible we might have a chicken and Egg issue with this and PARMS constructor
-//not being called before this manager is being initialized.
-#warning "Verify that PARMS constructor called before this is initialized"
-RHDatagram manager(driver, 0 /*PARMS.parameters.address */);  
+RHDatagram manager(driver, 0);  
 
 #if HAS_GPS
 double lastLat = 0;
@@ -110,7 +107,7 @@ void setup()
 #endif
 
   driver.setPromiscuous(PARMS.parameters.promiscuousEnabled);
-  
+
   // Battery
   float vbat = heltec_vbat();
   ps_all.printf("Vbat: %.2fV (%d%%)\n", vbat, heltec_battery_percent(vbat));
@@ -215,7 +212,6 @@ void loop()
 void check_button() 
 {
     //button presses
-  #warning "verify these are only initialized to zero once"
   static uint32_t single_button_time = 0.0;
   static uint32_t double_button_time = 0.0;
   #ifdef ARDUINO_LILYGO_T3_V1_6_1
