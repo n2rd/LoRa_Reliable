@@ -191,6 +191,13 @@ if (preferences.isKey(Key.promiscuousEnabled)) {
       parameters.promiscuousEnabled = false;
       preferences.putUInt(Key.promiscuousEnabled, parameters.promiscuousEnabled);
 }
+if (preferences.isKey(Key.radioType)) {
+      // Preferences exist, read from it and put into mypreferences
+      parameters.radioType = preferences.getUInt(Key.radioType);
+} else { //use defaults and write to nvram
+      parameters.radioType = 0;
+      preferences.putUInt(Key.radioType, parameters.radioType);
+}
 preferences.end();
 }
 //
