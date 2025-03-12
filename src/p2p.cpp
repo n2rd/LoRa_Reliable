@@ -193,6 +193,10 @@ void addGrid6LocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr
     do {
       hasFix = !GPS.getLocation(&lat,&lon);
     } while(!hasFix || ((millis()-beforeFix) > GPS_FIX_TIMEOUT));
+    if (!hasFix) {
+      //We timed out
+      log_d("Timeout getting GPS.getLocation() fix");
+    }
     if (!hasFix || ((lat == 0.0) && (lon == 0.0))) {
       //Couldn't get a fix
       log_d("GPS powered on but no fix in timeout- using fixed");
@@ -367,8 +371,17 @@ void listenForMessage()
         receivedMsg.snr = snr;
         receivedMsg.rssi = rssi;
         MUTEX_LOCK(receivedQueueMutex);
-        receive_queue.enqueue(receivedMsg); //Queue msg for display/csv output
-        MUTEX_UNLOCK(receivedQueueMutex);
+        if (!transmit_queue.isFull()) {
+          receive_queue.enqueue(receivedMsg); //Queue msg for display/csv output
+          MUTEX_UNLOCK(receivedQueueMutex);
+        }
+        else {
+          MUTEX_UNLOCK(receivedQueueMutex);
+          MUTEX_LOCK(csvOutputMutex);
+          csv_serial.debug("p2p",(char *)"receive_queue full\n");
+          csv_telnet.debug("p2p",(char *)"receive_queue full\n");
+          MUTEX_UNLOCK(csvOutputMutex);
+        }
 
         //create and add a signal report to the message queue
         transmitMessage_t message;
@@ -403,8 +416,8 @@ void listenForMessage()
         } else {
           MUTEX_UNLOCK(receivedQueueMutex);
           MUTEX_LOCK(csvOutputMutex);
-          csv_serial.debug("p2p",(char *)"Transmit queue full\n");
-          csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
+          csv_serial.debug("p2p",(char *)"receive_queue full\n");
+          csv_telnet.debug("p2p",(char *)"receive_queue full\n");
           MUTEX_UNLOCK(csvOutputMutex); 
         }
       }
@@ -536,16 +549,11 @@ void p2pLoop(void)
 //--------------------------------------------------------------------------------------------------
 void broadcastOnlyLoop()
 {
-  /*
-  static bool deletedBroadcastTask = false;
-  if (!deletedBroadcastTask) {
-    vTaskDelete(qabTaskHandle);
-    deletedBroadcastTask = true;
-  }
-  */
+  vTaskDelay(10000); //Initially delay 10 seconds to get up to speed on GPS and time.
   //MUTEX_LOCK(transmitQueueMutex);
   for (uint8_t i = 1; i < 30; i++) {
-    queueABroadcastMsg(i,(i*100)+millis()+10000);
+    queueABroadcastMsg(i,(i*10)+millis()+10000);
+    vTaskDelay(100);
   }
   //MUTEX_UNLOCK(transmitQueueMutex);
   vTaskDelay(1);
