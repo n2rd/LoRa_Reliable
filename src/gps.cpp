@@ -95,10 +95,11 @@ switchBaudRate:
       gpsSerialPtr->flush(false);
     }
     while (true) {
+      bool bForceUpdate = false;
       while (gpsSerialPtr->available() > 0) {
         me->gps.encode(gpsSerialPtr->read());
         if (me->gps.time.isUpdated()) {
-          if (!me->rtcIsSet) {
+          if (!me->rtcIsSet || bForceUpdate) {
             if (me->gps.time.isUpdated() && me->gps.time.isValid()
               && me->gps.date.isUpdated() && me->gps.date.isValid()) {
               rtc.setTime(
@@ -111,6 +112,7 @@ switchBaudRate:
                 (me->gps.time.centisecond() * (1000 *10)) + (me->gps.time.age() * 1000)
               );
               me->rtcIsSet = true;
+              bForceUpdate = false;
             }
           }
           else { //rtc is set
@@ -121,8 +123,11 @@ switchBaudRate:
               //unsigned long rtcMillis = rtc.getMillis();
               int rtcSeconds = rtc.getSecond();
               me->timeDiff = (rtcSeconds *1000 + rtc.getMillis()) - (gpsSeconds*1000 + me->gps.time.centisecond() * 10);
-              if (abs(me->timeDiff) > 800)
-                me->rtcIsSet = false;
+              if (abs(me->timeDiff) > 800) {
+                //Time has drifted or improved GPS so reset time.
+                bForceUpdate = true;
+                //me->rtcIsSet = false;
+              }
             }
           }
         }
