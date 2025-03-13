@@ -389,6 +389,7 @@ void listenForMessage()
         message.data[1] = static_cast<uint8_t>(snr);
         message.len = 2;
         message.to = from;
+        message.from = PARMS.parameters.address;
         message.headerID = headerId;
         message.transmitTime = getRandom300msecSlot();
         addGrid6LocatorIntoMsg(&message);
