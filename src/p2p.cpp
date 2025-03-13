@@ -97,6 +97,13 @@ bool checkReceiveQueueForItem(){
 //--------------------------------------------------------------------------------------------------
 bool checkTransmitQueueForItem(){
   MUTEX_LOCK(transmitQueueMutex);
+  unsigned int count = transmit_queue.itemCount();
+  if (count > 2) {
+    char msg[] = "Transmit Queue has %4u items";
+    char buf[sizeof(msg)+4];
+    sprintf(buf,msg,count);
+    debugMessage(buf);
+  }
   bool bRet = !transmit_queue.isEmpty();
   MUTEX_UNLOCK(transmitQueueMutex);
   return bRet;
@@ -199,7 +206,7 @@ void addGrid6LocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr
     }
     if (!hasFix || ((lat == 0.0) && (lon == 0.0))) {
       //Couldn't get a fix
-      log_d("GPS powered on but no fix in timeout- using fixed");
+      //log_d("GPS powered on but no fix in timeout- using fixed");
       //Debug code for baudrateswith
       if (!GPS.getRtcIsSet()) {
         log_d("Time not set by GPS or needs correcting diff: %d",GPS.getTimeDiff());
@@ -217,7 +224,7 @@ void addGrid6LocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr
       if (gridLocatorPtr != NULL)
         *gridLocatorPtr = fixedMaidenheadGrid;
 
-      log_d("Fixed lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,fixedMaidenheadGrid);
+      //log_d("Fixed lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,fixedMaidenheadGrid);
       encode_grid4_to_buffer(fixedMaidenheadGrid,&messagePtr->data[messagePtr->len]);
       messagePtr->len+=2;
       messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[4];
@@ -227,7 +234,7 @@ void addGrid6LocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr
     }
 
     char *curMaidenheadGrid = GPS.latLonToMaidenhead(lat,lon, gridSize);
-    log_d("GPS lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,curMaidenheadGrid);
+    //log_d("GPS lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,curMaidenheadGrid);
     if (gridLocatorPtr != NULL)
       *gridLocatorPtr = curMaidenheadGrid;
     encode_grid4_to_buffer(curMaidenheadGrid,&messagePtr->data[messagePtr->len]);
@@ -561,5 +568,15 @@ void broadcastOnlyLoop()
   }
   //MUTEX_UNLOCK(transmitQueueMutex);
   vTaskDelay(1);
+}
+
+void debugMessage(char* message)
+{
+  MUTEX_LOCK(csvOutputMutex);
+  char ct[12];
+  sprintf(ct," %ld", GPS.getTimeStamp());
+  csv_serial.debug(ct,message);
+  csv_telnet.debug(ct,message);
+  MUTEX_UNLOCK(csvOutputMutex);  
 }
 //--------------------------------------------------------------------------------------------------
