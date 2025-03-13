@@ -450,7 +450,7 @@ void queueABroadcastMsgTask(void *pvParameter)
 TaskHandle_t tqmTaskHandle;
 void transmitAQueuedMsgTask(void *pvParameter)
 {
-  const TickType_t xFrequency = 100; //1000;
+  const TickType_t xFrequency = 1000;
   log_d("TransmitQueue period is %ld ticks",xFrequency);
   while (true) {
     TickType_t xLastWakeTime;
@@ -506,6 +506,9 @@ void p2pSetup(bool broadcastOnlyArg)
   if (!broadcastOnlyArg)
     xTaskCreatePinnedToCore(queueABroadcastMsgTask,"P2PTaskQABM",10000,NULL,2,&qabTaskHandle, xPortGetCoreID());
   xTaskCreatePinnedToCore(transmitAQueuedMsgTask,"P2PTaskTQM",10000,NULL,2,&tqmTaskHandle, xPortGetCoreID());
+
+  log_d("BroadcastOnly is %s", broadcastOnlyArg ? "On" : "Off");
+
   //xTaskCreatePinnedToCore(IdleToRxTask,"P2PTaskITR",5000,NULL,2,&itrxTaskHandle, xPortGetCoreID());
   /*
   ReversePriorityQueue<uint64_t> testQueue(MAX_QUEUE);
