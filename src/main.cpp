@@ -183,6 +183,8 @@ void serial_input_loop()
   } while(sib[0] == '/'); 
 }
 /***********************************************************/
+unsigned long loopTimer = 0;
+unsigned long lastLoopTimer = 0;
 /***********************************************************/
 void loop()
 {
@@ -204,12 +206,19 @@ void loop()
       GPS.loop();
     #endif
     serial_input_loop();
+
   }
   ota_loop();
 
 // #if HAS_GPS
 //   dumpLatLon();
 // #endif //HAS_GPS
+loopTimer = millis();
+if ((loopTimer / 10000)  >= ((lastLoopTimer / 10000) + 1)) {
+  debugMessage("main loop() is alive\r\n");
+  lastLoopTimer = loopTimer;
+}
+
 } //loop
 
 /***********************************************************/
