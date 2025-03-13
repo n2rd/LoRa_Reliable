@@ -98,7 +98,7 @@ bool checkReceiveQueueForItem(){
 bool checkTransmitQueueForItem(){
   MUTEX_LOCK(transmitQueueMutex);
   unsigned int count = transmit_queue.itemCount();
-  if (count > 2) {
+  if (count > (MAX_QUEUE / 2)) {
     char msg[] = "Transmit Queue has %4u items";
     char buf[sizeof(msg)+4];
     sprintf(buf,msg,count);
@@ -315,7 +315,11 @@ void transmitAQueuedMsg()
         if (!mgrRet)
           log_e("manager.sendto(..) failed");
         MUTEX_LOCK(radioHeadMutex);
-        while(driver.mode() == RHGenericDriver::RHModeTx) delayMicroseconds(100);
+        while(driver.mode() == RHGenericDriver::RHModeTx) {
+          MUTEX_UNLOCK(radioHeadMutex);
+          delayMicroseconds(100);
+          MUTEX_LOCK(radioHeadMutex);
+        }
         RHGenericDriver::RHMode curMode = driver.mode();
         //log_d("Mode after TX is %d", curMode);
         if (driver.mode() == RHGenericDriver::RHModeIdle)
@@ -359,7 +363,7 @@ void listenForMessage()
     uint8_t id;
     uint8_t flags;
     MUTEX_LOCK(radioHeadMutex);
-    while (manager.recvfrom(buf, &len, &from, &to, &id, &flags)) {
+    if (manager.recvfrom(buf, &len, &from, &to, &id, &flags)) {
       uint8_t headerId = driver.headerId();
       recvMessage_t receivedMsg;
       receivedMsg.timeStamp = GPS.getTimeStamp();
@@ -370,6 +374,7 @@ void listenForMessage()
       receivedMsg.id = id;
       receivedMsg.flags = flags;
       receivedMsg.headerID = headerId;
+      MUTEX_UNLOCK(radioHeadMutex);
       if (to == RH_BROADCAST_ADDRESS) {
         //we have a broadcast message, so send reply back to sender
         //and display the broadcast message
@@ -378,7 +383,7 @@ void listenForMessage()
         receivedMsg.snr = snr;
         receivedMsg.rssi = rssi;
         MUTEX_LOCK(receivedQueueMutex);
-        if (!transmit_queue.isFull()) {
+        if (!receive_queue.isFull()) {
           receive_queue.enqueue(receivedMsg); //Queue msg for display/csv output
           MUTEX_UNLOCK(receivedQueueMutex);
         }
@@ -429,11 +434,14 @@ void listenForMessage()
           MUTEX_UNLOCK(csvOutputMutex); 
         }
       }
-    } //received a message
-    MUTEX_UNLOCK(radioHeadMutex);
+    } //if manager.recvfrom
+    else {
+      MUTEX_UNLOCK(radioHeadMutex);
+    }
     MUTEX_LOCK(radioHeadMutex);
     isAvailable = manager.available();
     MUTEX_UNLOCK(radioHeadMutex);
+    yield();
   } //while message available
 }
 //--------------------------------------------------------------------------------------------------
@@ -450,7 +458,6 @@ void queueABroadcastMsgTask(void *pvParameter)
     xWasDelayed = xTaskDelayUntil( &xLastWakeTime, xFrequency );
     if (xWasDelayed > 1)
       log_e("Broadcasting a message was delayed by %ld ticks",xWasDelayed);
-    //vTaskDelay(PAUSE / portTICK_PERIOD_MS);
   }
 }
 //--------------------------------------------------------------------------------------------------
@@ -467,7 +474,6 @@ void transmitAQueuedMsgTask(void *pvParameter)
     xWasDelayed = xTaskDelayUntil( &xLastWakeTime, xFrequency );
     if (xWasDelayed > 1)
       log_e("Transmitting queued messages was delayed by %ld ticks",xWasDelayed);
-    //vTaskDelay(PAUSE / portTICK_PERIOD_MS);
   }
 }
 //--------------------------------------------------------------------------------------------------
@@ -509,6 +515,7 @@ void p2pSetup(bool broadcastOnlyArg)
   MUTEX_INIT(csvOutputMutex);
   MUTEX_INIT(receivedQueueMutex);
   MUTEX_INIT(transmitQueueMutex);
+  MUTEX_INIT(radioHeadMutex);
   xTaskCreatePinnedToCore(p2pTaskDisplayCSV,"P2PTaskDisplayCSV",10000,NULL,2,&p2pTaskHandle, xPortGetCoreID());
   if (!broadcastOnlyArg)
     xTaskCreatePinnedToCore(queueABroadcastMsgTask,"P2PTaskQABM",10000,NULL,2,&qabTaskHandle, xPortGetCoreID());
