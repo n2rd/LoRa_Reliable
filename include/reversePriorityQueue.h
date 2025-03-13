@@ -239,18 +239,4 @@ class ReversePriorityQueue {
     return &(tail->item);
   }
 
-  /*
-    Depricated functions
-  */
-
-  // Depricated, use getHead() instead
-  T front() { return getHead(); }
-  // Depricated, use itemCount() instead
-  unsigned int item_count() { return itemCount(); }
-  // Depricated, use itemSize() instead
-  unsigned int item_size() { return itemSize(); }
-  // Depricated, use maxQueueSize() instead
-  unsigned int max_queue_size() { return maxQueueSize(); }
-  // Depricated, use maxMemorySize() instead
-  unsigned int max_memory_size() { return maxMemorySize(); }
 };
