@@ -214,11 +214,14 @@ void loop()
 //   dumpLatLon();
 // #endif //HAS_GPS
 loopTimer = millis();
-if ((loopTimer / 10000)  >= ((lastLoopTimer / 10000) + 1)) {
-  debugMessage("main loop() is alive\r\n");
+if ((loopTimer / 10000)  >= ((lastLoopTimer / 10000) + 60)) {
+  debugMessage((char*)"main loop() is alive\n");
+  if (otaActive)
+    debugMessage((char*)"otaActive is TRUE");
+  else
+    debugMessage((char*)"otaActive is FALSE");
   lastLoopTimer = loopTimer;
 }
-
 } //loop
 
 /***********************************************************/
