@@ -1,5 +1,6 @@
 #include "main.h"
-
+#include <LittleFS.h>
+#include <FS.h>
 /*----------------------------------------------------*/
 CsvClass::CsvClass(Print& _printObject) : printObject(_printObject), outputEnabled(true)
     {}
