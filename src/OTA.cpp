@@ -63,12 +63,13 @@ void ota_loop(void) {
 
 #else
 /////// Blocking Version ///////
+bool otaActive = false;
 unsigned long ota_progress_millis = 0;
 
 void onOTAStart() {
   // Log when OTA has started
   Serial.println("OTA update started!");
-  // <Add your own code here>
+  otaActive = true;
 }
 
 void onOTAProgress(size_t current, size_t final) {
@@ -86,13 +87,16 @@ void onOTAEnd(bool success) {
   } else {
     Serial.println("There was an error during OTA update!");
   }
-  // <Add your own code here>
+  otaActive = false;
 }
 
 void ota_setup(void) {
   Serial.begin(115200);
+  #if defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 1)
+  #else //!defined(USE_WM5500_ETHERNET) || (USE_WM5500_ETHERNET != 1)
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWD);
+  
   Serial.println("");
 
   // Wait for connection
@@ -105,7 +109,7 @@ void ota_setup(void) {
   Serial.println(WIFI_SSID);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
-
+  #endif //USE_WM5500_ETHERNET == 1
   server.on("/", []() {
     server.send(200, "text/plain", "Hi! This is Lora_Reliable. BLOCKING");
   });

@@ -12,6 +12,8 @@
   #if defined(ESP32)
     #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
       AsyncWebServer server(80);
+    #elif defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 2
+      //Placeholder for wired ethernet webserver stuff
     #else
       WebServer server(80);
     #endif
@@ -46,6 +48,9 @@ double lastLon = 0;
 void initializeNetwork() {
   ota_setup();
   telnet.setup();
+  #if defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 1)
+    WM5500_Setup();
+  #endif
 }
 /***********************************************************/
 /***********************************************************/
@@ -77,9 +82,13 @@ void setup()
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
 
+  #if USE_WM5500_ETHERNET == 0
   if (WIFI.init()) {
     initializeNetwork();
   }
+  #elif USE_WM5500_ETHERNET == 1
+
+  #endif //USE_WM5500_ETHERNET
 
   //start the radio
   if (!manager.init()) 

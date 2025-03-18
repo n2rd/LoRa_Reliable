@@ -37,9 +37,13 @@
             #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && (ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
             #include <ESPAsyncWebServer.h>
             extern AsyncWebServer server;
-            #else //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
-            #include <WebServer.h>
-            extern WebServer server;
+            #else //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) || ELEGANTOTA_USE_ASYNC_WEBSERVER != 1)
+                #if USE_WM5500_ETHERNET == 0
+                    #include <WebServer.h>
+                #else
+                    #include "wm5500.h"
+                #endif //USE_WM5500_ETHERNET == 0
+                extern WebServer server;
             #endif //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
         #endif //defined(HAS_WIFI) && (HAS_WIFI == 1)
     #endif //defined(ESP32)

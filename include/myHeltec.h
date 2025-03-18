@@ -192,9 +192,18 @@ extern const char* MY_CONFIG_NAME[];
 extern float power[POWER_INDEX_MAX];
  
 #define DRIVER_MAX_MESSAGE_LEN RH_SX126x_MAX_MESSAGE_LEN
+#ifndef USE_WIFI
+#define USE_WIFI  1 //DEFAULT IF not defined in myConfig.h
+#endif //USE_WIFI
+
 #ifndef HAS_WIFI
-#define HAS_WIFI  1 //DEFAULT IF not defined in myConfig.h
+#define HAS_WIFI  1
 #endif //HAS_WIFI
+
+#ifndef USE_WM5500_ETHERNET
+#define USE_WM5500_ETHERNET 0
+#endif //USE_WM5500_ETHERNET
+
 #ifndef HAS_GPS
 #define HAS_GPS 1 //DEFAULT IF not defined in myConfig.h
 #endif //HAS_GPS
