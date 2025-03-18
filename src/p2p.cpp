@@ -387,6 +387,11 @@ void listenForMessage()
       receivedMsg.from = from;
       receivedMsg.id = id;
       receivedMsg.flags = flags;
+      /*{
+        char buf[12];
+        sprintf(buf,"flags = %2X",flags);
+        debugMessage(buf);
+      }*/
       receivedMsg.headerID = headerId;
       MUTEX_UNLOCK(radioHeadMutex);
       if (to == RH_BROADCAST_ADDRESS) {
@@ -594,8 +599,8 @@ void broadcastOnlyLoop()
 void debugMessage(char* message)
 {
   MUTEX_LOCK(csvOutputMutex);
-  char ct[12];
-  sprintf(ct," %ld", GPS.getTimeStamp());
+  char ct[20];
+  sprintf(ct," %10ld, -, ", GPS.getTimeStamp());
   csv_serial.debug(ct,message);
   csv_telnet.debug(ct,message);
   MUTEX_UNLOCK(csvOutputMutex);  
