@@ -3,6 +3,15 @@
 #include <pthread.h>
 #include "ArduinoQueue.h"
 #include "reversePriorityQueue.h"
+
+
+#ifndef USE_RANDOM_SIGREP_SLOT
+#define USE_RANDOM_SIGREP_SLOT true
+#endif
+
+bool randomSignalReportSlot = USE_RANDOM_SIGREP_SLOT;
+
+
 //
 //Peer to Peer Messaging
 //
@@ -162,7 +171,12 @@ void p2pTaskDisplayCSV(void *pvParameter)
     delay(25);
   } while(true);
 }
-
+//--------------------------------------------------------------------------------------------------
+uint64_t getDeterministic300msecSlot() //return a time for transmit based on our address
+{
+  //return ((esp_random() % 100 /*avg slots between broadcasts */) * 300 /*slot size in ms*/ ) + millis();
+  return (PARMS.parameters.address * 3 * 300) + millis();
+}
 //--------------------------------------------------------------------------------------------------
 uint64_t getRandom300msecSlot()
 {
@@ -403,7 +417,7 @@ void listenForMessage()
         message.to = from;
         message.from = PARMS.parameters.address;
         message.headerID = headerId;
-        message.transmitTime = getRandom300msecSlot();
+        message.transmitTime = randomSignalReportSlot ? getRandom300msecSlot() : getDeterministic300msecSlot();
         addGrid6LocatorIntoMsg(&message);
         MUTEX_LOCK(transmitQueueMutex);
         if (!transmit_queue.isFull()) {
