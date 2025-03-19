@@ -27,14 +27,21 @@
 
 
 //
-
+#if USE_WIFI > 0
 CsvClass csv_telnet(telnet);
+#else //USE_WIFI == 0
+CsvClass csv_telnet((Print&)dummyPrintSplitter);
+#endif //USE_WIFI == 0
 CsvClass csv_serial(Serial);
 PrintSplitter csv_both(csv_serial,csv_telnet);
 PrintSplitter ps_both(Serial, display);
+#if USE_WIFI > 0
 PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
-
+#else //USE_WIFI == 0
+PrintSplitter ps_st(Serial);
+PrintSplitter ps_all(Serial,display);
+#endif //USE_WIFI == 0
 RHDatagram manager(driver, 0);  
 bool broadcastOnly = false;
 

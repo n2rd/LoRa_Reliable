@@ -1,5 +1,5 @@
 #include "main.h"
-
+#if USE_WIFI > 0
 Telnet telnet;
 
 const uint16_t  port = 23;
@@ -127,5 +127,5 @@ void Telnet::loop()
         telnet.print(Serial.read());
     }
 }
-
+#endif //USE_WIFI > 0
 //* ------------------------------------------------- */

@@ -1,5 +1,5 @@
 #include "main.h"
-
+#if USE_WIFI > 0
 void WifiClass::setup() {}
 bool WifiClass::init()
 {
@@ -47,5 +47,5 @@ bool WifiClass::changeAP()
     return init();
 }
 
-
 WifiClass WIFI;
+#endif //USE_WIFI > 0

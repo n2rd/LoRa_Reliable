@@ -16,8 +16,10 @@
 
 #include "parameters.h"
 #include "PrintSplitter.h"
+#if USE_WIFI >0
 #include "OTA.h"
 #include "telnet.h"
+#endif
 #include "cli.h"
 #include "csv.h"
 #include "gridutil.h"
@@ -43,8 +45,9 @@
             #endif //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
         #endif //defined(HAS_WIFI) && (HAS_WIFI == 1)
     #endif //defined(ESP32)
+    #include "wifiX.h"
 #endif //USE_WIFI > 0
-#include "wifiX.h"
+
 
 extern CsvClass csv_telnet;
 extern CsvClass csv_serial;

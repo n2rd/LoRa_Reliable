@@ -36,8 +36,6 @@ void onOTAEnd(bool success) {
 }
 
 void ota_setup(void) {
-
-
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     char buffer[100];
     sprintf(buffer,"Hi! This is a Lora_reliable device.\r\n\r\nThis radio is #%u ASYNC",manager.thisAddress());
@@ -91,22 +89,6 @@ void onOTAEnd(bool success) {
 }
 
 void ota_setup(void) {
-  Serial.begin(115200);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWD);
-  Serial.println("");
-
-  // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(WIFI_SSID);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-
   server.on("/", []() {
     server.send(200, "text/plain", "Hi! This is Lora_Reliable. BLOCKING");
   });
