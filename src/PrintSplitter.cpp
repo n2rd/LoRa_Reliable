@@ -10,22 +10,45 @@
  * to both Print objects.
  */
 
+  DummyPrintSplitter dummyPrintSplitter;
+
+    PrintSplitter::PrintSplitter() : a((Print&)dummyPrintSplitter), b((Print&)dummyPrintSplitter), c((Print&)dummyPrintSplitter)  {
+      /*
+      a = (Print&)dummy;
+      b = (Print&)dummy;
+      c = (Print&)dummy;
+      */
+      _cnt = 0; 
+    }
+    PrintSplitter::PrintSplitter(Print &_a) : a(_a), b(_a), c(_a) { _cnt = 1; }
     PrintSplitter::PrintSplitter(Print &_a, Print &_b) : a(_a), b(_b), c(_b) { _cnt = 2; }
     PrintSplitter::PrintSplitter(Print &_a, Print &_b, Print &_c) : a(_a), b(_b), c(_c) { _cnt = 3; }
 
     size_t PrintSplitter::write(uint8_t ch) {
-      a.write(ch);
-      size_t retval =  b.write(ch);
-      if (_cnt == 3)
-        c.write(ch);
+      size_t retval = 0;
+      if (_cnt > 0) {
+        retval = a.write(ch);
+        if (_cnt > 1)
+          b.write(ch);
+        if (_cnt > 2)
+          c.write(ch);
+      }
       return retval;
     }
     size_t PrintSplitter::write(const char* str) {
-      a.write(str);
-      size_t retval = b.write(str);
-      if (_cnt == 3)
-        c.write(str);
+      size_t retval = 0;
+      if (_cnt > 0) {
+        retval = a.write(str);
+        if (_cnt > 1)
+          b.write(str);
+        if (_cnt > 2)
+          c.write(str);
+      }
       return retval;
     }
+
+    DummyPrintSplitter::DummyPrintSplitter() {}
+    size_t DummyPrintSplitter::write(uint8_t c) { return 0; }
+    size_t DummyPrintSplitter::write(const char* str) { return 0; }
 
 
