@@ -104,7 +104,9 @@ void setup()
   driver.setPayloadCRC(true);
   driver.setCADTimeout(DEFAULT_CAD_TIMEOUT);  //Carrier Activity Detect Timeout 
 #else
-// CAD doesn't work on the heltec SX1262 driver yet
+  // CAD doesn't work on the heltec SX1262 driver yet return line 1134 of RH_SX126x.cpp needs commenting to make it work
+  // also adding a _cad=false; line to line 259 of RH_SX126x.cpp
+  driver.setCADTimeout(DEFAULT_CAD_TIMEOUT);  //Carrier Activity Detect Timeout 
   //The below is a protected function but not called anywhere.  //TODO: Investigate datasheet to see if this is useful.
   //driver.setRxBoostMode(bool boost, bool retain)
 #endif
