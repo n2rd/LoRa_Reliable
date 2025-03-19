@@ -43,10 +43,13 @@ double lastLat = 0;
 double lastLon = 0;
 #endif //HAS_GPS
 
-void initializeNetwork() {
-  ota_setup();
-  telnet.setup();
-}
+#if defined(USE_WIFI) && (USE_WIFI >0)
+  void initializeNetwork() {
+    ota_setup();
+    telnet.setup();
+  }
+#endif
+
 /***********************************************************/
 /***********************************************************/
 void setup() 
@@ -77,9 +80,11 @@ void setup()
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
 
-  if (WIFI.init()) {
-    initializeNetwork();
-  }
+  #if defined(USE_WIFI) && (USE_WIFI >0)
+    if (WIFI.init()) {
+      initializeNetwork();
+    }
+  #endif
 
   //start the radio
   if (!manager.init()) 
@@ -190,9 +195,12 @@ void loop()
 {
   static bool doneBroadcasting = false;
   //first check the buttons
+  #if defined(USE_WIFI) && (USE_WIFI >0)
   if (!otaActive) {
     check_button();
-    telnet.loop();
+    #if defined(USE_WIFI) && (USE_WIFI >0)
+      telnet.loop();
+    #endif
     if (broadcastOnly && !doneBroadcasting) {
       broadcastOnlyLoop();
       doneBroadcasting = true;
@@ -208,7 +216,10 @@ void loop()
     serial_input_loop();
 
   }
-  ota_loop();
+  #endif
+  #if defined(USE_WIFI) && (USE_WIFI >0)
+    ota_loop();
+  #endif
 
 // #if HAS_GPS
 //   dumpLatLon();

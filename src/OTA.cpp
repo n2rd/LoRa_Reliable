@@ -3,6 +3,7 @@
 
 
 //////////////////////// OTA  stuff /////////////////////////
+#if defined(USE_WIFI) && (USE_WIFI >0)
 #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
 /////// Async Version ///////
 bool otaActive = false;
@@ -124,5 +125,6 @@ void ota_loop(void) {
   server.handleClient();
   ElegantOTA.loop();
 }
+#endif
 #endif
 //////////////////////////////////////////////////////////////////// l
