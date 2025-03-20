@@ -202,7 +202,9 @@ void loop()
 {
   static bool doneBroadcasting = false;
   //first check the buttons
-  #if defined(USE_WIFI) && (USE_WIFI >0)
+  #if defined(USE_WIFI) && (USE_WIFI ==0)
+  bool otaActive = false;
+  #endif
   if (!otaActive) {
     check_button();
     #if defined(USE_WIFI) && (USE_WIFI >0)
@@ -221,9 +223,7 @@ void loop()
       GPS.loop();
     #endif
     serial_input_loop();
-
   }
-  #endif
   #if defined(USE_WIFI) && (USE_WIFI >0)
     ota_loop();
   #endif
