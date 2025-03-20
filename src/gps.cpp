@@ -40,7 +40,7 @@ GPSClass::GPSClass()
 TaskHandle_t GPSTaskHandle;
 unsigned long timeCheckValue = 0;
 const unsigned long timeCheckValueCheckValue = 10000;
-bool hsErrorOccurred = false;
+volatile bool hsErrorOccurred = false;
 
 void hsErrorCb(hardwareSerial_error_t hsError) 
 {
@@ -49,12 +49,23 @@ void hsErrorCb(hardwareSerial_error_t hsError)
   }
 }
 
+HardwareSerial *gpsSerialPtr;
+char rxBuffer[2000];
+void onReceive()
+{
+  int count;
+  memset(rxBuffer,0, sizeof(rxBuffer));
+  count = gpsSerialPtr->readBytes(rxBuffer,sizeof(rxBuffer));
+  for (int i = 0; i < count; i++)
+    GPS.gps.encode(rxBuffer[i]);
+}
+
 void GPSClass::GPSTask(void *pvParameter)
 {
   GPSClass* me = (GPSClass *)pvParameter;
-  HardwareSerial *gpsSerialPtr = new HardwareSerial(2);
+  gpsSerialPtr = new HardwareSerial(2);
   if (gpsSerialPtr != NULL) {
-    gpsSerialPtr->setRxBufferSize(5000);
+    gpsSerialPtr->setRxBufferSize(2000);
     gpsSerialPtr->begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
     gpsSerialPtr->onReceiveError(hsErrorCb);
     me->currentBaudRate = DEFAULT_GPS_BAUDRATE;
@@ -68,8 +79,10 @@ void GPSClass::GPSTask(void *pvParameter)
         baudTestBuffer[sizeof(baudTestBuffer) - 1] =0;
         break;
       }
-      if (hsErrorOccurred)
+      if (hsErrorOccurred) {
+        log_d("hsErrorCb has occurred");
         break;
+      }
     }
     if (!hsErrorOccurred) {
         //Check the buffer if we have. searching for "$GN". if we don't have it switch baud rates.
@@ -91,14 +104,15 @@ void GPSClass::GPSTask(void *pvParameter)
 switchBaudRate:
       uint32_t newBaudRate = (gpsSerialPtr->baudRate() == 9600) ? 115200 : 9600;
       me->currentBaudRate = newBaudRate;
-      gpsSerialPtr->end();
+      //gpsSerialPtr->end();
       gpsSerialPtr->updateBaudRate(newBaudRate);
       gpsSerialPtr->flush(false);
     }
+    gpsSerialPtr->onReceive(onReceive);
     while (true) {
       bool bForceUpdate = false;
-      while (gpsSerialPtr->available() > 0) {
-        me->gps.encode(gpsSerialPtr->read());
+      //while (gpsSerialPtr->available() > 0) {
+        //me->gps.encode(gpsSerialPtr->read());
         if (me->gps.time.isUpdated()) {
           if (!me->rtcIsSet || bForceUpdate) {
             if (me->gps.time.isUpdated() && me->gps.time.isValid()
@@ -132,11 +146,11 @@ switchBaudRate:
             }
           }
         }
-      }
+      //}
       //delay(10);
       vTaskDelay(10 / portTICK_PERIOD_MS);
       //yield();
-    }
+    } //while(true)
   }
 }
 #endif //ARDUINO_ARCH_ESP32

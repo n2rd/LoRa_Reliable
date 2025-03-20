@@ -39,10 +39,10 @@ class GPSClass {
         char* getBaudTestBufferPtr() { return baudTestBufferPtr; }
         int baudSwitchReason;
         int baudTestBufferLen;
+        TinyGPSPlus gps;
     private:
         //HardwareSerial GPSSerial;    //use Hardware UART1 for GPS
         uint32_t currentBaudRate;
-        TinyGPSPlus gps;
         PowerState powerState;
         char* baudTestBufferPtr;
         bool rtcIsSet;
