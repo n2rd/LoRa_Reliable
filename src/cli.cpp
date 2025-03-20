@@ -317,7 +317,6 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 2. Avoid Trailing and leading spaces (ASCII 0x20)
 3. Be careful with certain special characters, such as # % & " $ ￡
 */
-    #if defined(USE_WIFI) && (USE_WIFI >0)
     case '@':
         if (parameter_query) {
             ps_st.printf("OK:SSID = \"%s\"; Passcode = \"%s\"\r\n",
@@ -325,6 +324,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
                 "************"
                 );
         }
+        #if defined(USE_WIFI) && (USE_WIFI >0)
         else {
 			command_original_case[0] = ' ';               //replace leading \ and command with blanks
 			command_original_case[1] = ' ';
@@ -380,9 +380,8 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
                 /* should we do anything in the case of failure */
             }
         }
-
-       break;
        #endif
+       break;
 
 //      Radio Address----------------------------------------------------------
     case 'A':
