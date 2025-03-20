@@ -97,7 +97,16 @@ void Telnet::onTelnetInput(String str)
     }
 }
 /* ------------------------------------------------- */
-
+#if CORE_DEBUG_LEVEL > 4
+void telnetDebugOutput(char c) {
+    //telnet.print(c);
+    //Not implemented yet ... gets called but we need to 
+    //put the output into a buffer and then let another
+    //thread pick it up and push it to the telnet stream
+    //since we are in an event_task we can't call telent.print()
+}
+#endif
+/* ------------------------------------------------- */
 void Telnet::setup()
 {  
     // passing on functions for various telnet events
@@ -110,6 +119,9 @@ void Telnet::setup()
 
     if (telnet.begin(port)) {
         csv_serial.info("TEL",(char*)"telnet running\n");
+        #if CORE_DEBUG_LEVEL > 4
+            ets_install_putc2(telnetDebugOutput);
+        #endif 
     } else {
         csv_serial.debug("TEL",(char*)"telnet error.\n");
         errorMsg("Will reboot...");
