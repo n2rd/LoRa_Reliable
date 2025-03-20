@@ -332,7 +332,7 @@ void transmitAQueuedMsg()
           //requeue failed message
           transmit_queue.enqueue(message, message.transmitTime);
           MUTEX_UNLOCK(transmitQueueMutex);
-          log_e("manager.sendto(..) failed");
+          log_e("manager.sendto(..) failed message requeued");
         }
         MUTEX_LOCK(radioHeadMutex);
         while(driver.mode() == RHGenericDriver::RHModeTx) {
@@ -342,7 +342,6 @@ void transmitAQueuedMsg()
         }
         log_d("After sendto(..) rxBad %d rxGood %d txGood %d",driver.rxBad(),driver.rxGood(),driver.txGood());
         RHGenericDriver::RHMode curMode = driver.mode();
-        //log_d("Mode after TX is %d", curMode);
         if (driver.mode() == RHGenericDriver::RHModeIdle)
           driver.setModeRx();
         MUTEX_UNLOCK(radioHeadMutex);
