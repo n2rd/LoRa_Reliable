@@ -324,7 +324,6 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
                 "************"
                 );
         }
-        #if defined(USE_WIFI) && (USE_WIFI >0)
         else {
 			command_original_case[0] = ' ';               //replace leading \ and command with blanks
 			command_original_case[1] = ' ';
@@ -373,14 +372,17 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
             ps_st.printf("OK:SSID = \"%s\"; Passcode = \"%s\"\r\n", ssid_str, passcode_str);
             strcpy(PARMS.parameters.wifiSSID, ssid_str);
             strcpy(PARMS.parameters.wifiKey, passcode_str);
+
+            #if defined(USE_WIFI) && (USE_WIFI >0)
             if (WIFI.changeAP()) {
                 initializeNetwork();
             }
             else {
                 /* should we do anything in the case of failure */
             }
+            #endif
         }
-       #endif
+
        break;
 
 //      Radio Address----------------------------------------------------------
