@@ -55,6 +55,7 @@ void GPSClass::GPSTask(void *pvParameter)
   HardwareSerial *gpsSerialPtr = new HardwareSerial(2);
   if (gpsSerialPtr != NULL) {
     gpsSerialPtr->begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+    gpsSerialPtr->setRxBufferSize(5000);
     gpsSerialPtr->onReceiveError(hsErrorCb);
     me->currentBaudRate = DEFAULT_GPS_BAUDRATE;
     delay(10000);
@@ -91,7 +92,7 @@ switchBaudRate:
       uint32_t newBaudRate = (gpsSerialPtr->baudRate() == 9600) ? 115200 : 9600;
       me->currentBaudRate = newBaudRate;
       gpsSerialPtr->end();
-      gpsSerialPtr->begin(newBaudRate, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+      gpsSerialPtr->updateBaudRate(newBaudRate);
       gpsSerialPtr->flush(false);
     }
     while (true) {

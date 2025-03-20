@@ -324,11 +324,16 @@ void transmitAQueuedMsg()
         MUTEX_LOCK(radioHeadMutex);
         manager.setHeaderId(message.headerID);
         manager.setHeaderFrom(message.from);
-        log_d("Before sendto(..) rxBad %d rxGood %d txGood %d",driver.rxBad(),driver.rxGood(),driver.txGood());
+        log_d("Before sendto(..) rxBad %d rxGood %d txGood %d mode: %d",driver.rxBad(),driver.rxGood(),driver.txGood(), driver.mode());
         bool mgrRet = manager.sendto(message.data, message.len, message.to);
         MUTEX_UNLOCK(radioHeadMutex);
-        if (!mgrRet)
+        if (!mgrRet) {
+          MUTEX_LOCK(transmitQueueMutex);
+          //requeue failed message
+          transmit_queue.enqueue(message, message.transmitTime);
+          MUTEX_UNLOCK(transmitQueueMutex);
           log_e("manager.sendto(..) failed");
+        }
         MUTEX_LOCK(radioHeadMutex);
         while(driver.mode() == RHGenericDriver::RHModeTx) {
           MUTEX_UNLOCK(radioHeadMutex);
@@ -370,6 +375,7 @@ void transmitAQueuedMsg()
 void listenForMessage()
 {
   MUTEX_LOCK(radioHeadMutex);
+  //log_d("top of listenFor Message mode: %d",(int)driver.mode());
   bool isAvailable = manager.available();
   MUTEX_UNLOCK(radioHeadMutex);
   while (isAvailable) { //message has come in
@@ -464,6 +470,7 @@ void listenForMessage()
     MUTEX_UNLOCK(radioHeadMutex);
     yield();
   } //while message available
+  //log_d("bottom of listenFor Message mode: %d",(int)driver.mode());
 }
 //--------------------------------------------------------------------------------------------------
 TaskHandle_t qabTaskHandle;
