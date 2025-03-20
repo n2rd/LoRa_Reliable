@@ -54,8 +54,8 @@ void GPSClass::GPSTask(void *pvParameter)
   GPSClass* me = (GPSClass *)pvParameter;
   HardwareSerial *gpsSerialPtr = new HardwareSerial(2);
   if (gpsSerialPtr != NULL) {
-    gpsSerialPtr->begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
     gpsSerialPtr->setRxBufferSize(5000);
+    gpsSerialPtr->begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
     gpsSerialPtr->onReceiveError(hsErrorCb);
     me->currentBaudRate = DEFAULT_GPS_BAUDRATE;
     delay(10000);
