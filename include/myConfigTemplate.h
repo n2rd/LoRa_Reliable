@@ -60,6 +60,10 @@
 //#define DEFAULT_MODULATION_INDEX 5 //LongFast. see table in main.cpp to adjust
 //#define DEFAULT_POWER_INDEX 4     //see power table in main.cpp, index 0 is -9dBm, index 6 is +22dBm max 
 
+//Defines in the form of HAS_XXXX means that the device has the hardware
+//Defines in the form of USE_XXXX means that we are using the device 1 or not using it 0  (there might be other cases for a 2)
+#define HAS_WIFI 1 //usually in the specific device .h file
+#define USE_WIFI 1 //we want to use WIFI ... probably in myConfig.h or inside other #ifdefs that control it ie USE_HARDWIRED
 #define HAS_ENCODER 0
 #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
     //
@@ -74,6 +78,8 @@
     //#define GPS_METHOND_UART
 #endif
 
+//Defines in the form of HAS_XXXX means that the device has the hardware
+//Defines in the form of USE_XXXX means that we are using the device 1 or not using it 0  (there might be other cases for a 2)
 
 
 #endif

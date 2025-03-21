@@ -32,7 +32,10 @@ extern float power[POWER_INDEX_MAX];
 
 #define DRIVER_MAX_MESSAGE_LEN RH_RF95_MAX_MESSAGE_LEN
 
+#ifndef HAS_WIFI
 #define HAS_WIFI    1
+#endif //HAS_WIFI
+
 #ifndef HAS_GPS
 #define HAS_GPS     0  //Default if not in myConfig.h
 #endif //HAS_GPS
