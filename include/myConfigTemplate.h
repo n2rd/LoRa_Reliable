@@ -51,8 +51,6 @@
                                                             //False = deterministic slot selection for debugging
 //#define DETERMINISTIC_SIGREP_SLOT_WIDTH 300               //ms per slot (this should really be a variable based on packet size...)
 //#define DETERMINISTIC_SIGREP_MAX_RADIO_ADDRESS 30         //maximum number of radios while in deterministic mode
-//#define DEFAULT_PROMISCUOUS                 0
-//#define RH_PROMISCUOUS_MODE                 1     //Enable complation of promiscuous mode code
 
 #define DEFAULT_GPS_BAUDRATE 9600 //M100 ublox is 115200
   
