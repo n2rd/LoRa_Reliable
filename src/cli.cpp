@@ -425,6 +425,13 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
        break;
 
+//      P2P Address Filtering Enabled (used in conjunction with Promiscuous Mode)
+    case 'E':
+        local_params.p2pAddressFilterEnabled = PARMS.parameters.p2pAddressFilterEnabled;
+        cli_process_bool(parameter_query, "P2P Address Filtering Enabled", command, & local_params.p2pAddressFilterEnabled);
+        PARMS.parameters.p2pAddressFilterEnabled = local_params.p2pAddressFilterEnabled;
+        break;
+
 //      Frequency--------------------------------------------------------------
     case 'F':
         if (command[0] != '\0') {
@@ -478,7 +485,9 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         ps_st.printf("Radio Address                    /A <n>\r\n");
         ps_st.printf("Beacon Disable (TX Lockout)      /B <off>|<on>\r\n");
         ps_st.printf("Caallsign                        /C <callsign>\r\n");
-        ps_st.printf("Reset radio to default state     /D\r\n");        
+        ps_st.printf("Reset radio to default state     /D\r\n");
+        ps_st.printf("P2P Address Filtering            /E <off>|<on>\r\n");
+        ps_st.printf("                                    Used in combination with Promiscuous Mode\r\n");        
         ps_st.printf("Frequency                        /F <Frequency in MHz>\r\n");
         ps_st.printf("GPS State                        /G 0 for OFF, 1 for ON FOR TX\r\n");
         ps_st.printf("                                    and 2 for ON<off>|<tx<on>\r\n");
@@ -746,7 +755,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
 //      Invalid Command--------------------------------------------------------
         default:
-            ps_st.printf("NG:Unrecognized command %c [@, A, B, C, F, G, H, I, L, M, P, R, T, U, V, W, X, Y]\r\n", cmd_code);
+            ps_st.printf("NG:Unrecognized command %c [@, A, B, C, E, F, G, H, I, L, M, P, R, T, U, V, W, X, Y]\r\n", cmd_code);
         }
     }
     else {
@@ -765,7 +774,7 @@ int cli_execute(const char* command_arg) {
     
         char command[50],command_original_case[50];
         char command_query[4];
-        char command_codes[]={'@','A', 'B', 'C', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
+        char command_codes[]={'@','A', 'B', 'C', 'E', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
     
         strcpy(command, command_arg);
     

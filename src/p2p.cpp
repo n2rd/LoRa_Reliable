@@ -445,9 +445,9 @@ void listenForMessage()
           csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
           MUTEX_UNLOCK(csvOutputMutex);
         }
-      } else {
-      //} else if (to == PARMS.parameters.address) {    //RRP hack to run in promiscuous mode and let p2p filter
-                                                        //need way to enabale/disable SW hack from HW PM
+      //} else {
+      } else if (( PARMS.parameters.p2pAddressFilterEnabled && (to == PARMS.parameters.address)) ||
+                 (!PARMS.parameters.p2pAddressFilterEnabled                                    )) {    //RRP hack to run in promiscuous mode and let p2p filter
         //we have a signal report for us
         int rssi = (int8_t)buf[0];
         int snr = buf[1];

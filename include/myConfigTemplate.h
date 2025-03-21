@@ -45,6 +45,7 @@
 #define DEFAULT_TX_INTERVAL   
 #define DEFAULT_ADDRESS
 #define DEFAULT_PROMISCUOUS
+#define DEFAULT_P2PADDRESSFILTERENABLED
 
 //Diagnostic tools:
 //#define USE_RANDOM_SIGREP_SLOT false                      //True = randomized slot selection

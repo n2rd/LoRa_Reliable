@@ -191,6 +191,13 @@ if (preferences.isKey(Key.promiscuousEnabled)) {
       parameters.promiscuousEnabled = false;
       preferences.putUInt(Key.promiscuousEnabled, parameters.promiscuousEnabled);
 }
+if (preferences.isKey(Key.p2pAddressFilterEnabaled)) {
+      // Preferences exist, read from it and put into mypreferences
+      parameters.p2pAddressFilterEnabled = preferences.getUInt(Key.p2pAddressFilterEnabaled);
+} else { //use defaults and write to nvram
+      parameters.p2pAddressFilterEnabled = false;
+      preferences.putUInt(Key.p2pAddressFilterEnabaled, parameters.p2pAddressFilterEnabled);
+}
 if (preferences.isKey(Key.radioType)) {
       // Preferences exist, read from it and put into mypreferences
       parameters.radioType = preferences.getUInt(Key.radioType);
@@ -269,6 +276,9 @@ void ParametersClass::update() {
     }
     if (preferences.getUInt(Key.promiscuousEnabled) != parameters.promiscuousEnabled) {
       preferences.putUInt(Key.promiscuousEnabled, parameters.promiscuousEnabled);
+    }
+    if (preferences.getUInt(Key.p2pAddressFilterEnabaled) != parameters.p2pAddressFilterEnabled) {
+      preferences.putUInt(Key.p2pAddressFilterEnabaled, parameters.p2pAddressFilterEnabled);
     }
     preferences.end();
 }

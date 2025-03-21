@@ -106,6 +106,7 @@ typedef struct ParametersStruct {
     bool     serialCSVEnabled;
     bool     telnetCSVEnabled;
     uint8_t  promiscuousEnabled;
+    uint8_t  p2pAddressFilterEnabled;
 } PARAMETERS;
 
 //for opening nvram preferences
@@ -154,6 +155,7 @@ class ParametersClass {
       const char* serialCSVEnabled = "SerCSVEnabled";
       const char* telnetCSVEnabled = "TelCSVEnabled";
       const char* promiscuousEnabled = "PromisEnabled";
+      const char* p2pAddressFilterEnabaled = "P2pAFEnabled";
     } Key;
   private:
     static Preferences preferences;
