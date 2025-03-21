@@ -203,7 +203,7 @@ void loop()
   static bool doneBroadcasting = false;
   //first check the buttons
   #if defined(USE_WIFI) && (USE_WIFI ==0)
-  bool otaActive = false;
+  const bool otaActive = false;
   #endif
   if (!otaActive) {
     check_button();
