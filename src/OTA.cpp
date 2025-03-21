@@ -3,6 +3,7 @@
 
 
 //////////////////////// OTA  stuff /////////////////////////
+#if defined(USE_WIFI) && (USE_WIFI >0)
 #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
 /////// Async Version ///////
 bool otaActive = false;
@@ -35,8 +36,6 @@ void onOTAEnd(bool success) {
 }
 
 void ota_setup(void) {
-
-
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     char buffer[100];
     sprintf(buffer,"Hi! This is a Lora_reliable device.\r\n\r\nThis radio is #%u ASYNC",manager.thisAddress());
@@ -128,5 +127,6 @@ void ota_loop(void) {
   server.handleClient();
   ElegantOTA.loop();
 }
+#endif
 #endif
 //////////////////////////////////////////////////////////////////// l

@@ -29,14 +29,21 @@
 
 
 //
-
+#if USE_WIFI > 0
 CsvClass csv_telnet(telnet);
+#else //USE_WIFI == 0
+CsvClass csv_telnet((Print&)dummyPrintSplitter);
+#endif //USE_WIFI == 0
 CsvClass csv_serial(Serial);
 PrintSplitter csv_both(csv_serial,csv_telnet);
 PrintSplitter ps_both(Serial, display);
+#if USE_WIFI > 0
 PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
-
+#else //USE_WIFI == 0
+PrintSplitter ps_st(Serial);
+PrintSplitter ps_all(Serial,display);
+#endif //USE_WIFI == 0
 RHDatagram manager(driver, 0);  
 bool broadcastOnly = false;
 
@@ -45,13 +52,16 @@ double lastLat = 0;
 double lastLon = 0;
 #endif //HAS_GPS
 
-void initializeNetwork() {
-  ota_setup();
-  telnet.setup();
-  #if defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 1)
+#if defined(USE_WIFI) && (USE_WIFI >0)
+  void initializeNetwork() {
+    ota_setup();
+    telnet.setup();
+    #if defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 1)
     WM5500_Setup();
   #endif
 }
+#endif
+
 /***********************************************************/
 /***********************************************************/
 void setup() 
@@ -82,13 +92,11 @@ void setup()
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
 
-  #if USE_WM5500_ETHERNET == 0
-  if (WIFI.init()) {
-    initializeNetwork();
-  }
-  #elif USE_WM5500_ETHERNET == 1
-
-  #endif //USE_WM5500_ETHERNET
+  #if defined(USE_WIFI) && (USE_WIFI >0)
+    if (WIFI.init()) {
+      initializeNetwork();
+    }
+  #endif
 
   //start the radio
   if (!manager.init()) 
@@ -113,7 +121,9 @@ void setup()
   driver.setPayloadCRC(true);
   driver.setCADTimeout(DEFAULT_CAD_TIMEOUT);  //Carrier Activity Detect Timeout 
 #else
-// CAD doesn't work on the heltec SX1262 driver yet
+  // CAD doesn't work on the heltec SX1262 driver yet return line 1134 of RH_SX126x.cpp needs commenting to make it work
+  // also adding a _cad=false; line to line 259 of RH_SX126x.cpp
+  //driver.setCADTimeout(DEFAULT_CAD_TIMEOUT/4);  //Carrier Activity Detect Timeout 
   //The below is a protected function but not called anywhere.  //TODO: Investigate datasheet to see if this is useful.
   //driver.setRxBoostMode(bool boost, bool retain)
 #endif
@@ -199,9 +209,14 @@ void loop()
 {
   static bool doneBroadcasting = false;
   //first check the buttons
+  #if defined(USE_WIFI) && (USE_WIFI ==0)
+  const bool otaActive = false;
+  #endif
   if (!otaActive) {
     check_button();
-    telnet.loop();
+    #if defined(USE_WIFI) && (USE_WIFI >0)
+      telnet.loop();
+    #endif
     if (broadcastOnly && !doneBroadcasting) {
       broadcastOnlyLoop();
       doneBroadcasting = true;
@@ -215,9 +230,10 @@ void loop()
       GPS.loop();
     #endif
     serial_input_loop();
-
   }
-  ota_loop();
+  #if defined(USE_WIFI) && (USE_WIFI >0)
+    ota_loop();
+  #endif
 
 // #if HAS_GPS
 //   dumpLatLon();

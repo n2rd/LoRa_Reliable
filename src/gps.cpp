@@ -40,64 +40,61 @@ GPSClass::GPSClass()
 TaskHandle_t GPSTaskHandle;
 unsigned long timeCheckValue = 0;
 const unsigned long timeCheckValueCheckValue = 10000;
-bool hsErrorOccurred = false;
+volatile bool hsErrorOccurred = false;
+HardwareSerial *gpsSerialPtr;
+char rxBuffer[2000];
+bool firstReceive = true;
 
 void hsErrorCb(hardwareSerial_error_t hsError) 
 {
-  if ((hsError == UART_FRAME_ERROR) || (hsError == UART_PARITY_ERROR)) {
+  if ((hsError == UART_FRAME_ERROR) || (hsError == UART_PARITY_ERROR) || (hsError == UART_BREAK_ERROR)) {
+    log_d("caught hsErrorCb: %d", hsError);
     hsErrorOccurred = true;
+    //switch to the next baud rate;
+    uint32_t newBaudRate = (gpsSerialPtr->baudRate() == 9600) ? 115200 : 9600;
+    gpsSerialPtr->updateBaudRate(newBaudRate);
+    gpsSerialPtr->flush(false);
+    log_d("Changing GPS BaudRate to %d", newBaudRate);
+  }
+}
+
+void onReceive()
+{
+  int count;
+  memset(rxBuffer,0, sizeof(rxBuffer));
+  count = gpsSerialPtr->readBytes(rxBuffer,sizeof(rxBuffer));
+  if(firstReceive) {
+    rxBuffer[sizeof(rxBuffer)-1] = 0;
+    char* subStr = strstr(rxBuffer,"$GP");
+    if (subStr == NULL)
+      subStr = strstr(rxBuffer,"$GL");
+    if (subStr == NULL)
+      subStr = strstr(rxBuffer,"$GN");
+    if (!subStr) {
+      //Change baud rate here ??
+      log_d("RxBuffer: %s",rxBuffer);
+    }
+    firstReceive = false;
+  }
+  else {
+    for (int i = 0; i < count; i++)
+      GPS.gps.encode(rxBuffer[i]);
   }
 }
 
 void GPSClass::GPSTask(void *pvParameter)
 {
   GPSClass* me = (GPSClass *)pvParameter;
-  HardwareSerial *gpsSerialPtr = new HardwareSerial(2);
+  gpsSerialPtr = new HardwareSerial(2);
   if (gpsSerialPtr != NULL) {
+    gpsSerialPtr->setRxBufferSize(2000);
     gpsSerialPtr->begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
     gpsSerialPtr->onReceiveError(hsErrorCb);
-    me->currentBaudRate = DEFAULT_GPS_BAUDRATE;
-    delay(10000);
-    static char baudTestBuffer[100];
-    me->setBaudTestBufferPtr(baudTestBuffer);
-    int btbIndex = 0;
-    while (gpsSerialPtr->available()) {
-      baudTestBuffer[btbIndex++] = gpsSerialPtr->read();
-      if (btbIndex == (sizeof(baudTestBuffer) - 2)) {
-        baudTestBuffer[sizeof(baudTestBuffer) - 1] =0;
-        break;
-      }
-      if (hsErrorOccurred)
-        break;
-    }
-    if (!hsErrorOccurred) {
-        //Check the buffer if we have. searching for "$GN". if we don't have it switch baud rates.
-        char* subStr = strstr(baudTestBuffer,"$GP");
-        if (subStr == NULL)
-          subStr = strstr(baudTestBuffer,"$GL");
-        if (subStr == NULL)
-          subStr = strstr(baudTestBuffer,"$GN");
-        me->baudTestBufferLen = btbIndex; //strlen(baudTestBuffer);
-        if (!subStr) {
-          //not found so switch baud rate
-          me->baudSwitchReason = 0;
-          goto switchBaudRate;
-        }
-    }
-    else {
-      //switch to the next baud rate;
-      me->baudSwitchReason = 1;
-switchBaudRate:
-      uint32_t newBaudRate = (gpsSerialPtr->baudRate() == 9600) ? 115200 : 9600;
-      me->currentBaudRate = newBaudRate;
-      gpsSerialPtr->end();
-      gpsSerialPtr->begin(newBaudRate, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
-      gpsSerialPtr->flush(false);
-    }
+    gpsSerialPtr->onReceive(onReceive);
     while (true) {
       bool bForceUpdate = false;
-      while (gpsSerialPtr->available() > 0) {
-        me->gps.encode(gpsSerialPtr->read());
+      //while (gpsSerialPtr->available() > 0) {
+        //me->gps.encode(gpsSerialPtr->read());
         if (me->gps.time.isUpdated()) {
           if (!me->rtcIsSet || bForceUpdate) {
             if (me->gps.time.isUpdated() && me->gps.time.isValid()
@@ -131,11 +128,11 @@ switchBaudRate:
             }
           }
         }
-      }
+      //}
       //delay(10);
       vTaskDelay(10 / portTICK_PERIOD_MS);
       //yield();
-    }
+    } //while(true)
   }
 }
 #endif //ARDUINO_ARCH_ESP32

@@ -3,6 +3,15 @@
 #include <pthread.h>
 #include "ArduinoQueue.h"
 #include "reversePriorityQueue.h"
+
+
+#ifndef USE_RANDOM_SIGREP_SLOT
+#define USE_RANDOM_SIGREP_SLOT true
+#endif
+
+bool randomSignalReportSlot = USE_RANDOM_SIGREP_SLOT;
+
+
 //
 //Peer to Peer Messaging
 //
@@ -75,7 +84,7 @@ uint64_t random_delay_generator(uint64_t max) //max must be a power of 2
   return esp_random() & max;  //8192 ms max
 }
 //--------------------------------------------------------------------------------------------------
-uint64_t getRandom300msecSlot();
+uint64_t getRandomSlot();
 
 TaskHandle_t p2pTaskHandle;
 #define DECLARE_MUTEX(X) pthread_mutex_t X;						   
@@ -162,9 +171,17 @@ void p2pTaskDisplayCSV(void *pvParameter)
     delay(25);
   } while(true);
 }
-
 //--------------------------------------------------------------------------------------------------
-uint64_t getRandom300msecSlot()
+uint64_t getDeterministicSlot() //return a time for transmit based on our address
+{
+  //return ((esp_random() % 100 /*avg slots between broadcasts */) * 300 /*slot size in ms*/ ) + millis();
+  int num_slots = ((PARMS.parameters.tx_interval *1000)/DETERMINISTIC_SIGREP_SLOT_WIDTH)-1;     //# of slots  is transmit interval in milliseconds / slot width in ms
+  int radio_address_scale_factor = num_slots/DETERMINISTIC_SIGREP_MAX_RADIO_ADDRESS;
+  return (PARMS.parameters.address * radio_address_scale_factor * DETERMINISTIC_SIGREP_SLOT_WIDTH) + millis();
+  //return (PARMS.parameters.address * 3 * 300) + millis();
+}
+//--------------------------------------------------------------------------------------------------
+uint64_t getRandomSlot()
 {
   return ((esp_random() % 100 /*avg slots between broadcasts */) * 300 /*slot size in ms*/ ) + millis();
 }
@@ -310,18 +327,24 @@ void transmitAQueuedMsg()
         MUTEX_LOCK(radioHeadMutex);
         manager.setHeaderId(message.headerID);
         manager.setHeaderFrom(message.from);
+        log_d("Before sendto(..) rxBad %d rxGood %d txGood %d mode: %d",driver.rxBad(),driver.rxGood(),driver.txGood(), driver.mode());
         bool mgrRet = manager.sendto(message.data, message.len, message.to);
         MUTEX_UNLOCK(radioHeadMutex);
-        if (!mgrRet)
-          log_e("manager.sendto(..) failed");
+        if (!mgrRet) {
+          MUTEX_LOCK(transmitQueueMutex);
+          //requeue failed message
+          transmit_queue.enqueue(message, message.transmitTime);
+          MUTEX_UNLOCK(transmitQueueMutex);
+          log_e("manager.sendto(..) failed message requeued");
+        }
         MUTEX_LOCK(radioHeadMutex);
         while(driver.mode() == RHGenericDriver::RHModeTx) {
           MUTEX_UNLOCK(radioHeadMutex);
           delayMicroseconds(100);
           MUTEX_LOCK(radioHeadMutex);
         }
+        log_d("After sendto(..) rxBad %d rxGood %d txGood %d",driver.rxBad(),driver.rxGood(),driver.txGood());
         RHGenericDriver::RHMode curMode = driver.mode();
-        //log_d("Mode after TX is %d", curMode);
         if (driver.mode() == RHGenericDriver::RHModeIdle)
           driver.setModeRx();
         MUTEX_UNLOCK(radioHeadMutex);
@@ -354,6 +377,7 @@ void transmitAQueuedMsg()
 void listenForMessage()
 {
   MUTEX_LOCK(radioHeadMutex);
+  //log_d("top of listenFor Message mode: %d",(int)driver.mode());
   bool isAvailable = manager.available();
   MUTEX_UNLOCK(radioHeadMutex);
   while (isAvailable) { //message has come in
@@ -373,6 +397,11 @@ void listenForMessage()
       receivedMsg.from = from;
       receivedMsg.id = id;
       receivedMsg.flags = flags;
+      /*{
+        char buf[12];
+        sprintf(buf,"flags = %2X",flags);
+        debugMessage(buf);
+      }*/
       receivedMsg.headerID = headerId;
       MUTEX_UNLOCK(radioHeadMutex);
       if (to == RH_BROADCAST_ADDRESS) {
@@ -403,7 +432,7 @@ void listenForMessage()
         message.to = from;
         message.from = PARMS.parameters.address;
         message.headerID = headerId;
-        message.transmitTime = getRandom300msecSlot();
+        message.transmitTime = randomSignalReportSlot ? getRandomSlot() : getDeterministicSlot();
         addGrid6LocatorIntoMsg(&message);
         MUTEX_LOCK(transmitQueueMutex);
         if (!transmit_queue.isFull()) {
@@ -417,6 +446,8 @@ void listenForMessage()
           MUTEX_UNLOCK(csvOutputMutex);
         }
       } else {
+      //} else if (to == PARMS.parameters.address) {    //RRP hack to run in promiscuous mode and let p2p filter
+                                                        //need way to enabale/disable SW hack from HW PM
         //we have a signal report for us
         int rssi = (int8_t)buf[0];
         int snr = buf[1];
@@ -443,6 +474,7 @@ void listenForMessage()
     MUTEX_UNLOCK(radioHeadMutex);
     yield();
   } //while message available
+  //log_d("bottom of listenFor Message mode: %d",(int)driver.mode());
 }
 //--------------------------------------------------------------------------------------------------
 TaskHandle_t qabTaskHandle;
@@ -580,8 +612,8 @@ void broadcastOnlyLoop()
 void debugMessage(char* message)
 {
   MUTEX_LOCK(csvOutputMutex);
-  char ct[12];
-  sprintf(ct," %ld", GPS.getTimeStamp());
+  char ct[20];
+  sprintf(ct," %10ld, -, ", GPS.getTimeStamp());
   csv_serial.debug(ct,message);
   csv_telnet.debug(ct,message);
   MUTEX_UNLOCK(csvOutputMutex);  
