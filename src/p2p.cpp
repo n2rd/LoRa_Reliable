@@ -447,7 +447,7 @@ void listenForMessage()
         }
       //} else {
       } else if (( PARMS.parameters.p2pAddressFilterEnabled && (to == PARMS.parameters.address)) ||
-                 (!PARMS.parameters.p2pAddressFilterEnabled                                    )) {    //RRP hack to run in promiscuous mode and let p2p filter
+                 (!PARMS.parameters.p2pAddressFilterEnabled)) {    //RRP hack to run in promiscuous mode and let p2p filter
         //we have a signal report for us
         int rssi = (int8_t)buf[0];
         int snr = buf[1];
@@ -531,6 +531,30 @@ void IdleToRxTask(void *pvParameter)
   }
 }
 //--------------------------------------------------------------------------------------------------
+TaskHandle_t listenMsgTaskHandle;
+void listenMsgTask(void *pvParameter)
+{
+  const TickType_t xFrequency = 1;
+  log_d("listenMsgTask period is %ld ticks",xFrequency);
+  while (true) {
+    TickType_t xLastWakeTime;
+    BaseType_t xWasDelayed;
+    xLastWakeTime = xTaskGetTickCount ();
+
+    listenForMessage();
+
+    RHGenericDriver::RHMode currentMode = driver.mode();
+    if (currentMode == RHGenericDriver::RHModeIdle) {
+      //log_d("SX1262 is in idle (standby) switching to ModeRX");
+      driver.setModeRx();
+    }
+
+    xWasDelayed = xTaskDelayUntil( &xLastWakeTime, xFrequency );
+    if (xWasDelayed > 1)
+      log_e("listenForMessage() was delayed by %ld ticks",xWasDelayed);
+  }
+}
+//--------------------------------------------------------------------------------------------------
 void p2pSetup(bool broadcastOnlyArg) 
 {
   // every PAUSE seconds add a broadcast message to the message queue to be sent
@@ -552,28 +576,9 @@ void p2pSetup(bool broadcastOnlyArg)
   if (!broadcastOnlyArg)
     xTaskCreatePinnedToCore(queueABroadcastMsgTask,"P2PTaskQABM",10000,NULL,2,&qabTaskHandle, xPortGetCoreID());
   xTaskCreatePinnedToCore(transmitAQueuedMsgTask,"P2PTaskTQM",10000,NULL,2,&tqmTaskHandle, xPortGetCoreID());
+  xTaskCreatePinnedToCore(listenMsgTask,"P2PTaskLMT",10000,NULL,1,&listenMsgTaskHandle, xPortGetCoreID());
 
   log_d("BroadcastOnly is %s", broadcastOnlyArg ? "On" : "Off");
-
-  //xTaskCreatePinnedToCore(IdleToRxTask,"P2PTaskITR",5000,NULL,2,&itrxTaskHandle, xPortGetCoreID());
-  /*
-  ReversePriorityQueue<uint64_t> testQueue(MAX_QUEUE);
-  log_d("Starting  enqueue test");
-  int count = 30;
-  do {
-    //uint32_t ran = esp_random();
-    uint64_t ran = getRandom300msecSlot();
-    log_d("%02d enqueue random value: %llu",count, ran);
-    testQueue.enqueue(ran,ran);
-  } while (count--);
-  log_d("Starting dequeue test");
-  count = 1;
-  while (!testQueue.isEmpty()) {
-    uint64_t ran = testQueue.dequeue();
-    log_d("%02d dequeue random value: %llu",count++, ran);
-  }
-  log_d("Done Queue test");
-  */
 }
 //--------------------------------------------------------------------------------------------------
 //unsigned long lastLoop = micros();
@@ -582,19 +587,9 @@ void p2pLoop(void)
   //log_e("loop time %ld in micros",micros() - lastLoop);
   //lastLoop = micros();
   //unsigned long topOfLoop = micros();
-  //listening for others
-
-
-  listenForMessage();
-
-  //Queue up a Broadcast Message to be sent if it's at it's send interval
-  //queueABroadcastMsg();
-
-  //transmit the top message in the queue after random delay
-  //transmitAQueuedMsg();
   //log_e("Loop time is %ld", micros() - topOfLoop);
   //yield();
-  vTaskDelay(1);
+  //vTaskDelay(1);
 }
 //--------------------------------------------------------------------------------------------------
 void broadcastOnlyLoop()
