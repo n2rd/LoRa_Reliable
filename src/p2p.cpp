@@ -434,6 +434,8 @@ void listenForMessage()
           MUTEX_UNLOCK(csvOutputMutex);
         }
       } else {
+      //} else if (to == PARMS.parameters.address) {    //RRP hack to run in promiscuous mode and let p2p filter
+                                                        //need way to enabale/disable SW hack from HW PM
         //we have a signal report for us
         int rssi = (int8_t)buf[0];
         int snr = buf[1];
