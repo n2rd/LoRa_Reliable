@@ -37,8 +37,8 @@
             #include <WiFiClient.h>
             #include <ElegantOTA.h>
             #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && (ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
-            #include <ESPAsyncWebServer.h>
-            extern AsyncWebServer server;
+                #include <ESPAsyncWebServer.h>
+                extern AsyncWebServer server;
             #else //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) || ELEGANTOTA_USE_ASYNC_WEBSERVER != 1)
                 #if USE_WM5500_ETHERNET == 0
                     #include <WebServer.h>
@@ -51,7 +51,9 @@
     #endif //defined(ESP32)
     #include "wifiX.h"
 #endif //USE_WIFI > 0
-
+#if defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 1)
+#include "wm5500.h"
+#endif
 
 extern CsvClass csv_telnet;
 extern CsvClass csv_serial;
