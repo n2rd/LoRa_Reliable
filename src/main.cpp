@@ -27,14 +27,21 @@
 
 
 //
-
+#if USE_WIFI > 0
 CsvClass csv_telnet(telnet);
+#else //USE_WIFI == 0
+CsvClass csv_telnet((Print&)dummyPrintSplitter);
+#endif //USE_WIFI == 0
 CsvClass csv_serial(Serial);
 PrintSplitter csv_both(csv_serial,csv_telnet);
 PrintSplitter ps_both(Serial, display);
+#if USE_WIFI > 0
 PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
-
+#else //USE_WIFI == 0
+PrintSplitter ps_st(Serial);
+PrintSplitter ps_all(Serial,display);
+#endif //USE_WIFI == 0
 RHDatagram manager(driver, 0);  
 bool broadcastOnly = false;
 
@@ -43,10 +50,13 @@ double lastLat = 0;
 double lastLon = 0;
 #endif //HAS_GPS
 
-void initializeNetwork() {
-  ota_setup();
-  telnet.setup();
-}
+#if defined(USE_WIFI) && (USE_WIFI >0)
+  void initializeNetwork() {
+    ota_setup();
+    telnet.setup();
+  }
+#endif
+
 /***********************************************************/
 /***********************************************************/
 void setup() 
@@ -77,9 +87,11 @@ void setup()
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
 
-  if (WIFI.init()) {
-    initializeNetwork();
-  }
+  #if defined(USE_WIFI) && (USE_WIFI >0)
+    if (WIFI.init()) {
+      initializeNetwork();
+    }
+  #endif
 
   //start the radio
   if (!manager.init()) 
@@ -192,9 +204,14 @@ void loop()
 {
   static bool doneBroadcasting = false;
   //first check the buttons
+  #if defined(USE_WIFI) && (USE_WIFI ==0)
+  const bool otaActive = false;
+  #endif
   if (!otaActive) {
     check_button();
-    telnet.loop();
+    #if defined(USE_WIFI) && (USE_WIFI >0)
+      telnet.loop();
+    #endif
     if (broadcastOnly && !doneBroadcasting) {
       broadcastOnlyLoop();
       doneBroadcasting = true;
@@ -208,9 +225,10 @@ void loop()
       GPS.loop();
     #endif
     serial_input_loop();
-
   }
-  ota_loop();
+  #if defined(USE_WIFI) && (USE_WIFI >0)
+    ota_loop();
+  #endif
 
 // #if HAS_GPS
 //   dumpLatLon();

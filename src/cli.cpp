@@ -372,12 +372,15 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
             ps_st.printf("OK:SSID = \"%s\"; Passcode = \"%s\"\r\n", ssid_str, passcode_str);
             strcpy(PARMS.parameters.wifiSSID, ssid_str);
             strcpy(PARMS.parameters.wifiKey, passcode_str);
+
+            #if defined(USE_WIFI) && (USE_WIFI >0)
             if (WIFI.changeAP()) {
                 initializeNetwork();
             }
             else {
                 /* should we do anything in the case of failure */
             }
+            #endif
         }
 
        break;
@@ -470,7 +473,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 //      Help-------------------------------------------------------------------
     case 'H':
     //case '?':
-        ps_st.printf("WiFi credentials                 /a<ssid>,<passcode>   Note: case\r\n");
+        ps_st.printf("WiFi credentials                 /@<ssid>,<passcode>   Note: case\r\n");
         ps_st.printf("                                   sensitive and spaces not permitted!\r\n");
         ps_st.printf("Radio Address                    /A <n>\r\n");
         ps_st.printf("Beacon Disable (TX Lockout)      /B <off>|<on>\r\n");

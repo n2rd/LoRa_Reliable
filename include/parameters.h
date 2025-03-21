@@ -75,6 +75,16 @@
 #ifndef DEFAULT_PROMISCUOUS
 #define DEFAULT_PROMISCUOUS 0
 #endif
+#ifndef USE_RANDOM_SIGREP_SLOT
+#define USE_RANDOM_SIGREP_SLOT true
+#endif
+#ifndef DETERMINISTIC_SIGREP_SLOT_WIDTH
+#define DETERMINISTIC_SIGREP_SLOT_WIDTH 300 //ms per slot
+#endif
+#ifndef DETERMINISTIC_SIGREP_MAX_RADIO_ADDRESS
+#define DETERMINISTIC_SIGREP_MAX_RADIO_ADDRESS 30 //maximum number of radios
+#endif
+
 // organized into a struct
 typedef struct ParametersStruct {
     char     callsign[10];    // (10B) 9 char max
