@@ -48,7 +48,8 @@ uint8_t eth_mac[] = { 0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF };
  */
 IPAddress eth_ip(192, 168, 1, 146);		// *** CHANGE THIS to something relevant for YOUR LAN. ***
 IPAddress eth_masK(255, 255, 255, 0);		// Subnet mask.
-IPAddress eth_dns(192, 168, 1, 1);		// *** CHANGE THIS to match YOUR DNS server.           ***
+//IPAddress eth_dns(192, 168, 1, 1);		// *** CHANGE THIS to match YOUR DNS server.           ***
+IPAddress eth_dns(8, 8, 8, 8);
 IPAddress eth_gw(192, 168, 1, 1);		// *** CHANGE THIS to match YOUR Gateway (router).     ***
 IPAddress eth_mask(255, 255, 255, 0);		// mask
 
@@ -61,5 +62,6 @@ ESP32_W5500_onEvent();
 // start the ethernet connection and the server:
 // Use DHCP dynamic IP and random mac
 ETH.begin( ETH_MISO, ETH_MOSI, ETH_SCK, ETH_CS, ETH_INT, ETH_SPI_CLOCK_MHZ, ETH_SPI_HOST );
+ETH.config(eth_ip,eth_gw,eth_mask,eth_dns);
 
 }
