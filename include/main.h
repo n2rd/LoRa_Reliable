@@ -30,30 +30,26 @@
 #include "bmp280sensor.h"
 #include <RHReliableDatagram.h>
 
-#if USE_WIFI >0
-    #if defined(ESP32)
-        #if defined(HAS_WIFI) && (HAS_WIFI == 1)
-            #include <WiFi.h>
-            #include <WiFiClient.h>
-            #include <ElegantOTA.h>
-            #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && (ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
-                #include <ESPAsyncWebServer.h>
-                extern AsyncWebServer server;
-            #else //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) || ELEGANTOTA_USE_ASYNC_WEBSERVER != 1)
-                #if USE_WM5500_ETHERNET == 0
-                    #include <WebServer.h>
-                #else
-                    #include "wm5500.h"
-                #endif //USE_WM5500_ETHERNET == 0
-                extern WebServer server;
-            #endif //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
-        #endif //defined(HAS_WIFI) && (HAS_WIFI == 1)
-    #endif //defined(ESP32)
-    #include "wifiX.h"
-#endif //USE_WIFI > 0
-#if defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 1)
-#include "wm5500.h"
-#endif
+#if defined(ESP32)
+    #if defined(HAS_WIFI) && (HAS_WIFI == 1)
+        #include <WiFi.h>
+        #include <WiFiClient.h>
+        #include <ElegantOTA.h>
+        #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && (ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
+            #include <ESPAsyncWebServer.h>
+            extern AsyncWebServer server;
+        #else //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) || ELEGANTOTA_USE_ASYNC_WEBSERVER != 1)
+            #if defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 0)
+                #include <WebServer.h>
+            #else //USE_WM5500_ETHERNET == 0
+                #include "wm5500.h"
+            #endif //USE_WM5500_ETHERNET == 1
+            extern WebServer server;
+        #endif //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
+    #endif //defined(HAS_WIFI) && (HAS_WIFI == 1)
+#endif //defined(ESP32)
+#include "wifiX.h"
+
 
 extern CsvClass csv_telnet;
 extern CsvClass csv_serial;
