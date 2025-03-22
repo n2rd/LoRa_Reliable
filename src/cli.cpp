@@ -19,6 +19,8 @@ CLI Command set
     TX Lockout
     Callsign				/C <call>
     Default Config          /D
+    P2P Address Filtering   /E  <OFF|ON>                                    Default = OFF
+                                Used in conjunction with Promiscuous Mode
     Frequency index         /F <n>                                          Default = 905.2
                                     n= Frequency in MHz 3.g., 905.2, 
     GPS                     /G <OFF|TX|ON>                                  Default = OFF
