@@ -3,9 +3,12 @@
 
 //Template for creating per unit configuration
 
-#define USE_WIFI   1    //Change to 1 to enable WIFI
+#define USE_WIFI   0    //Change to 1 to enable WIFI
 #define WIFI_SSID "ssid"
 #define WIFI_PASSWD "passwd"
+
+#define HAS_WIRED_ETHERNET_PORT 1
+#define USE_WM5500_ETHERNET 1
 
 //#define MYADDRESS   3   //Set your unit ID here
 

@@ -1,9 +1,7 @@
+#ifdef USE_WM5500_ETHERNET
+
 #include "main.h"
 #include "wm5500.h"
-
-#include <WebServer_ESP32_W5500.h>
-
-WebServer server(80);
 
 // Enter a MAC address and IP address for your controller below.
 #define NUMBER_OF_MAC      20
@@ -62,4 +60,9 @@ ESP32_W5500_onEvent();
 // Use DHCP dynamic IP and random mac
 ETH.begin( ETH_MISO, ETH_MOSI, ETH_SCK, ETH_CS, ETH_INT, ETH_SPI_CLOCK_MHZ, ETH_SPI_HOST );
 
+//now trying telnetstream2 library by Ameer
+TelnetStream2.begin();
+
 }
+
+#endif  //USE_WM5500_ETHERNET

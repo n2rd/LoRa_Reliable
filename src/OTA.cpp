@@ -1,3 +1,4 @@
+#ifndef USE_WM5500_ETHERNET
 #include "main.h"
 #include "OTA.h"
 
@@ -129,4 +130,5 @@ void ota_loop(void) {
 }
 #endif
 #endif
+#endif //USE_WM5500_ETHERNET
 //////////////////////////////////////////////////////////////////// l

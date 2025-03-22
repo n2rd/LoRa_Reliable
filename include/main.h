@@ -16,7 +16,7 @@
 
 #include "parameters.h"
 #include "PrintSplitter.h"
-#if USE_WIFI >0
+#if USE_WIFI >0 
 #include "OTA.h"
 #include "telnet.h"
 #endif
@@ -29,6 +29,7 @@
 #include "menu.h"
 #include "bmp280sensor.h"
 #include <RHReliableDatagram.h>
+#include "wm5500.h"
 
 #if USE_WIFI >0
     #if defined(ESP32)

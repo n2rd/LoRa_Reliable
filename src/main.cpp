@@ -20,6 +20,10 @@
   #endif //defined(ESP32)
 #endif //deefined(USE_WIFI) && (USE_WIFI > 0)
 
+#ifdef USE_WM5500_ETHERNET
+  WebServer server(80);
+#endif
+
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 #define TIMEOUT     200  //for sendtoWait
 #define RETRIES     3     //for sendtoWait
@@ -29,21 +33,30 @@
 
 
 //
-#if USE_WIFI > 0
+#if USE_WIFI > 0 
+PrintSplitter ps_eth(Serial);
 CsvClass csv_telnet(telnet);
-#else //USE_WIFI == 0
+#elseif defined(USE_WM5500_ETHERNET)
+PrintSplitter ps_eth(Serial);
+CsvClass csv_telnet(TelnetStream2);
+#else //USE_WIFI == 0 and USE_WM5500_ETHERNET not defined
 CsvClass csv_telnet((Print&)dummyPrintSplitter);
 #endif //USE_WIFI == 0
+
 CsvClass csv_serial(Serial);
 PrintSplitter csv_both(csv_serial,csv_telnet);
 PrintSplitter ps_both(Serial, display);
 #if USE_WIFI > 0
 PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
-#else //USE_WIFI == 0
+#elseif defined(USE_WM5500_ETHERNET)
+PrintSplitter ps_st(Serial,TelnetStream2);
+PrintSplitter ps_all(Serial,TelnetStream2, display);
+#else //USE_WIFI == 0 and USE_WM5500_ETHERNET not defined  
 PrintSplitter ps_st(Serial);
 PrintSplitter ps_all(Serial,display);
 #endif //USE_WIFI == 0
+
 RHDatagram manager(driver, 0);  
 bool broadcastOnly = false;
 
@@ -52,15 +65,18 @@ double lastLat = 0;
 double lastLon = 0;
 #endif //HAS_GPS
 
-#if defined(USE_WIFI) && (USE_WIFI >0)
   void initializeNetwork() {
+    #if (defined(USE_WIFI) && (USE_WIFI >0)) || HAS_HARDWARE_ETHERNET_PORT > 0
+    #ifndef USE_WM5500_ETHERNET
     ota_setup();
+    #endif
+    #ifdef USE_WM5500_ETHERNET
+      WM5500_Setup();
+    #else
     telnet.setup();
-    #if defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 1)
-    WM5500_Setup();
-  #endif
+    #endif
+    #endif
 }
-#endif
 
 /***********************************************************/
 /***********************************************************/

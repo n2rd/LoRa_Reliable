@@ -1,5 +1,7 @@
+#ifndef USE_WM5500_ETHERNET
+
 #include "main.h"
-#if USE_WIFI > 0
+#if USE_WIFI > 0 || HAS_HARDWARE_ETHERNET_PORT > 0
 Telnet telnet;
 
 const uint16_t  port = 23;
@@ -141,3 +143,4 @@ void Telnet::loop()
 }
 #endif //USE_WIFI > 0
 //* ------------------------------------------------- */
+#endif //USE_WM5500_ETHERNET
