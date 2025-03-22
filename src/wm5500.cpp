@@ -7,7 +7,6 @@
 #define DEBUG_ETHERNET_WEBSERVER_PORT       Serial
 #include <WebServer_ESP32_W5500.h>
 
-
 #ifdef USE_WM5500_ETHERNET
   WebServer server(80);
 #endif
