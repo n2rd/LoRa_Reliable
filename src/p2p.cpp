@@ -4,39 +4,32 @@
 #include "ArduinoQueue.h"
 #include "reversePriorityQueue.h"
 
-
 #ifndef USE_RANDOM_SIGREP_SLOT
 #define USE_RANDOM_SIGREP_SLOT true
 #endif
 
 bool randomSignalReportSlot = USE_RANDOM_SIGREP_SLOT;
 
-
 //
 //Peer to Peer Messaging
 //
-//#define DEBUG  1 //comment this line out for production
-//#define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
+
+//Packet Header Bits defined
+#define PACKET_HEADER_BIT_8CHAR_MAIDENHEAD  0x00000001
+#define PACKET_HEADER_BIT_NEED_TIME         0x00000010
+#define PACKET_HEADER_BIT_HAVE_TIME         0x00000100
 
 // Pause between transmited packets in seconds.
-#define PAUSE       PARMS.parameters.tx_interval // client, time between transmissions
-#define TIMEOUT     200  //for sendtoWait
+#define PAUSE       PARMS.parameters.tx_interval // client, time between transmissions in seconds
 
 // some state variables
 extern bool menu_active;
 bool short_pause = false;
 unsigned long effective_pause = 0;
+uint64_t broadcast_time = 0;
 
 // Dont put this on the stack: 
 uint8_t buf[DRIVER_MAX_MESSAGE_LEN];
-
-//message management
-//uint16_t counter = 0;
-uint64_t broadcast_time = 0;
-
-//button presses
-uint32_t single_button_time = 0.0;
-uint32_t double_button_time = 0.0;
 
 typedef struct {
   uint32_t transmitTime;
@@ -47,7 +40,6 @@ typedef struct {
   uint8_t data[DRIVER_MAX_MESSAGE_LEN];
   char    gridLocator[11];
 } transmitMessage_t;
-
 
 typedef struct {
   unsigned long timeStamp;
@@ -61,6 +53,7 @@ typedef struct {
   int     snr;
   int     rssi;
 } recvMessage_t;
+
 #define MAX_QUEUE 50  //max queue size
 ReversePriorityQueue<transmitMessage_t> transmit_queue(MAX_QUEUE);
 ArduinoQueue<recvMessage_t> receive_queue(MAX_QUEUE);
@@ -72,19 +65,7 @@ uint64_t tx_time = 0;
 
 void extractGrid6LocatorFromData(int startMsgDataIndex, uint8_t* data, int dataLen, char* locator);
 
-//messages are transmitted from the queue
-// to transmit a message, add it to the queue
-//transmit top item in queue after random delay
-#define MAX_DELAY 0x1000 //8192 ms max, must be power of 2
-uint16_t random_delay;
 //--------------------------------------------------------------------------------------------------
-//random delay generator
-uint64_t random_delay_generator(uint64_t max) //max must be a power of 2
-{
-  return esp_random() & max;  //8192 ms max
-}
-//--------------------------------------------------------------------------------------------------
-uint64_t getRandomSlot();
 
 TaskHandle_t p2pTaskHandle;
 #define DECLARE_MUTEX(X) pthread_mutex_t X;						   
@@ -566,8 +547,7 @@ void p2pSetup(bool broadcastOnlyArg)
   else {
     effective_pause = PAUSE * 1000;
   }
-  //random delay for the next transmisson
-  random_delay = random_delay_generator(MAX_DELAY);
+;
   MUTEX_INIT(csvOutputMutex);
   MUTEX_INIT(receivedQueueMutex);
   MUTEX_INIT(transmitQueueMutex);
