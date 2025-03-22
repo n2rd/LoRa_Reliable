@@ -3,6 +3,15 @@
 #include "main.h"
 #include "wm5500.h"
 
+#define _ETHERNET_WEBSERVER_LOGLEVEL_       3
+#define DEBUG_ETHERNET_WEBSERVER_PORT       Serial
+#include <WebServer_ESP32_W5500.h>
+
+
+#ifdef USE_WM5500_ETHERNET
+  WebServer server(80);
+#endif
+
 // Enter a MAC address and IP address for your controller below.
 #define NUMBER_OF_MAC      20
 

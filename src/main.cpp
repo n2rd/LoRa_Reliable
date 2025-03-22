@@ -19,11 +19,11 @@
     #endif
   #endif //defined(ESP32)
 #endif //deefined(USE_WIFI) && (USE_WIFI > 0)
-
+#if 0
 #ifdef USE_WM5500_ETHERNET
   WebServer server(80);
 #endif
-
+#endif
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 #define TIMEOUT     200  //for sendtoWait
 #define RETRIES     3     //for sendtoWait
@@ -36,7 +36,7 @@
 #if USE_WIFI > 0 
 PrintSplitter ps_eth(Serial);
 CsvClass csv_telnet(telnet);
-#elseif defined(USE_WM5500_ETHERNET)
+#elif defined(USE_WM5500_ETHERNET)
 PrintSplitter ps_eth(Serial);
 CsvClass csv_telnet(TelnetStream2);
 #else //USE_WIFI == 0 and USE_WM5500_ETHERNET not defined
@@ -49,7 +49,7 @@ PrintSplitter ps_both(Serial, display);
 #if USE_WIFI > 0
 PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
-#elseif defined(USE_WM5500_ETHERNET)
+#elif defined(USE_WM5500_ETHERNET)
 PrintSplitter ps_st(Serial,TelnetStream2);
 PrintSplitter ps_all(Serial,TelnetStream2, display);
 #else //USE_WIFI == 0 and USE_WM5500_ETHERNET not defined  
