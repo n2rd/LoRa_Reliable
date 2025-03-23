@@ -200,9 +200,9 @@ void Telnet::loop()
     if (isConnected())
         bufDump();
     // send serial input to telnet as output
-    if (Serial.available()) {
-        telnet.print(Serial.read());
-    }
+    //if (Serial.available()) {
+    //    telnet.print(Serial.read());
+    //}
 }
 #endif //USE_WIFI > 0
 //* ------------------------------------------------- */
