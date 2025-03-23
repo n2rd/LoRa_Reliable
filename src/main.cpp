@@ -65,16 +65,10 @@ double lastLat = 0;
 double lastLon = 0;
 #endif //HAS_GPS
 
-  void initializeNetwork() {
-    #if (defined(USE_WIFI) && (USE_WIFI >0)) || HAS_HARDWARE_ETHERNET_PORT > 0
-    #ifndef USE_WM5500_ETHERNET
+  void initializeWiFiNetwork() {
+    #if (defined(USE_WIFI) && (USE_WIFI >0)) 
     ota_setup();
-    #endif
-    #ifdef USE_WM5500_ETHERNET
-      WM5500_Setup();
-    #else
     telnet.setup();
-    #endif
     #endif
 }
 
@@ -84,6 +78,11 @@ void setup()
 {
   Serial.begin(115200);
   while (!Serial) ; // Wait for serial port to be available
+
+
+  #ifdef USE_WM5500_ETHERNET
+    WM5500_Setup();
+  #endif
 
   #ifdef ARDUINO_LILYGO_T3_V1_6_1
   pinMode(LED_BUILTIN, OUTPUT);

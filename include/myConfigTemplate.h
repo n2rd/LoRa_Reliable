@@ -76,6 +76,7 @@
 
 // #define HAS_GPS 0 //HAS_GPS deprecated no longer used
 #define HAS_HARDWARE_ETHERNET_PORT 0
+#define USE_WM5500_ETHERNET 0
 #if defined(HAS_HARDWARE_ETHERNET_PORT) && (HAS_HARDWARE_ETHERNET_PORT == 1)
     #define GPS_METHOD_SPI
     //#define GPS_METHOND_UART
