@@ -144,7 +144,6 @@ void Telnet::onTelnetInput(String str)
     }
 }
 /* ------------------------------------------------- */
-#if CORE_DEBUG_LEVEL > 4
 CircularBuffer<char,1000> telDbgBuffer;
 
 void telnetDebugOutput(char c) {
@@ -159,7 +158,6 @@ void telnetDebugOutput(char c) {
             telDbgBuffer.push(c);
     }
 }
-#endif //CORE_DEBUG_LEVEL > 4
 /* ------------------------------------------------- */
 void Telnet::setup()
 {  
@@ -173,10 +171,8 @@ void Telnet::setup()
 
     if (telnet.begin(port)) {
         MUTEX_INIT(telnetBufferMutex);
-        #if CORE_DEBUG_LEVEL > 4
             telDbgBuffer.clear();
             ets_install_putc2(telnetDebugOutput);
-        #endif 
         csv_serial.info("TEL",(char*)"telnet running\n");
     } else {
         csv_serial.debug("TEL",(char*)"telnet error.\n");
@@ -187,7 +183,6 @@ void Telnet::setup()
 void Telnet::loop()
 {
     ESPTelnet::loop();
-    #if CORE_DEBUG_LEVEL > 4
         MUTEX_LOCK(telnetBufferMutex);
         for (decltype(telDbgBuffer)::index_t i = 0; i < telDbgBuffer.size(); i++) {
             char ch = telDbgBuffer.shift();
@@ -196,13 +191,8 @@ void Telnet::loop()
             //    break;
         }
         MUTEX_UNLOCK(telnetBufferMutex);
-    #endif //CORE_DEBUG_LEVEL > 4
     if (isConnected())
         bufDump();
-    // send serial input to telnet as output
-    //if (Serial.available()) {
-    //    telnet.print(Serial.read());
-    //}
 }
 #endif //USE_WIFI > 0
 //* ------------------------------------------------- */
