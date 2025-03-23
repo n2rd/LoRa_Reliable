@@ -1,9 +1,11 @@
 #include "main.h"
+#include "CircularBuffer.hpp"
+
 #if USE_WIFI > 0
 Telnet telnet;
 
 const uint16_t  port = 23;
-
+/* ------------------------------------------------- */
 /* ------------------------------------------------- */
 size_t Telnet::printf(const char* format, ...) {
   if (!client || !isConnected()) return 0;
@@ -24,25 +26,70 @@ size_t Telnet::printf(const char* format, ...) {
     va_start(arg, format);
     vsnprintf(temp, len + 1, format, arg);
     va_end(arg);
-    len = write((uint8_t*)temp, len);
+    len = bufWrite((uint8_t*)temp, len);
     free(temp);
   } else {
-    len = write((uint8_t*)loc_buf, len);
+    len = bufWrite((uint8_t*)loc_buf, len);
   }
 
   return len;
 }
 /* ------------------------------------------------- */
 /* ------------------------------------------------- */
+size_t Telnet::write(uint8_t ch)
+{
+    //return ESPTelnet::write(ch);
+    return write((uint8_t*)&ch,1);
+}
+/* ------------------------------------------------- */
+/* ------------------------------------------------- */
+size_t Telnet::write(const char* str)
+{
+    //return ESPTelnet::write((const uint8_t*)str,strlen(str));
+    return write((uint8_t*)str,strlen(str));
+}
+/* ------------------------------------------------- */
+/* ------------------------------------------------- */
+size_t Telnet::write(uint8_t* bytes, unsigned int size)
+{
+    //return ESPTelnet::write((const uint8_t*)bytes , size);
+    return bufWrite(bytes,size);
+}
 
+/* ------------------------------------------------- */
+/* ------------------------------------------------- */
+DECLARE_MUTEX(telnetBufferMutex);
+CircularBuffer<uint8_t,10000> telnetBuffer;
+size_t Telnet::bufWrite(uint8_t*data, int len)
+{
+    MUTEX_LOCK(telnetBufferMutex);
+    for (int i = 0; i < len; i++)
+        telnetBuffer.push(data[i]);
+    MUTEX_UNLOCK(telnetBufferMutex);
+    return len;
+}
+/* ------------------------------------------------- */
+void Telnet::bufDump()
+{
+    MUTEX_LOCK(telnetBufferMutex);
+    decltype(telnetBuffer)::index_t size = telnetBuffer.size();
+    uint8_t *tempBuf = static_cast<uint8_t*>(malloc(size));
+    telnetBuffer.copyToArray(tempBuf);
+    telnetBuffer.clear();
+    ESPTelnet::write(tempBuf,size);
+    free(tempBuf);
+    MUTEX_UNLOCK(telnetBufferMutex);  
+}
+/* ------------------------------------------------- */
+/* ------------------------------------------------- */
 void Telnet::errorMsg(String error, bool restart)
 {
     Serial.println(error);
     if (restart) {
-    Serial.println("Rebooting now...");
-    delay(2000);
-    ESP.restart();
-    delay(2000);
+        Serial.println("Rebooting now...");
+        delay(2000);
+        ESP.restart();
+        delay(2000);
     }
 }
 
@@ -98,14 +145,21 @@ void Telnet::onTelnetInput(String str)
 }
 /* ------------------------------------------------- */
 #if CORE_DEBUG_LEVEL > 4
+CircularBuffer<char,1000> telDbgBuffer;
+
 void telnetDebugOutput(char c) {
     //telnet.print(c);
     //Not implemented yet ... gets called but we need to 
     //put the output into a buffer and then let another
     //thread pick it up and push it to the telnet stream
-    //since we are in an event_task we can't call telent.print()
+    //since we are in an event_task we can't call telnet.print()
+
+    if (telnet.isConnected()) {
+        if (!telDbgBuffer.isFull())
+            telDbgBuffer.push(c);
+    }
 }
-#endif
+#endif //CORE_DEBUG_LEVEL > 4
 /* ------------------------------------------------- */
 void Telnet::setup()
 {  
@@ -118,22 +172,33 @@ void Telnet::setup()
     telnet.setLineMode(true);
 
     if (telnet.begin(port)) {
-        csv_serial.info("TEL",(char*)"telnet running\n");
+        MUTEX_INIT(telnetBufferMutex);
         #if CORE_DEBUG_LEVEL > 4
+            telDbgBuffer.clear();
             ets_install_putc2(telnetDebugOutput);
         #endif 
+        csv_serial.info("TEL",(char*)"telnet running\n");
     } else {
         csv_serial.debug("TEL",(char*)"telnet error.\n");
         errorMsg("Will reboot...");
     }
 }
-
 /* ------------------------------------------------- */
-
 void Telnet::loop()
 {
     ESPTelnet::loop();
-
+    #if CORE_DEBUG_LEVEL > 4
+        MUTEX_LOCK(telnetBufferMutex);
+        for (decltype(telDbgBuffer)::index_t i = 0; i < telDbgBuffer.size(); i++) {
+            char ch = telDbgBuffer.shift();
+            telnetBuffer.push(ch);
+            //if (ch == '\n')
+            //    break;
+        }
+        MUTEX_UNLOCK(telnetBufferMutex);
+    #endif //CORE_DEBUG_LEVEL > 4
+    if (isConnected())
+        bufDump();
     // send serial input to telnet as output
     if (Serial.available()) {
         telnet.print(Serial.read());

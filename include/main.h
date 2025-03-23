@@ -48,6 +48,11 @@
     #include "wifiX.h"
 #endif //USE_WIFI > 0
 
+#define DECLARE_MUTEX(X) pthread_mutex_t X;						   
+#define MUTEX_INIT(X) pthread_mutex_init(&X, NULL)
+#define MUTEX_LOCK(X) pthread_mutex_lock(&X)
+#define MUTEX_TRYLOCK(X) pthread_mutex_trylock(&X)
+#define MUTEX_UNLOCK(X) pthread_mutex_unlock(&X)
 
 extern CsvClass csv_telnet;
 extern CsvClass csv_serial;

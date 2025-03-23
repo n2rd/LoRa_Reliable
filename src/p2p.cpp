@@ -66,12 +66,7 @@ uint64_t tx_time = 0;
 void extractGrid6LocatorFromData(int startMsgDataIndex, uint8_t* data, int dataLen, char* locator);
 
 //--------------------------------------------------------------------------------------------------
-
 TaskHandle_t p2pTaskHandle;
-#define DECLARE_MUTEX(X) pthread_mutex_t X;						   
-#define MUTEX_INIT(X) pthread_mutex_init(&X, NULL)
-#define MUTEX_LOCK(X) pthread_mutex_lock(&X)
-#define MUTEX_UNLOCK(X) pthread_mutex_unlock(&X)
 
 DECLARE_MUTEX(csvOutputMutex);
 DECLARE_MUTEX(receivedQueueMutex);
