@@ -108,6 +108,7 @@ void GPSClass::GPSTask(void *pvParameter)
                 me->gps.date.year(),
                 (me->gps.time.centisecond() * (1000 *10)) + (me->gps.time.age() * 1000)
               );
+              log_d("time set age: %d timestamp: %d",me->gps.time.age(),rtc.getLocalEpoch());
               me->rtcIsSet = true;
               bForceUpdate = false;
             }
@@ -120,6 +121,7 @@ void GPSClass::GPSTask(void *pvParameter)
               //unsigned long rtcMillis = rtc.getMillis();
               int rtcSeconds = rtc.getSecond();
               me->timeDiff = (rtcSeconds *1000 + rtc.getMillis()) - (gpsSeconds*1000 + me->gps.time.centisecond() * 10);
+              log_d("time updated. TimeDiff: %d",me->timeDiff);
               if (abs(me->timeDiff) > 800) {
                 //Time has drifted or improved GPS so reset time.
                 bForceUpdate = true;
