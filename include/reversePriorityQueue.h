@@ -120,7 +120,8 @@ class ReversePriorityQueue {
         }
     }
     count++;
-
+    if (count > (maxItems / 2))
+      log_w("ReversePriorityQueue is over half full: %u", count);
     return true;
   }
 

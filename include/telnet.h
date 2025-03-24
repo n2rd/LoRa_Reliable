@@ -18,16 +18,10 @@ class Telnet : public ESPTelnet, public Print {
     void setup();
     void loop();
 
-  protected:
-    size_t write(uint8_t ch) {
-      return ESPTelnet::write(ch);
-    }
-    size_t write(const char* str) {
-      return ESPTelnet::write((const uint8_t*)str,strlen(str));
-    }
-    size_t write(uint8_t* bytes, unsigned int size) {
-      return ESPTelnet::write((const uint8_t*)bytes , size);
-    }
+  //protected:
+    size_t write(uint8_t ch);
+    size_t write(const char* str);
+    size_t write(uint8_t* bytes, unsigned int size);
 
   private:
     static void errorMsg(String error, bool restart = true);
@@ -36,6 +30,8 @@ class Telnet : public ESPTelnet, public Print {
     static void onTelnetReconnect(String ip);
     static void onTelnetConnectionAttempt(String ip);
     static void onTelnetInput(String str);
+    size_t bufWrite(uint8_t*data, int len);
+    void bufDump();
 };
 
 extern Telnet telnet;

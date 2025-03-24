@@ -158,8 +158,9 @@ void CsvClass::fatalError(const char *tag, char *data)
 {
     CHECKOUTPUT;
     output('E',tag,data);
-    #warning "HALT/REBOOT needs to be implemented"
-    //HALT/REBOOT here after disconnecting telnet session and ???
+    delay(2000);
+    ESP.restart();
+    delay(2000);
 }
 /*----------------------------------------------------*/
 void CsvClass::debug(const char *tag, char *data)
