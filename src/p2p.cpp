@@ -37,11 +37,12 @@ typedef struct {
   uint8_t from;
   uint8_t len;
   uint8_t headerID;
+  uint8_t flags;
   uint8_t data[DRIVER_MAX_MESSAGE_LEN];
   char    gridLocator[11];
 } transmitMessage_t;
 
-typedef struct {
+typedef struct  {
   unsigned long timeStamp;
   uint8_t to;
   uint8_t from;
@@ -53,7 +54,37 @@ typedef struct {
   int     snr;
   int     rssi;
 } recvMessage_t;
+/*
+typedef struct TESTSTRUCT {
+  unsigned long timeStamp;
+  uint8_t to;
+  uint8_t from;
+  uint8_t headerID;
+  uint8_t id;
+  uint8_t flags;
+  uint8_t len;
+  //uint8_t packet[DRIVER_MAX_MESSAGE_LEN];
+  char    letter;
+  int     snr;
+  char    letter2;
+  int     rssi;
+} testStruct_t;
 
+typedef struct __attribute__((packed)) TESTPACKEDSTRUCT {
+  unsigned long timeStamp;
+  uint8_t to;
+  uint8_t from;
+  uint8_t headerID;
+  uint8_t id;
+  uint8_t flags;
+  uint8_t len;
+  //uint8_t packet[DRIVER_MAX_MESSAGE_LEN];
+  char    letter;
+  int     snr;
+  char    letter2;
+  int     rssi;
+} testPackedStruct_t;
+*/
 #define MAX_QUEUE 50  //max queue size
 ReversePriorityQueue<transmitMessage_t> transmit_queue(MAX_QUEUE);
 ArduinoQueue<recvMessage_t> receive_queue(MAX_QUEUE);
@@ -261,6 +292,7 @@ void queueABroadcastMsg(uint8_t from = RH_BROADCAST_ADDRESS, unsigned long timeT
   message.data[0] = 0;  //static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
   message.data[1] = temp; //static_cast<uint8_t>(counter & 0xFF); //low byte
   message.len = 2;
+  message.flags = 0; /* Placholder for flags */
   message.headerID = ++transmit_headerId;
   message.to = RH_BROADCAST_ADDRESS;
   if (from == RH_BROADCAST_ADDRESS)
@@ -408,6 +440,7 @@ void listenForMessage()
         message.to = from;
         message.from = PARMS.parameters.address;
         message.headerID = headerId;
+        message.flags = 0; /* Placholder for flags */
         message.transmitTime = randomSignalReportSlot ? getRandomSlot() : getDeterministicSlot();
         addGrid6LocatorIntoMsg(&message);
         MUTEX_LOCK(transmitQueueMutex);
@@ -553,7 +586,10 @@ void p2pSetup(bool broadcastOnlyArg)
   xTaskCreatePinnedToCore(transmitAQueuedMsgTask,"P2PTaskTQM",10000,NULL,2,&tqmTaskHandle, xPortGetCoreID());
   xTaskCreatePinnedToCore(listenMsgTask,"P2PTaskLMT",10000,NULL,1,&listenMsgTaskHandle, xPortGetCoreID());
 
-  log_d("BroadcastOnly is %s", broadcastOnlyArg ? "On" : "Off");
+  //log_d("BroadcastOnly is %s", broadcastOnlyArg ? "On" : "Off");
+  //log_e("testStruct_t size is %d",sizeof(testStruct_t));
+  //log_e("testPackedStruct_t size is %d",sizeof(testPackedStruct_t));
+  //log_e("sizeof(unsigned long): %d sizeof(int) %d sizeof(size_t) %d sizeof(long long) %d",sizeof(unsigned long), sizeof(int),sizeof(size_t),sizeof(long long));
 }
 //--------------------------------------------------------------------------------------------------
 //unsigned long lastLoop = micros();
