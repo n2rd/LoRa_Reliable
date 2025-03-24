@@ -171,8 +171,8 @@ void Telnet::setup()
 
     if (telnet.begin(port)) {
         MUTEX_INIT(telnetBufferMutex);
-            telDbgBuffer.clear();
-            ets_install_putc2(telnetDebugOutput);
+        telDbgBuffer.clear();
+        ets_install_putc2(telnetDebugOutput);
         csv_serial.info("TEL",(char*)"telnet running\n");
     } else {
         csv_serial.debug("TEL",(char*)"telnet error.\n");
