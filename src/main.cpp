@@ -236,6 +236,7 @@ void loop()
   loopTimer = millis();
   if ((loopTimer / 10000)  >= ((lastLoopTimer / 10000) + 6)) {
     debugMessage((char*)"main loop() is alive");
+    //log_e("rtcIsSet: %d GPS.gps.time.isValid(): %d",GPS.getRtcIsSet(),GPS.gps.time.isValid());
     /*
     if (otaActive)
       debugMessage((char*)"otaActive is TRUE");
