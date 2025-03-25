@@ -1,7 +1,5 @@
-#ifndef USE_WM5500_ETHERNET
-
 #include "main.h"
-#if USE_WIFI > 0 || HAS_HARDWARE_ETHERNET_PORT > 0
+
 Telnet telnet;
 
 const uint16_t  port = 23;
@@ -119,7 +117,7 @@ void Telnet::setup()
     telnet.onInputReceived(onTelnetInput);
     telnet.setLineMode(true);
 
-    if (telnet.begin(port)) {
+    if (telnet.begin(port, false)) {
         csv_serial.info("TEL",(char*)"telnet running\n");
         #if CORE_DEBUG_LEVEL > 4
             ets_install_putc2(telnetDebugOutput);
@@ -135,12 +133,5 @@ void Telnet::setup()
 void Telnet::loop()
 {
     ESPTelnet::loop();
-
-    // send serial input to telnet as output
-    if (Serial.available()) {
-        telnet.print(Serial.read());
-    }
 }
-#endif //USE_WIFI > 0
-//* ------------------------------------------------- */
-#endif //USE_WM5500_ETHERNET
+/* ------------------------------------------------- */
