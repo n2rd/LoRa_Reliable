@@ -15,7 +15,7 @@ ESP32Time rtc(0);  // stay on UTC, neg or pos offset in seconds
 #ifndef GPS_DEBUG  
 #define GPS_DEBUG 0
 #endif //GPS_DEBUG
-
+#define TIME_DIFF_TO_UPDATE_ON 800
 #if defined(ARDUINO_ARCH_ESP32) && TESTGPS_TASK == 0
 static HardwareSerial GPSSerial(2);    //use Hardware UART1 for GPS
 #endif
@@ -91,49 +91,44 @@ void GPSClass::GPSTask(void *pvParameter)
     gpsSerialPtr->begin(DEFAULT_GPS_BAUDRATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
     gpsSerialPtr->onReceiveError(hsErrorCb);
     gpsSerialPtr->onReceive(onReceive);
+    bool bForceUpdate = false;
     while (true) {
-      bool bForceUpdate = false;
-      //while (gpsSerialPtr->available() > 0) {
-        //me->gps.encode(gpsSerialPtr->read());
-        if (me->gps.time.isUpdated()) {
-          if (!me->rtcIsSet || bForceUpdate) {
-            if (me->gps.time.isUpdated() && me->gps.time.isValid()
-              && me->gps.date.isUpdated() && me->gps.date.isValid()) {
-              rtc.setTime(
-                me->gps.time.second() + (me->gps.time.age() /1000),
-                me->gps.time.minute(),
-                me->gps.time.hour(),
-                me->gps.date.day(),
-                me->gps.date.month(),
-                me->gps.date.year(),
-                (me->gps.time.centisecond() * (1000 *10)) + (me->gps.time.age() * 1000)
-              );
-              log_d("time set age: %d timestamp: %d",me->gps.time.age(),rtc.getLocalEpoch());
-              me->rtcIsSet = true;
-              bForceUpdate = false;
-            }
-          }
-          else { //rtc is set
-            // Check the time every timeCheckCounterCheckValue times we come here. mainly happens when updating firmware.
-            if (millis() >= timeCheckValue) {
-              timeCheckValue = millis() + timeCheckValueCheckValue;
-              uint8_t gpsSeconds = me->gps.time.second() + (me->gps.time.age() / 1000);
-              //unsigned long rtcMillis = rtc.getMillis();
-              int rtcSeconds = rtc.getSecond();
-              me->timeDiff = (rtcSeconds *1000 + rtc.getMillis()) - (gpsSeconds*1000 + me->gps.time.centisecond() * 10);
-              log_d("time updated. TimeDiff: %d",me->timeDiff);
-              if (abs(me->timeDiff) > 800) {
-                //Time has drifted or improved GPS so reset time.
-                bForceUpdate = true;
-                //me->rtcIsSet = false;
-              }
-            }
+      if (!me->rtcIsSet || bForceUpdate) {
+        if (me->gps.time.isUpdated() && me->gps.time.isValid()
+          && me->gps.date.isUpdated() && me->gps.date.isValid()) {
+          rtc.setTime(
+            me->gps.time.second() + (me->gps.time.age() /1000),
+            me->gps.time.minute(),
+            me->gps.time.hour(),
+            me->gps.date.day(),
+            me->gps.date.month(),
+            me->gps.date.year(),
+            (me->gps.time.centisecond() * (1000 *10)) + (me->gps.time.age() * 1000)
+          );
+          log_d("time set age: %d timestamp: %d",me->gps.time.age(),rtc.getLocalEpoch());
+          me->rtcIsSet = true;
+          bForceUpdate = false;
+        }
+      }
+      else { //rtc is set
+        // Check the time every timeCheckCounterCheckValue times we come here. mainly happens when updating firmware.
+        if (millis() >= timeCheckValue) {
+          timeCheckValue = millis() + timeCheckValueCheckValue;
+          uint8_t gpsSeconds = me->gps.time.second() + (me->gps.time.age() / 1000);
+          //unsigned long rtcMillis = rtc.getMillis();
+          int rtcSeconds = rtc.getSecond();
+          me->timeDiff = (rtcSeconds *1000 + rtc.getMillis()) - (gpsSeconds*1000 + me->gps.time.centisecond() * 10);
+          if (abs(me->timeDiff) > TIME_DIFF_TO_UPDATE_ON) {
+            log_d("time to be updated. TimeDiff > %d: %d  Sats: %d hdop: %lf",TIME_DIFF_TO_UPDATE_ON,me->timeDiff,me->gps.satellites.value(),me->gps.hdop.hdop());
+            log_d("GPS UTC Time: %4d-%02d-%02d  %02d:%02d:%02d",
+              me->gps.date.year(),me->gps.date.month(),me->gps.date.day(),
+              me->gps.time.hour(),me->gps.time.minute(),me->gps.time.second());
+            //Time has drifted or improved via GPS so reset time.
+            bForceUpdate = true;
           }
         }
-      //}
-      //delay(10);
-      vTaskDelay(10 / portTICK_PERIOD_MS);
-      //yield();
+      }
+      vTaskDelay(15000 / portTICK_PERIOD_MS);
     } //while(true)
   }
 }
