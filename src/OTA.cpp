@@ -39,8 +39,8 @@ void onOTAEnd(bool success) {
 
 void ota_setup(void) {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    char buffer[100];
-    sprintf(buffer,"Hi! This is a Lora_reliable device.\r\n\r\nThis radio is #%u ASYNC",manager.thisAddress());
+    char buffer[200];
+    sprintf(buffer,"Hi! This is a Lora_reliable device.\r\n\r\nThis radio is #%u ASYNC\r\n\r\nFirmware Version: %s\r\n",manager.thisAddress(),VERSION);
     request->send(200, "text/plain",buffer);
   });
 
