@@ -50,10 +50,15 @@ double lastLon = 0;
 #endif //HAS_GPS
 
   void initializeNetwork() {
-    //#if (defined(USE_WIFI) && (USE_WIFI >0)) 
-    ota_setup();
-    telnet.setup();
-    //#endif
+    #ifdef USE_WM5500_ETHERNET
+      WM5500_Setup();
+    #endif
+    #if USE_OTA > 0
+      ota_setup();
+    #endif
+    #if USE_TELNET > 0
+      telnet.setup();
+    #endif
   }
 
 /***********************************************************/
@@ -62,10 +67,6 @@ void setup()
 {
   Serial.begin(115200);
   while (!Serial) ; // Wait for serial port to be available
-
-  #ifdef USE_WM5500_ETHERNET
-    WM5500_Setup();
-  #endif
 
   #ifdef ARDUINO_LILYGO_T3_V1_6_1
   pinMode(LED_BUILTIN, OUTPUT);
@@ -90,11 +91,7 @@ void setup()
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
 
-  //#if defined(USE_WIFI) && (USE_WIFI >0)
-    //if (WIFI.init()) {
-      initializeNetwork();
-    //}
-  //#endif
+  initializeNetwork();
 
   //start the radio
   if (!manager.init()) 

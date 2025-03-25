@@ -85,5 +85,10 @@
 //Defines in the form of HAS_XXXX means that the device has the hardware
 //Defines in the form of USE_XXXX means that we are using the device 1 or not using it 0  (there might be other cases for a 2)
 
-
+//#defines for controlling the IP of the W5500 if USE_WM5500_ETHERNET defined
+#if USE_WM5500_ETHERNET
+#define W5500_SUBNET    9
+#define W5500_UNIT      254
+#define W5500_DNS       209, 18, 47, 61 /*Spectrum*/
+#endif
 #endif
