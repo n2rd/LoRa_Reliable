@@ -1,7 +1,9 @@
 #include "main.h"
 #include "OTA.h"
 
-
+#if defined(USE_ARDUINO_OTA) && (USE_ARDUINO_OTA == 1)
+  #include <ArduinoOTA.h>
+#endif
 //////////////////////// OTA  stuff /////////////////////////
 #if defined(USE_WIFI) && (USE_WIFI >0)
 #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
@@ -54,10 +56,16 @@ void ota_setup(void) {
 
   server.begin();
   Serial.println("HTTP server started");
+  #if defined(USE_ARDUINO_OTA) && (USE_ARDUINO_OTA == 1)
+    ArduinoOTA.begin();
+  #endif
 }
 
 void ota_loop(void) {
   ElegantOTA.loop();
+  #if defined(USE_ARDUINO_OTA) && (USE_ARDUINO_OTA == 1)
+    ArduinoOTA.handle();
+  #endif
 }
 
 #else

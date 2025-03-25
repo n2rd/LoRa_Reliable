@@ -79,6 +79,7 @@
     //#define GPS_METHOND_UART
 #endif
 
+#define USE_ARDUINO_OTA 1 // Enables Arduino OTA library
 
 
 #endif
