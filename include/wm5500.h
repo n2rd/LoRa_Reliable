@@ -13,12 +13,8 @@
 #define ETH_SCK 39
 #define ETH_CS 38
 #define ETH_RST 4
-#if 0
-#define _ETHERNET_WEBSERVER_LOGLEVEL_       3
-#define DEBUG_ETHERNET_WEBSERVER_PORT       Serial
-#include <WebServer_ESP32_W5500.h>
-#endif
-#include "TelnetStream2.h"
+
+//#include "TelnetStream2.h"
 
 void WM5500_Setup();
 #endif //defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 1)

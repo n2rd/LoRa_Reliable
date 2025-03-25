@@ -1,8 +1,6 @@
 #ifndef TELNETEXT_H
 #define TELNETEXT_H
 
-#ifndef USE_WM5500_ETHERNET
-
 #include <ESPTelnet.h>
 #include <Print.h>
 
@@ -41,6 +39,5 @@ class Telnet : public ESPTelnet, public Print {
 };
 
 extern Telnet telnet;
-#endif //USE_WM5500_ETHERNET
 
 #endif //TELNETEXT_H
