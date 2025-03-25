@@ -2,11 +2,17 @@
 #define MAIN_H
 
 #include "myConfig.h"
+
+#ifndef USE_OTA
+#define USE_OTA 1
+#endif
+
 #include "version.h"
 #include <Arduino.h>
 #include <stdlib.h>
 #include <SPI.h>
 #include <Preferences.h>
+#include <RHDatagram.h>
 
 #ifndef ARDUINO_LILYGO_T3_V1_6_1
 #include  "myHeltec.h"
@@ -16,7 +22,7 @@
 
 #include "parameters.h"
 #include "PrintSplitter.h"
-#if USE_WIFI >0 
+#if USE_WIFI == 0 
 #include "OTA.h"
 #include "telnet.h"
 #endif
@@ -28,33 +34,23 @@
 #include "gps.h"
 #include "menu.h"
 #include "bmp280sensor.h"
-#include <RHReliableDatagram.h>
-#include "wm5500.h"
 
-#if USE_WIFI >0
-    #if defined(ESP32)
-        #if defined(HAS_WIFI) && (HAS_WIFI == 1)
-            #include <WiFi.h>
-            #include <WiFiClient.h>
-            #include <ElegantOTA.h>
-            #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && (ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
-                #include <ESPAsyncWebServer.h>
-                extern AsyncWebServer server;
-            #else //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) || ELEGANTOTA_USE_ASYNC_WEBSERVER != 1)
-                #if USE_WM5500_ETHERNET == 0
-                    #include <WebServer.h>
-                #else
-                    #include "wm5500.h"
-                #endif //USE_WM5500_ETHERNET == 0
-                extern WebServer server;
-            #endif //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
-        #endif //defined(HAS_WIFI) && (HAS_WIFI == 1)
-    #endif //defined(ESP32)
-    #include "wifiX.h"
-#endif //USE_WIFI > 0
 #if defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 1)
 #include "wm5500.h"
 #endif
+
+#if defined(ESP32)
+    #if defined(HAS_WIFI) && (HAS_WIFI == 1)
+        #include <WiFi.h>
+        #include <WiFiClient.h>
+        #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && (ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
+            #include <ElegantOTA.h>
+            #include <ESPAsyncWebServer.h>
+        #endif //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
+    #endif //defined(HAS_WIFI) && (HAS_WIFI == 1)
+#endif //defined(ESP32)
+#include "wifiX.h"
+
 
 extern CsvClass csv_telnet;
 extern CsvClass csv_serial;
