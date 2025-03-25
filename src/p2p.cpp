@@ -335,7 +335,7 @@ void transmitAQueuedMsg()
         MUTEX_LOCK(radioHeadMutex);
         manager.setHeaderId(message.headerID);
         manager.setHeaderFrom(message.from);
-        log_d("Before sendto(..) rxBad %d rxGood %d txGood %d mode: %d",driver.rxBad(),driver.rxGood(),driver.txGood(), driver.mode());
+        //log_d("Before sendto(..) rxBad %d rxGood %d txGood %d mode: %d",driver.rxBad(),driver.rxGood(),driver.txGood(), driver.mode());
         bool mgrRet = manager.sendto(message.data, message.len, message.to);
         MUTEX_UNLOCK(radioHeadMutex);
         if (!mgrRet) {
@@ -351,7 +351,7 @@ void transmitAQueuedMsg()
           delayMicroseconds(100);
           MUTEX_LOCK(radioHeadMutex);
         }
-        log_d("After sendto(..) rxBad %d rxGood %d txGood %d",driver.rxBad(),driver.rxGood(),driver.txGood());
+        //log_d("After sendto(..) rxBad %d rxGood %d txGood %d",driver.rxBad(),driver.rxGood(),driver.txGood());
         RHGenericDriver::RHMode curMode = driver.mode();
         if (driver.mode() == RHGenericDriver::RHModeIdle)
           driver.setModeRx();
