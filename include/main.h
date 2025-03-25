@@ -3,10 +3,6 @@
 
 #include "myConfig.h"
 
-#ifndef USE_OTA
-#define USE_OTA 1
-#endif
-
 #include "version.h"
 #include <Arduino.h>
 #include <stdlib.h>
@@ -22,10 +18,15 @@
 
 #include "parameters.h"
 #include "PrintSplitter.h"
-#if USE_WIFI == 0 
+
+#if USE_OTA > 0 
 #include "OTA.h"
+#endif
+
+#if USE_TELNET > 0
 #include "telnet.h"
 #endif
+
 #include "cli.h"
 #include "csv.h"
 #include "gridutil.h"

@@ -19,43 +19,27 @@
     #endif
   #endif //defined(ESP32)
 #endif //deefined(USE_WIFI) && (USE_WIFI > 0)
-#if 0
-#ifdef USE_WM5500_ETHERNET
-  WebServer server(80);
-#endif
-#endif
+
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 #define TIMEOUT     200  //for sendtoWait
 #define RETRIES     3     //for sendtoWait
 
-// some state variables
-
-
-
-//
-#if USE_WIFI > 0 
-PrintSplitter ps_eth(Serial);
+#if USE_TELNET > 0 
 CsvClass csv_telnet(telnet);
-#elif defined(USE_WM5500_ETHERNET)
-PrintSplitter ps_eth(Serial);
-CsvClass csv_telnet(TelnetStream2);
-#else //USE_WIFI == 0 and USE_WM5500_ETHERNET not defined
+#else //USE_TELNET==0
 CsvClass csv_telnet((Print&)dummyPrintSplitter);
-#endif //USE_WIFI == 0
+#endif //USE_TELNET == 0
 
 CsvClass csv_serial(Serial);
 PrintSplitter csv_both(csv_serial,csv_telnet);
-PrintSplitter ps_both(Serial, display);
-#if USE_WIFI > 0
+PrintSplitter ps_both(Serial, telnet);
+#if USE_TELNET > 0
 PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
-#elif defined(USE_WM5500_ETHERNET)
-PrintSplitter ps_st(Serial,TelnetStream2);
-PrintSplitter ps_all(Serial,TelnetStream2, display);
-#else //USE_WIFI == 0 and USE_WM5500_ETHERNET not defined  
+#else //USE_TELNET == 0
 PrintSplitter ps_st(Serial);
 PrintSplitter ps_all(Serial,display);
-#endif //USE_WIFI == 0
+#endif //USE_TELNET == 0
 
 RHDatagram manager(driver, 0);  
 bool broadcastOnly = false;
@@ -65,12 +49,12 @@ double lastLat = 0;
 double lastLon = 0;
 #endif //HAS_GPS
 
-  void initializeWiFiNetwork() {
-    #if (defined(USE_WIFI) && (USE_WIFI >0)) 
+  void initializeNetwork() {
+    //#if (defined(USE_WIFI) && (USE_WIFI >0)) 
     ota_setup();
     telnet.setup();
-    #endif
-}
+    //#endif
+  }
 
 /***********************************************************/
 /***********************************************************/
@@ -78,7 +62,6 @@ void setup()
 {
   Serial.begin(115200);
   while (!Serial) ; // Wait for serial port to be available
-
 
   #ifdef USE_WM5500_ETHERNET
     WM5500_Setup();
@@ -107,17 +90,17 @@ void setup()
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
 
-  #if defined(USE_WIFI) && (USE_WIFI >0)
-    if (WIFI.init()) {
+  //#if defined(USE_WIFI) && (USE_WIFI >0)
+    //if (WIFI.init()) {
       initializeNetwork();
-    }
-  #endif
+    //}
+  //#endif
 
   //start the radio
   if (!manager.init()) 
   {
-    display.println("Radio failed to initialize");
-    ps_both.println("HALTING");
+    ps_all.println("Lora Radio failed to initialize");
+    ps_all.println("HALTING");
     while (1);
   }
 
@@ -164,14 +147,13 @@ void setup()
 #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
    rotary_setup();
 #endif
+
   bmp280_setup();
   if (bmp280_isPresent()) {
-    Serial.printf("Temperature: %f\r\n",myBMP280.readTempF());
-    display.printf("Temperature: %f\r\n",myBMP280.readTempF());
+    ps_all.printf("Temperature: %f\r\n",myBMP280.readTempF());
   }
   csv_telnet.setOutputEnabled(PARMS.parameters.telnetCSVEnabled);
   csv_serial.setOutputEnabled(PARMS.parameters.serialCSVEnabled);
-  //log_e("exiting setup()");
 }
 /***********************************************************/
 /***********************************************************/
@@ -229,7 +211,7 @@ void loop()
   #endif
   if (!otaActive) {
     check_button();
-    #if defined(USE_WIFI) && (USE_WIFI >0)
+    #if defined(USE_WIFI) && (USE_WIFI == 0)
       telnet.loop();
     #endif
     if (broadcastOnly && !doneBroadcasting) {
