@@ -1,4 +1,5 @@
 #include "main.h"
+#include "ntp.h"
 
 #ifdef ARDUINO_LILYGO_T3_V1_6_1
   #include "myLilyGoT3.h"
@@ -136,10 +137,14 @@ void setup()
 #endif //DUMP_PARTITIONS
 
 #if HAS_GPS
-  GPS.onoff(GPSClass::GPS_ON);
-  Serial.printf("GPS Power State: %s\r\n", GPS.getPowerStateName(GPSClass::GPS_ON));
+  GPS.onoff((GPSClass::GPSPowerState)PARMS.parameters.gps_state);
+  Serial.printf("GPS Power State: %s\r\n", GPS.getPowerStateName((GPSClass::GPSPowerState)PARMS.parameters.gps_state));
   dumpLatLon();
 #endif //HAS_GPS
+
+if (GPS.onoffState() == GPSClass::GPS_OFF) {
+  InitNTP();
+}
 
 #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
    rotary_setup();

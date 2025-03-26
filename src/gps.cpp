@@ -9,8 +9,8 @@
 #endif //DEFAULT_GPS_BAUDRATE
 
 // TIME esp32 internal RTC
-#include <ESP32Time.h>  //includes time.h, uses the RTC built into ESP32
-ESP32Time rtc(0);  // stay on UTC, neg or pos offset in seconds
+
+ESP32Time GPSClass::rtc(0);  // stay on UTC, neg or pos offset in seconds
 
 #ifndef GPS_DEBUG  
 #define GPS_DEBUG 0
@@ -93,7 +93,7 @@ void GPSClass::GPSTask(void *pvParameter)
     gpsSerialPtr->onReceive(onReceive);
     bool bForceUpdate = false;
     while (true) {
-      if (!me->rtcIsSet || bForceUpdate) {
+      if ((!me->rtcIsSet || bForceUpdate) && ((me->powerState == GPS_ON) || (me->powerState == GPS_TX))) {
         if (me->gps.time.isUpdated() && me->gps.time.isValid()
           && me->gps.date.isUpdated() && me->gps.date.isValid()) {
           rtc.setTime(
@@ -103,14 +103,14 @@ void GPSClass::GPSTask(void *pvParameter)
             me->gps.date.day(),
             me->gps.date.month(),
             me->gps.date.year(),
-            (me->gps.time.centisecond() * (1000 *10)) + (me->gps.time.age() * 1000)
+            0//(me->gps.time.centisecond() * (1000 *10)) + (me->gps.time.age() * 1000)
           );
           log_d("time set age: %d timestamp: %d",me->gps.time.age(),rtc.getLocalEpoch());
           me->rtcIsSet = true;
           bForceUpdate = false;
         }
       }
-      else { //rtc is set
+      else if (me->powerState == GPS_ON) { //rtc is set and GPS state is GPS_ON
         // Check the time every timeCheckCounterCheckValue times we come here. mainly happens when updating firmware.
         if (millis() >= timeCheckValue) {
           timeCheckValue = millis() + timeCheckValueCheckValue;
@@ -128,7 +128,10 @@ void GPSClass::GPSTask(void *pvParameter)
           }
         }
       }
-      vTaskDelay(15000 / portTICK_PERIOD_MS);
+      if ((me->powerState == GPS_ON) || (me->powerState == GPS_TX))
+        vTaskDelay((me->rtcIsSet ? 15000 : 20) / portTICK_PERIOD_MS);
+      else
+        vTaskDelay(1000*60*60 / portTICK_PERIOD_MS);
     } //while(true)
   }
 }

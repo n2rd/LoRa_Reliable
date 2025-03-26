@@ -5,6 +5,7 @@
 
 #include "TinyGPS++.h"
 #include "HardwareSerial.h"
+#include <ESP32Time.h>  //includes time.h, uses the RTC built into ESP32
 
 #ifndef GPS_TIMEOUT
 #define GPS_TIMEOUT 60  //time in seconds for gps acquisition
@@ -33,19 +34,21 @@ class GPSClass {
         double distance(double lat1, double lon1, double lat2, double lon2);
         bool getLastLatLon(double *lat, double *lon);
         bool getRtcIsSet() { return rtcIsSet; }
+        ESP32Time *getRtc() { return &rtc; }
         int getTimeDiff() { return timeDiff; }
         uint32_t getBaudRate() { return currentBaudRate; }
         void setBaudTestBufferPtr(char *baudTestBufferPtrArg) {baudTestBufferPtr = baudTestBufferPtrArg; }
         char* getBaudTestBufferPtr() { return baudTestBufferPtr; }
+        void rtcTimeSetExternally() { rtcIsSet = true; }
         int baudSwitchReason;
         int baudTestBufferLen;
         TinyGPSPlus gps;
     private:
         //HardwareSerial GPSSerial;    //use Hardware UART1 for GPS
         uint32_t currentBaudRate;
-        PowerState powerState;
+        volatile PowerState powerState;
         char* baudTestBufferPtr;
-        bool rtcIsSet;
+        volatile bool rtcIsSet;
         double lastLat;
         double lastLon;
         int timeDiff;
@@ -53,6 +56,7 @@ class GPSClass {
         static void GPSTask(void *pvParameter);
         #endif //ARDUINO_ARCH_ESP32
         const char *powerStateNames[3] = { "OFF", "TX", "ON"};
+        static ESP32Time rtc;
 };
 
 extern GPSClass GPS;
