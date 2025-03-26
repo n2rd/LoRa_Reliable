@@ -92,29 +92,29 @@ void sntpTimeSyncCB(struct timeval *tv)
 {
     uSec = tv->tv_usec;
     seconds = tv->tv_sec;
-    log_d("NTP time: seconds: %d  uSec: %d", seconds, uSec);
     struct tm time;
     secs_to_tm(seconds,&time);
     time.tm_year += 1900;
     time.tm_mon += 1;
-    log_d("NTP UTC Time: %4d-%02d-%02d  %02d:%02d:%02d",
-        time.tm_year, time.tm_mon, time.tm_mday,
-        time.tm_hour, time.tm_min, time.tm_sec
-    );
 
     ESP32Time *pRtc = GPS.getRtc();
     
     pRtc->setTime(
-        time.tm_sec, //+ (me->gps.time.age() /1000),
+        time.tm_sec,
         time.tm_min,
         time.tm_hour,
         time.tm_mday,
         time.tm_mon,
-        time.tm_year
-        );
+        time.tm_year,
+        uSec);
      
-    //pRtc->setTimeStruct(time);
+    //pRtc->setTimeStruct(time); //Don't use. Something in the structure causes the timeStamp to be off vs GPS
     GPS.rtcTimeSetExternally();
+    log_d("NTP time: seconds: %d  uSec: %d", seconds, uSec);
+    log_d("NTP UTC Time: %4d-%02d-%02d  %02d:%02d:%02d",
+        time.tm_year, time.tm_mon, time.tm_mday,
+        time.tm_hour, time.tm_min, time.tm_sec
+    );
     log_d("RTC TimeStamp (from NTP) %d",/* pRtc->getLocalEpoch() */ GPS.getTimeStamp());   
 }
 

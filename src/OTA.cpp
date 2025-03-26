@@ -1,15 +1,18 @@
 #include "main.h"
-#include "OTA.h"
 
+//////////////////////// OTA  stuff /////////////////////////
+
+#if defined(USE_OTA) && (USE_OTA > 0)
+#if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
+#include <ESPAsyncWebServer.h>
+#include "OTA.h"
 #if defined(USE_ARDUINO_OTA) && (USE_ARDUINO_OTA == 1)
   #include <ArduinoOTA.h>
 #endif
-//////////////////////// OTA  stuff /////////////////////////
-#if defined(USE_WIFI) && (USE_WIFI >0)
-#if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
 /////// Async Version ///////
 bool otaActive = false;
 unsigned long ota_progress_millis = 0;
+static AsyncWebServer server(80);
 
 void onOTAStart() {
   // Log when OTA has started
@@ -116,5 +119,5 @@ void ota_loop(void) {
   ElegantOTA.loop();
 }
 #endif
-#endif
+#endif //USE_OTA > 0
 //////////////////////////////////////////////////////////////////// l

@@ -1,7 +1,7 @@
 #include "main.h"
 #include "CircularBuffer.hpp"
 
-#if USE_WIFI > 0
+#if USE_TELNET > 0
 Telnet telnet;
 
 const uint16_t  port = 23;
@@ -169,7 +169,7 @@ void Telnet::setup()
     telnet.onInputReceived(onTelnetInput);
     telnet.setLineMode(true);
 
-    if (telnet.begin(port)) {
+    if (telnet.begin(port,false)) {
         MUTEX_INIT(telnetBufferMutex);
         telDbgBuffer.clear();
         ets_install_putc2(telnetDebugOutput);
@@ -194,5 +194,5 @@ void Telnet::loop()
     if (isConnected())
         bufDump();
 }
-#endif //USE_WIFI > 0
+#endif //USE_TELNET > 0
 //* ------------------------------------------------- */

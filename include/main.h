@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <SPI.h>
 #include <Preferences.h>
+#include <RHDatagram.h>
 
 #ifndef ARDUINO_LILYGO_T3_V1_6_1
 #include  "myHeltec.h"
@@ -16,10 +17,15 @@
 
 #include "parameters.h"
 #include "PrintSplitter.h"
-#if USE_WIFI >0
+
+#if USE_OTA >0
 #include "OTA.h"
+#endif
+
+#if USE_TELNET >0
 #include "telnet.h"
 #endif
+
 #include "cli.h"
 #include "csv.h"
 #include "gridutil.h"
@@ -28,8 +34,12 @@
 #include "gps.h"
 #include "menu.h"
 #include "bmp280sensor.h"
-#include <RHReliableDatagram.h>
 
+#if defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 1)
+#include "wm5500.h"
+#endif
+
+/*
 #if USE_WIFI >0
     #if defined(ESP32)
         #if defined(HAS_WIFI) && (HAS_WIFI == 1)
@@ -47,6 +57,18 @@
     #endif //defined(ESP32)
     #include "wifiX.h"
 #endif //USE_WIFI > 0
+*/
+#if defined(ESP32)
+    #if defined(HAS_WIFI) && (HAS_WIFI == 1)
+        #include <WiFi.h>
+        #include <WiFiClient.h>
+        #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && (ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
+            #include <ElegantOTA.h>
+            #include <ESPAsyncWebServer.h>
+        #endif //!(defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1)
+    #endif //defined(HAS_WIFI) && (HAS_WIFI == 1)
+#endif //defined(ESP32)
+#include "wifiX.h"
 
 #define DECLARE_MUTEX(X) pthread_mutex_t X;						   
 #define MUTEX_INIT(X) pthread_mutex_init(&X, NULL)

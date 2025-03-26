@@ -17,7 +17,7 @@
       WebServer server(80);
     #endif
   #endif //defined(ESP32)
-#endif //deefined(USE_WIFI) && (USE_WIFI > 0)
+#endif //defined(USE_WIFI) && (USE_WIFI > 0)
 
 #define DEFAULT_CAD_TIMEOUT 1000  //mS default Carrier Activity Detect Timeout
 #define TIMEOUT     200  //for sendtoWait
@@ -28,21 +28,22 @@
 
 
 //
-#if USE_WIFI > 0
+#if USE_TELNET > 0
 CsvClass csv_telnet(telnet);
-#else //USE_WIFI == 0
+#else //USE_TELNET == 0
 CsvClass csv_telnet((Print&)dummyPrintSplitter);
-#endif //USE_WIFI == 0
+#endif //USE_TELNET == 0
 CsvClass csv_serial(Serial);
 PrintSplitter csv_both(csv_serial,csv_telnet);
 PrintSplitter ps_both(Serial, display);
-#if USE_WIFI > 0
+#if USE_TELNET > 0
 PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
-#else //USE_WIFI == 0
+#else //USE_TELNET == 0
 PrintSplitter ps_st(Serial);
 PrintSplitter ps_all(Serial,display);
-#endif //USE_WIFI == 0
+#endif //USE_TELNET == 0
+
 RHDatagram manager(driver, 0);  
 bool broadcastOnly = false;
 
@@ -51,12 +52,24 @@ double lastLat = 0;
 double lastLon = 0;
 #endif //HAS_GPS
 
-#if defined(USE_WIFI) && (USE_WIFI >0)
-  void initializeNetwork() {
-    ota_setup();
-    telnet.setup();
+void initializeNetwork() {
+  #ifdef USE_WM5500_ETHERNET
+    WM5500_Setup();
+  #endif
+  #if USE_WIFI > 0
+  if (!WIFI.init()) {
+    log_e("WIFI.init() FAILED - HALTING");
+    while (1);
   }
-#endif
+  #endif
+  #if USE_OTA > 0
+    ota_setup();
+  #endif
+  #if USE_TELNET > 0
+    telnet.setup();
+  #endif
+  }
+
 
 /***********************************************************/
 /***********************************************************/
@@ -88,11 +101,7 @@ void setup()
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
 
-  #if defined(USE_WIFI) && (USE_WIFI >0)
-    if (WIFI.init()) {
-      initializeNetwork();
-    }
-  #endif
+  initializeNetwork();
 
   //start the radio
   if (!manager.init()) 
@@ -149,6 +158,7 @@ if (GPS.onoffState() == GPSClass::GPS_OFF) {
 #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
    rotary_setup();
 #endif
+
   bmp280_setup();
   if (bmp280_isPresent()) {
     Serial.printf("Temperature: %f\r\n",myBMP280.readTempF());
@@ -214,7 +224,7 @@ void loop()
   #endif
   if (!otaActive) {
     check_button();
-    #if defined(USE_WIFI) && (USE_WIFI >0)
+    #if defined(USE_TELNET) && (USE_TELNET >0)
       telnet.loop();
     #endif
     if (broadcastOnly && !doneBroadcasting) {
@@ -231,7 +241,7 @@ void loop()
     #endif
     serial_input_loop();
   }
-  #if defined(USE_WIFI) && (USE_WIFI >0)
+  #if defined(USE_OTA) && (USE_OTA >0)
     ota_loop();
   #endif
 
