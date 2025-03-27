@@ -58,8 +58,7 @@ void initializeNetwork() {
   #endif
   #if USE_WIFI > 0
   if (!WIFI.init()) {
-    log_e("WIFI.init() FAILED - HALTING");
-    while (1);
+    log_e("WIFI.init() FAILED - continuing without WiFi");
   }
   #endif
   #if USE_OTA > 0
