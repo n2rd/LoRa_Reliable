@@ -39,7 +39,7 @@ void ParametersClass::init() {
   if (!preferences.begin("LoRa", RW_MODE)) {  //R/W needed to create it if it does not exist
       //failure to open .... pass Partion value to initialize the partion
       log_e("Preferences.begin () Failed to begin paramters group Lora. Trying to initialize.");
-      if (!preferences.begin("LoRa", RW_MODE, "nvs")) {
+      if (!preferences.begin("LoRa", RW_MODE, "nvs") /*||true*/) {
             //Failed again
             log_e("nvs_flash_init_partition failed. Using defaults");
             //use defaults here
@@ -57,6 +57,10 @@ void ParametersClass::init() {
             parameters.power_index = DEFAULT_POWER_INDEX;
             parameters.tx_interval = DEFAULT_TX_INTERVAL;
             parameters.address = DEFAULT_ADDRESS;
+            parameters.serialCSVEnabled = true;
+            parameters.telnetCSVEnabled = true;
+            strcpy(parameters.wifiSSID,DEFAULT_WIFI_SSID);
+            strcpy(parameters.wifiKey,DEFAULT_WIFI_KEY);
             return;
       }
       log_e("nvs_flash_init_partition Succeeded");
@@ -161,13 +165,13 @@ void ParametersClass::init() {
   if (preferences.isKey(Key.wifiSSID)) {
       strcpy(parameters.wifiSSID, preferences.getString(Key.wifiSSID).c_str());
   } else { //use defaults and write to nvram
-      strcpy(parameters.wifiSSID, WIFI_SSID);
+      strcpy(parameters.wifiSSID, DEFAULT_WIFI_SSID);
       preferences.putString(Key.wifiSSID, parameters.wifiSSID);
   }
   if (preferences.isKey(Key.wifiKey)) {
       strcpy(parameters.wifiKey, preferences.getString(Key.wifiKey).c_str());
   } else { //use defaults and write to nvram
-      strcpy(parameters.wifiKey, WIFI_PASSWD);
+      strcpy(parameters.wifiKey, DEFAULT_WIFI_KEY);
       preferences.putString(Key.wifiKey, parameters.wifiKey);
   }        
   if (preferences.isKey(Key.serialCSVEnabled)) {
