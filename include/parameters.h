@@ -67,7 +67,7 @@
 #define DEFAULT_POWER_INDEX 4
 #endif
 #ifndef DEFAULT_TX_INTERVAL   
-#define DEFAULT_TX_INTERVAL 30
+#define DEFAULT_TX_INTERVAL 60
 #endif
 #ifndef DEFAULT_ADDRESS
 #define DEFAULT_ADDRESS 4   
