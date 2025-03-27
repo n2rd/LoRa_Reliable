@@ -180,17 +180,34 @@ void Telnet::setup()
     }
 }
 /* ------------------------------------------------- */
+#if 0
+static unsigned long lastLoopTimer = 0;
+static unsigned long loopAverage = 0;
+static unsigned int loopCounter = 0;
+static int loopSamples = 30000;
+#endif //0
 void Telnet::loop()
 {
+    #if 0
+    loopAverage += (micros()-lastLoopTimer); 
+    lastLoopTimer = micros();
+    if (++loopCounter == loopSamples) {
+        loopCounter = 0;
+        loopAverage /= loopSamples;
+        log_i("Average Telnet loop servicing in micros over %d samples: %d", loopSamples, loopAverage);
+        loopAverage = 0;
+        loopSamples =  isConnected() ? 3000 : 30000;
+    }
+    #endif
     ESPTelnet::loop();
-        MUTEX_LOCK(telnetBufferMutex);
+    MUTEX_LOCK(telnetBufferMutex);
         for (decltype(telDbgBuffer)::index_t i = 0; i < telDbgBuffer.size(); i++) {
             char ch = telDbgBuffer.shift();
             telnetBuffer.push(ch);
             //if (ch == '\n')
             //    break;
         }
-        MUTEX_UNLOCK(telnetBufferMutex);
+    MUTEX_UNLOCK(telnetBufferMutex);
     if (isConnected())
         bufDump();
 }
