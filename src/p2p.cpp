@@ -564,6 +564,14 @@ void listenMsgTask(void *pvParameter)
   }
 }
 //--------------------------------------------------------------------------------------------------
+void p2pStop()
+{
+  vTaskDelete(p2pTaskHandle);
+  vTaskDelete(qabTaskHandle);
+  vTaskDelete(tqmTaskHandle);
+  vTaskDelete(listenMsgTaskHandle);
+}
+//--------------------------------------------------------------------------------------------------
 void p2pSetup(bool broadcastOnlyArg) 
 {
   // every PAUSE seconds add a broadcast message to the message queue to be sent

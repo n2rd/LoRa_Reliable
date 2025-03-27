@@ -4,6 +4,7 @@
 extern bool tx_lock;
 extern bool short_pause;
 
+void p2pStop();
 void p2pSetup(bool broadcastOnlyArg = false);
 void p2pLoop(void);
 void broadcastOnlyLoop(void);

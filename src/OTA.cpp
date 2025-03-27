@@ -16,27 +16,28 @@ static AsyncWebServer server(80);
 
 void onOTAStart() {
   // Log when OTA has started
-  Serial.println("OTA update started!");
+  log_i("OTA update started!");
   driver.setModeIdle();
   otaActive = true;
+  p2pStop();
 }
 
 void onOTAProgress(size_t current, size_t final) {
   // Log every 1 second
   if (millis() - ota_progress_millis > 1000) {
     ota_progress_millis = millis();
-    Serial.printf("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
+    log_i("OTA Progress Current: %u bytes, Final: %u bytes\n", current, final);
   }
 }
 
 void onOTAEnd(bool success) {
   // Log when OTA has finished
   if (success) {
-    Serial.println("OTA update finished successfully!");
+    log_i("OTA update finished successfully!");
   } else {
-    Serial.println("There was an error during OTA update!");
+    log_i("There was an error during OTA update!");
   }
-  driver.setMode(driver.RHModeRx);
+  //driver.setMode(driver.RHModeRx);
   otaActive = false;
 }
 
@@ -58,7 +59,7 @@ void ota_setup(void) {
   ElegantOTA.setAuth("Lora","Reliable");
 
   server.begin();
-  Serial.println("HTTP server started");
+  log_i("HTTP server started");
   #if defined(USE_ARDUINO_OTA) && (USE_ARDUINO_OTA == 1)
     ArduinoOTA.begin();
   #endif
