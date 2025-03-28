@@ -72,6 +72,12 @@
 #ifndef DEFAULT_ADDRESS
 #define DEFAULT_ADDRESS 4   
 #endif
+#ifndef DEFAULT_WIFI_SSID
+#define DEFAULT_WIFI_SSID  "CommCtr"
+#endif 
+#ifndef DEFAULT_WIFI_KEY
+#define DEFAULT_WIFI_KEY "700$outhBay!"
+#endif
 #ifndef DEFAULT_PROMISCUOUS
 #define DEFAULT_PROMISCUOUS 0
 #endif
