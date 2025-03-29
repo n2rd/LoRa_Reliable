@@ -39,6 +39,10 @@
 #include "wm5500.h"
 #endif
 
+#ifdef HAS_INA219
+#include "inaSensor.h"
+#endif //has_ina219
+
 /*
 #if USE_WIFI >0
     #if defined(ESP32)

@@ -152,6 +152,11 @@ void setup()
 
 if (GPS.onoffState() == GPSClass::GPS_OFF) {
   InitNTP();
+
+#ifdef HAS_INA219
+  ina_setup();
+  ina_measure();
+#endif //HAS_INA219
 }
 
 #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
