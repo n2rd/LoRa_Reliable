@@ -57,9 +57,7 @@ void initializeNetwork() {
     WM5500_Setup();
   #endif
   #if USE_WIFI > 0
-  if (!WIFI.init()) {
-    log_e("WIFI.init() FAILED - continuing without WiFi");
-  }
+    WIFI.init();
   #endif
   #if USE_OTA > 0
     ota_setup();
@@ -147,11 +145,13 @@ void setup()
 #if HAS_GPS
   GPS.onoff((GPSClass::GPSPowerState)PARMS.parameters.gps_state);
   Serial.printf("GPS Power State: %s\r\n", GPS.getPowerStateName((GPSClass::GPSPowerState)PARMS.parameters.gps_state));
-  dumpLatLon();
 #endif //HAS_GPS
 
 if (GPS.onoffState() == GPSClass::GPS_OFF) {
   InitNTP();
+}
+else {
+  dumpLatLon();
 }
 
 #if defined(HAS_ENCODER) && (HAS_ENCODER == 1)
@@ -348,7 +348,7 @@ void dumpLatLon()
   double lon;
   if (GPS.getLocation(&lat,&lon)) {
     if ((lat != lastLat) || (lon != lastLon)) {
-      display.printf("Lat: %f Lon: %f\n",lat,lon);
+      display.printf("Lat: %f \r\nLon: %f\n",lat,lon);
       lastLat = lat;
       lastLon = lon;
     }
