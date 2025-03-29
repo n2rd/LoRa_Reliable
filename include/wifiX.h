@@ -7,6 +7,11 @@ class WifiClass {
         bool init();
         void disconnect();
         bool changeAP();
+    private:
+    static void connectToWIFITask(void *pvParameter);
+    static TaskHandle_t wifixCTWTaskHandle;
+    void notifyConnected();
+    void notifyDisconnected();
 };
 
 extern WifiClass WIFI;
