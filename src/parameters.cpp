@@ -225,7 +225,7 @@ preferences.end();
 //@brief update nvs from parameters if they have changed
 //
 void ParametersClass::update() {
-    log_e("start parameter update");
+    //log_e("start parameter update");
     if (!preferences.begin("LoRa", RW_MODE)) {
       log_e("Couldn't open preferences RW");
     }
