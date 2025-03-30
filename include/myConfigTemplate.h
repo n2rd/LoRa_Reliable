@@ -81,5 +81,7 @@
 
 // #define USE_ARDUINO_OTA 1 // Enables Arduino OTA library
 
+// #define HAS_INA219 0
+
 
 #endif
