@@ -61,6 +61,9 @@ void ParametersClass::init() {
             parameters.telnetCSVEnabled = true;
             strcpy(parameters.wifiSSID,DEFAULT_WIFI_SSID);
             strcpy(parameters.wifiKey,DEFAULT_WIFI_KEY);
+            parameters.p2pAddressFilterEnabled = true;
+            parameters.promiscuousEnabled = DEFAULT_PROMISCUOUS;
+            parameters.gridSize = DEFAULT_GRID_SIZE;
             return;
       }
       log_e("nvs_flash_init_partition Succeeded");
@@ -192,14 +195,14 @@ if (preferences.isKey(Key.promiscuousEnabled)) {
       // Preferences exist, read from it and put into mypreferences
       parameters.promiscuousEnabled = preferences.getUInt(Key.promiscuousEnabled);
 } else { //use defaults and write to nvram
-      parameters.promiscuousEnabled = false;
+      parameters.promiscuousEnabled = DEFAULT_PROMISCUOUS;
       preferences.putUInt(Key.promiscuousEnabled, parameters.promiscuousEnabled);
 }
 if (preferences.isKey(Key.p2pAddressFilterEnabaled)) {
       // Preferences exist, read from it and put into mypreferences
       parameters.p2pAddressFilterEnabled = preferences.getUInt(Key.p2pAddressFilterEnabaled);
 } else { //use defaults and write to nvram
-      parameters.p2pAddressFilterEnabled = false;
+      parameters.p2pAddressFilterEnabled = DEFAULT_P2P_ADDRESS_FILTERING;
       preferences.putUInt(Key.p2pAddressFilterEnabaled, parameters.p2pAddressFilterEnabled);
 }
 if (preferences.isKey(Key.radioType)) {
@@ -208,6 +211,13 @@ if (preferences.isKey(Key.radioType)) {
 } else { //use defaults and write to nvram
       parameters.radioType = 0;
       preferences.putUInt(Key.radioType, parameters.radioType);
+}
+if (preferences.isKey(Key.gridSize)) {
+      // Preferences exist, read from it and put into mypreferences
+      parameters.gridSize = preferences.getUInt(Key.gridSize);
+} else { //use defaults and write to nvram
+      parameters.gridSize = DEFAULT_GRID_SIZE;
+      preferences.putUInt(Key.gridSize, parameters.gridSize);
 }
 preferences.end();
 }

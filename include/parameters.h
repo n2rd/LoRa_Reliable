@@ -79,7 +79,7 @@
 #define DEFAULT_WIFI_KEY "700$outhBay!"
 #endif
 #ifndef DEFAULT_PROMISCUOUS
-#define DEFAULT_PROMISCUOUS 0
+#define DEFAULT_PROMISCUOUS 1
 #endif
 #ifndef USE_RANDOM_SIGREP_SLOT
 #define USE_RANDOM_SIGREP_SLOT true
@@ -89,6 +89,12 @@
 #endif
 #ifndef DETERMINISTIC_SIGREP_MAX_RADIO_ADDRESS
 #define DETERMINISTIC_SIGREP_MAX_RADIO_ADDRESS 30 //maximum number of radios
+#endif
+#ifndef DEFAULT_P2P_ADDRESS_FILTERING
+#define DEFAULT_P2P_ADDRESS_FILTERING 1
+#endif
+#ifndef DEFAULT_GRID_SIZE
+#define DEFAULT_GRID_SIZE 6
 #endif
 
 // organized into a struct
@@ -113,6 +119,7 @@ typedef struct ParametersStruct {
     bool     telnetCSVEnabled;
     uint8_t  promiscuousEnabled;
     uint8_t  p2pAddressFilterEnabled;
+    uint8_t  gridSize;
 } PARAMETERS;
 
 //for opening nvram preferences
@@ -162,6 +169,7 @@ class ParametersClass {
       const char* telnetCSVEnabled = "TelCSVEnabled";
       const char* promiscuousEnabled = "PromisEnabled";
       const char* p2pAddressFilterEnabaled = "P2pAFEnabled";
+      const char* gridSize = "gridSize";
     } Key;
   private:
     static Preferences preferences;
