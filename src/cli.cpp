@@ -388,7 +388,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
        break;
 //      GridSize --------------------------------------------------------------
     case '6':
-        local_params.address = PARMS.parameters.address;
+        local_params.gridSize = PARMS.parameters.gridSize;
         cli_process_int(parameter_query, "Grid Size", command, 6, 10 , & local_params.gridSize);
         PARMS.parameters.gridSize = local_params.gridSize;
         break;
@@ -489,6 +489,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
     //case '?':
         ps_st.printf("WiFi credentials                 /@<ssid>,<passcode>   Note: case\r\n");
         ps_st.printf("                                   sensitive and spaces not permitted!\r\n");
+        ps_st.printf("Maidenhead Grid Size             /6<size> 4,6,8,10\r\n");
         ps_st.printf("Radio Address                    /A <n>\r\n");
         ps_st.printf("Beacon Disable (TX Lockout)      /B <off>|<on>\r\n");
         ps_st.printf("Caallsign                        /C <callsign>\r\n");
@@ -781,7 +782,7 @@ int cli_execute(const char* command_arg) {
     
         char command[50],command_original_case[50];
         char command_query[4];
-        char command_codes[]={'@','A', 'B', 'C', 'E', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
+        char command_codes[]={'@', '6', 'A', 'B', 'C', 'E', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
     
         strcpy(command, command_arg);
     
