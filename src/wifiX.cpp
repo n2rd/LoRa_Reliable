@@ -47,12 +47,13 @@ void WifiClass::connectToWIFITask(void *pvParameter)
                 //we disconnected or never was connected ??
                 bWasntConnected = true;
                 bWasConnected = false;
+                WiFi.disconnect(false,false);
                 me->notifyDisconnected();
             }
             else {
                 if (wLastStatus != wStatus) {
-                    display.printf("Unprocessed Wifi Status: %d",wStatus);
-                    Serial.printf("Unprocessed Wifi Status: %d",wStatus);
+                    display.printf("Unprocessed Wifi Status:%02X\r\n",wStatus);
+                    Serial.printf("Unprocessed Wifi Status: %02X\r\n",wStatus);
                 }
             }
         }
