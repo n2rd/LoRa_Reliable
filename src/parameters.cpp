@@ -294,6 +294,9 @@ void ParametersClass::update() {
     if (preferences.getUInt(Key.p2pAddressFilterEnabaled) != parameters.p2pAddressFilterEnabled) {
       preferences.putUInt(Key.p2pAddressFilterEnabaled, parameters.p2pAddressFilterEnabled);
     }
+    if (preferences.getUInt(Key.gridSize) != parameters.gridSize) {
+      preferences.putUInt(Key.gridSize, parameters.gridSize);
+    }
     preferences.end();
 }
 

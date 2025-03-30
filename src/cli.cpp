@@ -67,7 +67,7 @@ CLI Command set
                                 Note: Special compile required
 
                                     Write NVRAM             /W
-    Grid                    /X      4 or 6 character maidenhead grid square
+    Grid                    /X      4, 6, 8 or 10 character maidenhead grid square
     Short Pause             /Y <OFF|ON>                                     Default = OFF      
 */
 
@@ -386,7 +386,12 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         }
 
        break;
-
+//      GridSize --------------------------------------------------------------
+    case '6':
+        local_params.address = PARMS.parameters.address;
+        cli_process_int(parameter_query, "Grid Size", command, 6, 10 , & local_params.gridSize);
+        PARMS.parameters.gridSize = local_params.gridSize;
+        break;
 //      Radio Address----------------------------------------------------------
     case 'A':
         local_params.address = PARMS.parameters.address;

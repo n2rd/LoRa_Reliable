@@ -21,6 +21,7 @@ bool randomSignalReportSlot = USE_RANDOM_SIGREP_SLOT;
 
 // Pause between transmited packets in seconds.
 #define PAUSE       PARMS.parameters.tx_interval // client, time between transmissions in seconds
+#define GRIDLOCATORSZ PARMS.parameters.gridSize
 
 // some state variables
 extern bool menu_active;
@@ -94,7 +95,7 @@ uint8_t transmit_headerId = 0;
 //keep track of the last time a message was transmitted
 uint64_t tx_time = 0;
 
-void extractGrid6LocatorFromData(int startMsgDataIndex, uint8_t* data, int dataLen, char* locator);
+void extractGridLocatorFromData(int startMsgDataIndex, uint8_t* data, int dataLen, char* locator);
 
 //--------------------------------------------------------------------------------------------------
 TaskHandle_t p2pTaskHandle;
@@ -141,8 +142,7 @@ void p2pTaskDisplayCSV(void *pvParameter)
       uint8_t len = receivedMsg.len;
       char gridLocator[11];
       char csvChar = 'X';
-      extractGrid6LocatorFromData(2, receivedMsg.packet, len, gridLocator);
-      gridLocator[6] = 0;
+      extractGridLocatorFromData(2, receivedMsg.packet, len, gridLocator);
       if (to == RH_BROADCAST_ADDRESS) {
         //display the broadcast message
         snr = receivedMsg.snr;
@@ -195,9 +195,8 @@ uint64_t getRandomSlot()
 //--------------------------------------------------------------------------------------------------
 #define GPS_FIX_TIMEOUT 10000
 
-void addGrid6LocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr = NULL)
+void addGridLocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr = NULL, int gridSize = 6)
 {
-  const int gridSize = 6;
   double lat = 0, lon = 0;
   bool hasFix;
   if (GPS.onoffState() == GPS.GPS_OFF) {
@@ -263,24 +262,30 @@ void addGrid6LocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr
       *gridLocatorPtr = curMaidenheadGrid;
     encode_grid4_to_buffer(curMaidenheadGrid,&messagePtr->data[messagePtr->len]);
     messagePtr->len+=2;
-    messagePtr->data[messagePtr->len++] = (uint8_t)curMaidenheadGrid[4];
-    messagePtr->data[messagePtr->len++] = (uint8_t)curMaidenheadGrid[5];
+    gridSize -= 4;
+    int index = 4;
+    while (gridSize > 0)
+    {
+      messagePtr->data[messagePtr->len++] = (uint8_t)curMaidenheadGrid[index++];
+      messagePtr->data[messagePtr->len++] = (uint8_t)curMaidenheadGrid[index++];
+      gridSize -=2;
+    }
     strcpy(messagePtr->gridLocator, curMaidenheadGrid);
   }
 }
 //--------------------------------------------------------------------------------------------------
-void extractGrid6LocatorFromData(int startMsgDataIndex, uint8_t* data, int dataLen, char* locator)
+void extractGridLocatorFromData(int startMsgDataIndex, uint8_t* data, int dataLen, char* locator)
 {
   uint16_t mindex = startMsgDataIndex;
   uint16_t lindex = 4;
   if (dataLen >= (startMsgDataIndex+2)) {
     decode_grid4_from_buffer(&data[mindex],locator);
-    if (dataLen >= (startMsgDataIndex+4)) {
-      mindex+=2;
+    mindex+=2;
+    while (dataLen >= (mindex+2)) {
       locator[lindex++] = data[mindex++]; //5th locator character
       locator[lindex++] = data[mindex++]; //6th locator character
-      locator[lindex] = 0;
     }
+    locator[lindex] = 0;
   } 
 }
 //--------------------------------------------------------------------------------------------------
@@ -304,7 +309,7 @@ void queueABroadcastMsg(uint8_t from = RH_BROADCAST_ADDRESS, unsigned long timeT
     message.transmitTime = timeToSend;
   //Add maidenheadGrid6
   char* gridLocator;
-  addGrid6LocatorIntoMsg(&message);
+  addGridLocatorIntoMsg(&message, NULL, GRIDLOCATORSZ);
   MUTEX_LOCK(transmitQueueMutex);
   if (!transmit_queue.isFull()) {
     transmit_queue.enqueue(message, message.transmitTime);
@@ -442,7 +447,7 @@ void listenForMessage()
         message.headerID = headerId;
         message.flags = 0; /* Placholder for flags */
         message.transmitTime = randomSignalReportSlot ? getRandomSlot() : getDeterministicSlot();
-        addGrid6LocatorIntoMsg(&message);
+        addGridLocatorIntoMsg(&message, NULL, GRIDLOCATORSZ);
         MUTEX_LOCK(transmitQueueMutex);
         if (!transmit_queue.isFull()) {
           transmit_queue.enqueue(message, message.transmitTime);
