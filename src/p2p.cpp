@@ -206,7 +206,7 @@ void addGridLocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr 
         GPS.latLonToMaidenhead(
           PARMS.parameters.lat_value,
           PARMS.parameters.lon_value,
-          6
+          GRIDLOCATORSZ
           );
       log_d("Fixed lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,fixedMaidenheadGrid);
       if (gridLocatorPtr != NULL)
@@ -247,7 +247,7 @@ void addGridLocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr 
         GPS.latLonToMaidenhead(
           PARMS.parameters.lat_value,
           PARMS.parameters.lon_value,
-          6
+          GRIDLOCATORSZ
           );
       if (gridLocatorPtr != NULL)
         *gridLocatorPtr = fixedMaidenheadGrid;
