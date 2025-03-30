@@ -14,6 +14,7 @@ Required commands
 CLI Command set
 
     Wifi Credentials        /@ SSID, passcode
+    Transmitted grid length /6  6, 8 or 10                                  Default = 6
     Radio Address           /A                                              Default = 0
     Beacon Disable and      /B <OFF|ON>                                     Default = OFF
     TX Lockout
@@ -291,6 +292,8 @@ char        grid4_str_value[5];
 strcpy(command, command_arg);
 strcpy(command_original_case, command_arg);     //preserve case for WiFi credentials
 
+if (command[0] == '\0') return 0;
+
 if (command[0] == '/') {
     upcase(command);
 
@@ -386,12 +389,14 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         }
 
        break;
+
 //      GridSize --------------------------------------------------------------
     case '6':
         local_params.gridSize = PARMS.parameters.gridSize;
         cli_process_int(parameter_query, "Grid Size", command, 6, 10 , & local_params.gridSize);
         PARMS.parameters.gridSize = local_params.gridSize;
         break;
+
 //      Radio Address----------------------------------------------------------
     case 'A':
         local_params.address = PARMS.parameters.address;
@@ -402,7 +407,6 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         break;
 
 //      TX Lock (Beacon disable) Off/On----------------------------------------
-
     case 'B':
         local_params.tx_lock      = PARMS.parameters.tx_lock;
         cli_process_bool(parameter_query, "TX Lock (Beacon Disable)", command, & local_params.tx_lock);
@@ -463,6 +467,9 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
                 local_params.gps_state = PARMS.parameters.gps_state;
                 if (parameter_query) {
                     ps_st.printf(PRINTF_OK_GPS, PARMS.parameters.gps_state, GPS.getPowerStateName((GPSClass::PowerState) PARMS.parameters.gps_state));
+                    if (GPS.getLastLatLon(&local_params.lat_value, &local_params.lon_value)) {
+                        ps_st.printf("OK:GPS current fix is: Latitude = % f; Longitude = %f\r\n", local_params.lat_value, local_params.lon_value);
+                    } 
                 }
                 else {
                     local_params.gps_state = atoi(command);
@@ -763,7 +770,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
 //      Invalid Command--------------------------------------------------------
         default:
-            ps_st.printf("NG:Unrecognized command %c [@, A, B, C, E, F, G, H, I, L, M, P, R, T, U, V, W, X, Y]\r\n", cmd_code);
+            ps_st.printf("NG:Unrecognized command %c [@, 6, A, B, C, E, F, G, H, I, L, M, P, R, T, U, V, W, X, Y]\r\n", cmd_code);
         }
     }
     else {
