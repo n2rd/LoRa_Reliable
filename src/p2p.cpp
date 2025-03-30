@@ -206,15 +206,20 @@ void addGridLocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr 
         GPS.latLonToMaidenhead(
           PARMS.parameters.lat_value,
           PARMS.parameters.lon_value,
-          6
+          GRIDLOCATORSZ
           );
       log_d("Fixed lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,fixedMaidenheadGrid);
       if (gridLocatorPtr != NULL)
         *gridLocatorPtr = fixedMaidenheadGrid;
       encode_grid4_to_buffer(fixedMaidenheadGrid,&messagePtr->data[messagePtr->len]);
       messagePtr->len+=2;
-      messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[4];
-      messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[5];
+      int index = 4;
+      while (gridSize > 0)
+      {
+        messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[index++];
+        messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[index++];
+        gridSize -=2;
+      }
       strcpy(messagePtr->gridLocator, fixedMaidenheadGrid);
       return;
   }
@@ -242,7 +247,7 @@ void addGridLocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr 
         GPS.latLonToMaidenhead(
           PARMS.parameters.lat_value,
           PARMS.parameters.lon_value,
-          6
+          GRIDLOCATORSZ
           );
       if (gridLocatorPtr != NULL)
         *gridLocatorPtr = fixedMaidenheadGrid;
@@ -250,8 +255,13 @@ void addGridLocatorIntoMsg(transmitMessage_t* messagePtr, char **gridLocatorPtr 
       //log_d("Fixed lat %lf, lon %lf, grid %s",PARMS.parameters.lat_value,PARMS.parameters.lon_value,fixedMaidenheadGrid);
       encode_grid4_to_buffer(fixedMaidenheadGrid,&messagePtr->data[messagePtr->len]);
       messagePtr->len+=2;
-      messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[4];
-      messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[5];
+      int index = 4;
+      while (gridSize > 0)
+      {
+        messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[index++];
+        messagePtr->data[messagePtr->len++] = (uint8_t)fixedMaidenheadGrid[index++];
+        gridSize -=2;
+      }
       strcpy(messagePtr->gridLocator, fixedMaidenheadGrid);
       return;
     }
