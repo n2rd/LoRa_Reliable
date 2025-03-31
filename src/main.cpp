@@ -185,26 +185,28 @@ void serial_input_loop()
       if (sibIndex == 0)
         Serial.println();
       char ch = Serial.read();
-      sib[sibIndex] = ch;
-      if ((ch == '/') && (sibIndex == 0))
-        Serial.print("Command:/");
-      else
-        Serial.print(ch);
-      if ((ch == '\r') || (ch == '\n')) {
-        sib[sibIndex] = 0;
-        sendToCli = true;
-        break;
-      }
-      else if ((ch == 8) || (ch == 127)) {
-        if (sibIndex > 0) {
-          sib[--sibIndex] = 0;
+      if (ch != '\n') {
+        sib[sibIndex] = ch;
+        if ((ch == '/') && (sibIndex == 0))
+          Serial.print("Command:/");
+        else
+          Serial.print(ch);
+        if ((ch == '\r') || (ch == '\n')) {
+          sib[sibIndex] = 0;
+          sendToCli = true;
+          break;
         }
+        else if ((ch == 8) || (ch == 127)) {
+          if (sibIndex > 0) {
+            sib[--sibIndex] = 0;
+          }
+        }
+        if (sibIndex >= SIB_SIZE) {
+          sib[sibIndex] = 0;
+          break;
+        }
+        sibIndex++;
       }
-      if (sibIndex >= SIB_SIZE) {
-        sib[sibIndex] = 0;
-        break;
-      }
-      sibIndex++;
     }
     if (sendToCli) {
       //log_e("executing cli %d '%s'",sibIndex,sib);

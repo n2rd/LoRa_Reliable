@@ -29,6 +29,7 @@
 #include "cli.h"
 #include "csv.h"
 #include "gridutil.h"
+#include "inaSensor.h"
 #include "clientServer.h"
 #include "p2p.h"
 #include "gps.h"
