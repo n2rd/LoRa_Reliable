@@ -37,7 +37,11 @@ void WifiClass::connectToWIFITask(void *pvParameter)
             WL_CONNECTED        = 3,
             WL_CONNECT_FAILED   = 4,
             WL_CONNECTION_LOST  = 5,
-            WL_DISCONNECTED     = 6
+            WL_DISCONNECTED     = 6,
+
+            ------------------------
+            Disconnect reasons
+            WL_ASSOC_LEAVE      = 8
             */
         wLastStatus = wStatus;
         wStatus = WiFi.status();
@@ -53,8 +57,8 @@ void WifiClass::connectToWIFITask(void *pvParameter)
                     //we disconnected or never was connected ??
                     bWasntConnected = true;
                     bWasConnected = false;
-                    //WiFi.disconnect(false,false); This caused the reconnection to not happen
                     me->notifyDisconnected();
+                    //WiFi.disconnect(false,false); This caused the reconnection to not happen
                 }
             }
             else if (wStatus == WL_IDLE_STATUS){
