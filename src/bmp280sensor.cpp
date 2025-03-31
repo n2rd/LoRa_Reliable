@@ -19,97 +19,70 @@
 */
 #include "main.h"
 #include <Wire.h>
-
 #include "SparkFunBME280.h"
-BME280 myBMP280;
-void scanI2CBus();
-static bool isPresent = false;
 
-bool bmp280_isPresent()
+BMP280Sensor BMP280;
+
+bool BMP280Sensor::isPresent()
 {
-  return isPresent;
+  return bIsPresent;
 }
 
-
-bool bmp280_setup()
+bool BMP280Sensor::setup()
 {
-  Wire1.begin(41U,42U,400000);
   //scanI2CBus();
+  bIsPresent = false;
   myBMP280.setI2CAddress(0x76);
   bool devicePresentResult = myBMP280.beginI2C(Wire1);
-  //Serial.print("DevicePresentResult = "); Serial.println(devicePresentResult);
+  log_v("DevicePresentResult = %d",devicePresentResult);
   if (devicePresentResult) {
     uint8_t  result = myBMP280.begin();
     if ( result == 0x58) //0x58 for bmp 0x60 for bme device
-      Serial.println("BMP280 detected");
+      log_v("BMP280 detected");
     else if ( result == 0x60) //0x58 for bmp 0x60 for bme device
-      Serial.println("BME280 detected");
+      log_v("BME280 detected");
     else {
-      Serial.println("No BMP280 or BME280 detected");
-      isPresent = false;
+      log_d("No BMP280 or BME280 detected");
       return false;
     }
-    isPresent = true;
-    /*
-    //myBMP280.setReferencePressure(101200); //Adjust the sea level pressure used for altitude calculations??
-    BME280_SensorMeasurements measurements;
-    myBMP280.readAllMeasurements(&measurements);
-    //Serial.print("Humidity: ");
-    //Serial.println(measurements.humidity);
-    Serial.print("Pressure: ");
-    Serial.println(measurements.pressure);
-    Serial.print("Temperature: ");
-    Serial.println(measurements.temperature);
-    */
+    bIsPresent = true;
     return true;
   }
   else {
-    Serial.println("No BMP280 or BME280 detected");
+    log_d("No BMP280 or BME280 detected");
     return false;
   }
 }
-#if 0
-#define WIRE Wire1
-void scanI2CBus() {
+
+void scanI2CBus(Print& printDev, TwoWire& WIRE) {
   byte error, address;
   int nDevices;
-  Serial.println("\nI2C Scanner");
-  Serial.println("Scanning...");
-  Serial.printf("%3d.",address);
+  printDev.printf("\r\nI2C Scanner\r\n");
+  printDev.printf("Scanning 127 addresses ...\r\n");
   nDevices = 0;
   for(address = 1; address < 127; address++ )
   {
     if (address % 10 == 0)
-        Serial.printf("\r\n%3d.",address);
+        printDev.printf("\r\n%3d.",address);
     else
-        Serial.print(".");
+        printDev.print(".");
     // The i2c_scanner uses the return value of
     // the Write.endTransmisstion to see if
     // a device did acknowledge to the address.
     WIRE.beginTransmission(address);
     error = WIRE.endTransmission();
-
     if (error == 0)
     {
-      Serial.print("I2C device found at address 0x");
-      if (address<16)
-        Serial.print("0");
-      Serial.print(address,HEX);
-      Serial.println("  !");
-
+      printDev.printf("I2C device found at address %02X\r\n", address);
       nDevices++;
     }
     else if (error==4)
     {
-      Serial.print("Unknown error at address 0x");
-      if (address<16)
-        Serial.print("0");
-      Serial.println(address,HEX);
+      printDev.printf("Unknown error at address %02X", address);
     }
   }
   if (nDevices == 0)
-    Serial.println("No I2C devices found\n");
+    printDev.printf("No I2C devices found\r\n");
   else
-    Serial.println("done\n");
+    printDev.printf("done\n");
 }
-#endif //0
