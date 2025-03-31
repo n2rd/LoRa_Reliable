@@ -302,7 +302,7 @@ void extractGridLocatorFromData(int startMsgDataIndex, uint8_t* data, int dataLe
 void queueABroadcastMsg(uint8_t from = RH_BROADCAST_ADDRESS, unsigned long timeToSend = -1)
 {
   //add the broadcast message to the message queue
-  int8_t temp = bmp280_isPresent() ? (int8_t) myBMP280.readTempF() : 0xFF;
+  int8_t temp = BMP280.isPresent() ? (int8_t) BMP280.readTempF() : 0xFF;
   transmitMessage_t message;
   message.data[0] = 0;  //static_cast<uint8_t>((counter >> 8) & 0xFF); //highbyte
   message.data[1] = temp; //static_cast<uint8_t>(counter & 0xFF); //low byte

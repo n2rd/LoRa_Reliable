@@ -150,10 +150,7 @@ void setup()
 if (GPS.onoffState() == GPSClass::GPS_OFF) {
   InitNTP();
 
-#ifdef HAS_INA219
-  ina_setup();
-  ina_measure();
-#endif //HAS_INA219
+
 }
 else {
   dumpLatLon();
@@ -163,11 +160,19 @@ else {
    rotary_setup();
 #endif
 
-  bmp280_setup();
-  if (bmp280_isPresent()) {
-    Serial.printf("Temperature: %f\r\n",myBMP280.readTempF());
-    display.printf("Temperature: %f\r\n",myBMP280.readTempF());
+  Wire1.begin(41U,42U /*,400000 */); //Initialize sensor I2C bus as Wire1
+
+  INA219.setup();
+  if (INA219.isPresent()) {
+    INA219.outputData(ps_all);
   }
+
+  BMP280.setup();
+  if (BMP280.isPresent()) {
+    ps_all.printf("BMP280 Temp: %3.2f°\r\n",BMP280.readTempF());
+  }
+
+
   csv_telnet.setOutputEnabled(PARMS.parameters.telnetCSVEnabled);
   csv_serial.setOutputEnabled(PARMS.parameters.serialCSVEnabled);
   //log_e("exiting setup()");

@@ -396,22 +396,23 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         ps_st.printf("OK:Parametrics follow for connected devices\r\n");
         ps_st.printf("=========================================================\r\n");
 
-        if (bmp280_isPresent()) {
-            ps_st.printf("BMP280 temperature, pressure & humidity sensor present\r\n");
-            ps_st.printf("Temperature: %f\r\n",myBMP280.readTempF());
+        if (BMP280.isPresent()) {
+            ps_st.printf("BMP280 temperature sensor present\r\n");
+            ps_st.printf("Temperature: %f°\r\n", BMP280.readTempF());
         }
         else {
             ps_st.printf("BMP280 temperature, pressure & humidity sensor not present\r\n");     
         }
 
         ps_st.printf("----------------------------------------------------------\r\n");
-
-        #if defined (HAS_INA219) && (HAS_INA219 >0)
+        if (INA219.isPresent()) {
             ps_st.printf("INA219 voltage and current sensor present\r\n");     
-            ina_measure();
-        #else
-            ps_st.printf("INA219 voltage and current sensor not present\r\n");     
-        #endif
+            INA219.outputData(ps_st);
+        }
+        else {
+            ps_st.printf("INA219 voltage and current sensor not present\r\n");
+        }
+
 
         ps_st.printf("==========================================================\r\n");
        break;
