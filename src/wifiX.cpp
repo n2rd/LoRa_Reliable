@@ -5,6 +5,11 @@ void WifiClass::setup() {}
 void WifiClass::connectToWIFITask(void *pvParameter)
 {
     WifiClass *me = (WifiClass *)pvParameter;
+    WiFi.mode(WIFI_STA);
+    WiFi.setHostname("Lora_Reliable");
+    WiFi.setAutoReconnect(true);
+    WiFi.persistent(true);
+    WiFi.begin(PARMS.parameters.wifiSSID, PARMS.parameters.wifiKey);
     const TickType_t tickDelay = 5000;
     int tryCount = 0;
     while ((WiFi.status() != WL_CONNECTED) && (tryCount < 8)) {
@@ -43,12 +48,21 @@ void WifiClass::connectToWIFITask(void *pvParameter)
             me->notifyConnected();
         }
         else {
-            if ((wStatus == WL_CONNECTION_LOST) || (wStatus == WL_DISCONNECTED) && (bWasConnected)) {
-                //we disconnected or never was connected ??
-                bWasntConnected = true;
-                bWasConnected = false;
-                WiFi.disconnect(false,false);
-                me->notifyDisconnected();
+            if ((wStatus == WL_CONNECTION_LOST) || (wStatus == WL_DISCONNECTED)) {
+                if (bWasConnected) {
+                    //we disconnected or never was connected ??
+                    bWasntConnected = true;
+                    bWasConnected = false;
+                    //WiFi.disconnect(false,false); This caused the reconnection to not happen
+                    me->notifyDisconnected();
+                }
+            }
+            else if (wStatus == WL_IDLE_STATUS){
+                if (WiFi.reconnect()) {
+                    bWasntConnected = false;
+                    bWasConnected = true;
+                    me->notifyConnected();
+                }
             }
             else {
                 if (wLastStatus != wStatus) {
@@ -84,11 +98,6 @@ void WifiClass::notifyDisconnected()
 }
 bool WifiClass::init()
 {
-    WiFi.mode(WIFI_STA);
-    WiFi.setHostname("Lora_Reliable");
-    WiFi.setAutoReconnect(true);
-    WiFi.persistent(true);
-    WiFi.begin(PARMS.parameters.wifiSSID, PARMS.parameters.wifiKey);
     xTaskCreatePinnedToCore(connectToWIFITask,"wifixCTWTask",10000,this,1,&wifixCTWTaskHandle, xPortGetCoreID());
     delay(4500); // Wait for connection or failure in Task
     return (WiFi.status() == WL_CONNECTED) ? true : false;
