@@ -3,6 +3,39 @@
 #include <pthread.h>
 #include "ArduinoQueue.h"
 #include "reversePriorityQueue.h"
+#include "Hashtable.h"
+
+class ReceivedStats {
+  public:
+    int address;
+    int count;
+    int minRSSI;
+    ReceivedStats() : address(-1), count(0), minRSSI(100) {}
+    ReceivedStats(int _address) : address(_address), count(1), minRSSI(100) {}
+    ReceivedStats(int _address, int _RSSI) : address(_address), count(1), minRSSI(_RSSI) {}
+};
+
+static Hashtable<int,ReceivedStats> stats;
+
+void addReceivedStats(int address, int rssi) {
+  ReceivedStats* ptrRS = stats.get(address);
+  if (ptrRS) {
+    ptrRS->count+= 1;
+    ptrRS->minRSSI = min(ptrRS->minRSSI,rssi);
+  }
+  else {
+    stats.put(address,ReceivedStats(address,rssi));
+  }
+}
+
+void dumpStats(Print& printDev)
+{
+  SimpleVector<int> keys = stats.keys();
+  for (int address : keys) {
+    ReceivedStats rs = stats.getElement(address);
+    printDev.printf("%3d cnt: %4d minRssi: %3d dbm\r\n",rs.address, rs.count, rs.minRSSI);
+  }
+}
 
 #ifndef USE_RANDOM_SIGREP_SLOT
 #define USE_RANDOM_SIGREP_SLOT true
@@ -147,6 +180,7 @@ void p2pTaskDisplayCSV(void *pvParameter)
         //display the broadcast message
         snr = receivedMsg.snr;
         rssi = receivedMsg.rssi;
+        addReceivedStats(from,rssi);
         if (!menu_active) {
           display.printf(
             "B %u-%03u #%i RSSI %i\n",

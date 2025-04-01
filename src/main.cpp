@@ -288,7 +288,9 @@ void check_button()
   button.update();
 
   // single click will wake up sleeping unit
-
+  if (button.isDoubleClick()) {
+    dumpStats(display);
+  }
   //long press puts to sleep
   if (button.pressedFor(1000)) 
   { //go to sleep

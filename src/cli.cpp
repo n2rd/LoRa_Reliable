@@ -416,7 +416,12 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
         ps_st.printf("==========================================================\r\n");
        break;
-
+    case '3':
+    ps_st.printf("OK:stats follow for received devices\r\n");
+        ps_st.printf("=========================================================\r\n");
+        dumpStats(ps_st);
+        ps_st.printf("=========================================================\r\n");
+        break;
 //      Transmitted GridSize (# of characters)---------------------------------
     case '6':
         local_params.gridSize = PARMS.parameters.gridSize;
@@ -817,7 +822,7 @@ int cli_execute(const char* command_arg) {
     
         char command[50],command_original_case[50];
         char command_query[4];
-        char command_codes[]={'@', '1', '6', 'A', 'B', 'C', 'E', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
+        char command_codes[]={'@', '1', '3', '6', 'A', 'B', 'C', 'E', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
     
         strcpy(command, command_arg);
     
