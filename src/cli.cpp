@@ -272,7 +272,7 @@ char        *lat_str_ptr = lat_str;
 char        *lon_str_ptr = lon_str;
 float       lat_sign,lon_sign;
 char        str_grid4_value[5];
-int         i, j;
+int         i, j, k;
 int         int_input;
 float       flt_input;
 int         status;
@@ -288,6 +288,9 @@ char        current_char_value1;
 char        current_char_value2;
 bool        valid_gridsquare_format;
 char        grid4_str_value[5];
+char        csvValidFilters[] = {'B', 'O', 'R', 'S'};
+bool        csvValidFilter;
+bool        csvFilterFound;
 
 
 strcpy(command, command_arg);
@@ -417,6 +420,55 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         ps_st.printf("==========================================================\r\n");
        break;
 
+//      CSV Filtering (B, O, R, S)
+    case '2':
+        if (parameter_query) {
+            ps_st.printf("OK:CSV message filter = %s\r\n", PARMS.parameters.csvFilter);
+        }
+        else {
+            i=0;
+            k=0;
+            csvValidFilter = true;
+            while (command[i] != '\0' && csvValidFilter ) {
+                j=0;
+                csvFilterFound = false;
+                while (csvValidFilters[j] != '\0') {
+                    if (command[i] == csvValidFilters[j]) {
+                        if (k < sizeof(local_params.csvFilter)/sizeof(local_params.csvFilter[0])) {
+                            local_params.csvFilter[k] = command[i];
+                            k++;
+                            i++;
+                            csvFilterFound = true;
+                            break;
+                         }
+                         else {
+                            ps_st.printf("NG:Internal CSV filter buffer exceeded\r\n");
+                            break;
+                         }
+                    }
+                    else {
+                        j++;
+                    }
+                }
+                if (!csvFilterFound) csvValidFilter = false;
+            }
+            if (csvValidFilter) {
+                if (k < sizeof(local_params.csvFilter)/sizeof(local_params.csvFilter[0])) {
+                    local_params.csvFilter[k] = '\0';
+                    ps_st.printf("OK:CSV message filter = %s\r\n", local_params.csvFilter);
+                    strcpy(PARMS.parameters.csvFilter,local_params.csvFilter);
+                }
+                else {
+                    ps_st.printf("NG:Internal CSV filter buffer exceeded\r\n");
+                    break;
+                }
+            }
+            else {
+                ps_st.printf("NG:CSV message filter must be a combination of the letters B, O, R and S\r\n");
+            }
+        }
+        break;
+
 //      Transmitted GridSize (# of characters)---------------------------------
     case '6':
         local_params.gridSize = PARMS.parameters.gridSize;
@@ -508,7 +560,6 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
                         ps_st.printf(PRINTF_NG_GPS, local_params.gps_state);
                     }
                 }
-    
             }
             else {
                 ps_st.printf(PRINTF_NG_NULL_ARG);
@@ -524,6 +575,12 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         ps_st.printf("WiFi credentials                 /@<ssid>,<passcode>   Note: case\r\n");
         ps_st.printf("                                   sensitive and spaces not permitted!\r\n");
         ps_st.printf("Display parametrics              /1\r\n");
+        ps_st.printf("Set CSV Filtering                /2 <string>\r\n");
+        ps_st.printf("                                    String is a combination of the letters B, O, R & S\r\n");
+        ps_st.printf("                                    B = display inbound broadcast messages\r\n");
+        ps_st.printf("                                    O = display outbound broadcast messages\r\n");
+        ps_st.printf("                                    R = display outbound signal reports\r\n");
+        ps_st.printf("                                    S = display inbound signal reports\r\n");
         ps_st.printf("Maidenhead Grid Size             /6<size> 4,6,8,10\r\n");
         ps_st.printf("Radio Address                    /A <n>\r\n");
         ps_st.printf("Beacon Disable (TX Lockout)      /B <off>|<on>\r\n");
@@ -798,7 +855,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
 //      Invalid Command--------------------------------------------------------
         default:
-            ps_st.printf("NG:Unrecognized command %c [@, 1, 6, A, B, C, E, F, G, H, I, L, M, P, R, T, U, V, W, X, Y]\r\n", cmd_code);
+            ps_st.printf("NG:Unrecognized command %c [@, 1, 2, 6, A, B, C, E, F, G, H, I, L, M, P, R, T, U, V, W, X, Y]\r\n", cmd_code);
         }
     }
     else {
@@ -817,7 +874,7 @@ int cli_execute(const char* command_arg) {
     
         char command[50],command_original_case[50];
         char command_query[4];
-        char command_codes[]={'@', '1', '6', 'A', 'B', 'C', 'E', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
+        char command_codes[]={'1', '@', '2', '6', 'A', 'B', 'C', 'E', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
     
         strcpy(command, command_arg);
     
