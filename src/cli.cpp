@@ -288,7 +288,7 @@ char        current_char_value1;
 char        current_char_value2;
 bool        valid_gridsquare_format;
 char        grid4_str_value[5];
-char        csvValidFilters[] = {'B', 'O', 'R', 'S'};
+char        csvValidFilters[] = {'B', 'O', 'R', 'S', '-'};
 bool        csvValidFilter;
 bool        csvFilterFound;
 

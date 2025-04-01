@@ -190,15 +190,7 @@ void p2pTaskDisplayCSV(void *pvParameter)
         snr = receivedMsg.snr;
         rssi = receivedMsg.rssi;
         addReceivedStats(from,rssi);
-        if (!menu_active) {
-          display.printf(
-            "B %u-%03u #%i RSSI %i\n",
-            from,
-            headerId,
-            (int)(receivedMsg.packet[0]*256 + receivedMsg.packet[1]),
-            rssi
-            ); //Do it all in one
-        }
+
         csvChar = 'B';
       } else {
         //we have a signal report for us or another address (if in promiscuous mode)
@@ -209,14 +201,25 @@ void p2pTaskDisplayCSV(void *pvParameter)
           csvChar = 'S';
         else
           csvChar = 'P';
-        if (!menu_active) {
+      }
+      if (strchr(PARMS.parameters.csvFilter,csvChar)) {
+        if (!menu_active && (csvChar == 'B')) {
+          display.printf(
+            "B %u-%03u #%i RSSI %i\n",
+            from,
+            headerId,
+            (int)(receivedMsg.packet[0]*256 + receivedMsg.packet[1]),
+            rssi
+            ); //Do it all in one
+        }
+        else if (!menu_active && ((csvChar == 'S') || (csvChar == 'P'))) {
           display.printf("%c %u-%03u RSSI %i\n",csvChar, from, headerId, rssi);
         }
+        MUTEX_LOCK(csvOutputMutex);
+        csv_serial.data(receivedMsg.timeStamp, csvChar, from, to, headerId, rssi, snr, gridLocator);
+        csv_telnet.data(receivedMsg.timeStamp, csvChar, from, to, headerId, rssi, snr, gridLocator);
+        MUTEX_UNLOCK(csvOutputMutex);
       }
-      MUTEX_LOCK(csvOutputMutex);
-      csv_serial.data(receivedMsg.timeStamp, csvChar, from, to, headerId, rssi, snr, gridLocator);
-      csv_telnet.data(receivedMsg.timeStamp, csvChar, from, to, headerId, rssi, snr, gridLocator);
-      MUTEX_UNLOCK(csvOutputMutex);
     }
     delay(25);
   } while(true);
@@ -420,17 +423,21 @@ void transmitAQueuedMsg()
         tx_time = millis();
         if (message.to == RH_BROADCAST_ADDRESS) {
           //TODO Queue the broadcast CSV ouput up
-          MUTEX_LOCK(csvOutputMutex);
-          csv_serial.broadcast(GPS.getTimeStamp(), from, message.headerID, message.gridLocator);
-          csv_telnet.broadcast(GPS.getTimeStamp(), from, message.headerID, message.gridLocator);
-          MUTEX_UNLOCK(csvOutputMutex);
+          if (strchr(PARMS.parameters.csvFilter,'O')) {
+            MUTEX_LOCK(csvOutputMutex);
+            csv_serial.broadcast(GPS.getTimeStamp(), from, message.headerID, message.gridLocator);
+            csv_telnet.broadcast(GPS.getTimeStamp(), from, message.headerID, message.gridLocator);
+            MUTEX_UNLOCK(csvOutputMutex);
+          }
         }
         else { // message is a signal report
           //TODO Queue the signal report CSV ouput up
-          MUTEX_LOCK(csvOutputMutex);
-          csv_serial.signalReport(GPS.getTimeStamp(), from, message.to, message.headerID, message.gridLocator);
-          csv_telnet.signalReport(GPS.getTimeStamp(), from, message.to, message.headerID, message.gridLocator);
-          MUTEX_UNLOCK(csvOutputMutex);
+          if (strchr(PARMS.parameters.csvFilter,'R')) {
+            MUTEX_LOCK(csvOutputMutex);
+            csv_serial.signalReport(GPS.getTimeStamp(), from, message.to, message.headerID, message.gridLocator);
+            csv_telnet.signalReport(GPS.getTimeStamp(), from, message.to, message.headerID, message.gridLocator);
+            MUTEX_UNLOCK(csvOutputMutex);
+          }
         }
       }
     }
@@ -683,11 +690,13 @@ void broadcastOnlyLoop()
 
 void debugMessage(char* message)
 {
-  MUTEX_LOCK(csvOutputMutex);
-  char ct[20];
-  sprintf(ct," %10ld, -, ", GPS.getTimeStamp());
-  csv_serial.debug(ct,message);
-  csv_telnet.debug(ct,message);
-  MUTEX_UNLOCK(csvOutputMutex);  
+  if (strchr(PARMS.parameters.csvFilter,'-')) {
+    MUTEX_LOCK(csvOutputMutex);
+    char ct[20];
+    sprintf(ct," %10ld, -, ", GPS.getTimeStamp());
+    csv_serial.debug(ct,message);
+    csv_telnet.debug(ct,message);
+    MUTEX_UNLOCK(csvOutputMutex);
+  }  
 }
 //--------------------------------------------------------------------------------------------------
