@@ -70,8 +70,9 @@ void WifiClass::connectToWIFITask(void *pvParameter)
             }
             else {
                 if (wLastStatus != wStatus) {
-                    display.printf("Unprocessed Wifi Status:%02X\r\n",wStatus);
-                    Serial.printf("Unprocessed Wifi Status: %02X\r\n",wStatus);
+                    uint val = (bWasConnected ? 0x02 : 0x00) | (bWasntConnected ? 0x01 : 0x00);
+                    display.printf("Unproc Wifi Status:%02X val: %02X\r\n",wStatus, val);
+                    Serial.printf("Unprocessed Wifi Status: %02X val: %02X\r\n",wStatus, val);
                 }
             }
         }

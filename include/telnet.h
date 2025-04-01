@@ -17,6 +17,7 @@ class Telnet : public ESPTelnet, public Print {
 
     void setup();
     void loop();
+    void restart();
 
   //protected:
     size_t write(uint8_t ch);
@@ -32,6 +33,7 @@ class Telnet : public ESPTelnet, public Print {
     static void onTelnetInput(String str);
     size_t bufWrite(uint8_t*data, int len);
     void bufDump();
+    const uint16_t  port = 23;
 };
 
 extern Telnet telnet;

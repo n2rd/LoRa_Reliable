@@ -4,7 +4,6 @@
 #if USE_TELNET > 0
 Telnet telnet;
 
-const uint16_t  port = 23;
 /* ------------------------------------------------- */
 /* ------------------------------------------------- */
 size_t Telnet::printf(const char* format, ...) {
@@ -178,6 +177,17 @@ void Telnet::setup()
         csv_serial.debug("TEL",(char*)"telnet error.\n");
         errorMsg("Will reboot...");
     }
+}
+/* ------------------------------------------------- */
+void Telnet::restart()
+{
+    telnet.stop();
+    if (telnet.begin(port,false)) {
+        csv_serial.info("TEL",(char*)"restart() telnet running on new IP \r\n");
+    } else {
+        csv_serial.debug("TEL",(char*)"restart() telnet.begin error.\r\n");
+        errorMsg("Will reboot...");
+    }   
 }
 /* ------------------------------------------------- */
 #if 0
