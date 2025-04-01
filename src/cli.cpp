@@ -383,11 +383,16 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
             strcpy(PARMS.parameters.wifiKey, passcode_str);
 
             #if defined(USE_WIFI) && (USE_WIFI >0)
+            #if USE_TELNET > 0
             telnet.disconnectClient(true);
+            #endif
             if (WIFI.changeAP()) {
-                telnet.restart();
-                ota_setup();
-                //initializeNetwork();
+                #if USE_TELNET > 0
+                    telnet.restart();
+                #endif
+                #if USE_OTA > 0
+                    ota_setup();
+                #endif
             }
             else {
                 log_e("Failed to change AP");
