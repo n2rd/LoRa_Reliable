@@ -37,6 +37,15 @@ void dumpStats(Print& printDev)
   }
 }
 
+void dumpCompactStats(Print& printDev)
+{
+  SimpleVector<int> keys = stats.keys();
+  for (int address : keys) {
+    ReceivedStats rs = stats.getElement(address);
+    printDev.printf("%3d cnt: %4d minRssi: %3d dbm\r\n",rs.address, rs.count, rs.minRSSI);
+  }
+}
+
 #ifndef USE_RANDOM_SIGREP_SLOT
 #define USE_RANDOM_SIGREP_SLOT true
 #endif
