@@ -64,6 +64,7 @@ void ParametersClass::init() {
             parameters.p2pAddressFilterEnabled = true;
             parameters.promiscuousEnabled = DEFAULT_PROMISCUOUS;
             parameters.gridSize = DEFAULT_GRID_SIZE;
+            strcpy(parameters.csvFilter,DEFAULT_CSV_FILTER);
             return;
       }
       log_e("nvs_flash_init_partition Succeeded");
@@ -219,6 +220,14 @@ if (preferences.isKey(Key.gridSize)) {
       parameters.gridSize = DEFAULT_GRID_SIZE;
       preferences.putUInt(Key.gridSize, parameters.gridSize);
 }
+if (preferences.isKey(Key.csvFilter)) {
+      // Preferences exist, read from it and put into mypreferences
+      strcpy(parameters.csvFilter, preferences.getString(Key.csvFilter).c_str());
+} else { //use defaults and write to nvram
+      strcpy(parameters.csvFilter, DEFAULT_CSV_FILTER);
+      preferences.putString(Key.csvFilter, parameters.csvFilter);
+}
+
 preferences.end();
 }
 //
@@ -297,6 +306,13 @@ void ParametersClass::update() {
     if (preferences.getUInt(Key.gridSize) != parameters.gridSize) {
       preferences.putUInt(Key.gridSize, parameters.gridSize);
     }
+    if (preferences.getUInt(Key.gridSize) != parameters.gridSize) {
+      preferences.putUInt(Key.gridSize, parameters.gridSize);
+    }
+    if (strcmp(preferences.getString(Key.csvFilter).c_str(), parameters.csvFilter) !=0) {
+      preferences.putString(Key.csvFilter, parameters.csvFilter);
+    }
+
     preferences.end();
 }
 

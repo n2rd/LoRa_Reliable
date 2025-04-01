@@ -96,6 +96,10 @@
 #ifndef DEFAULT_GRID_SIZE
 #define DEFAULT_GRID_SIZE 6
 #endif
+#ifndef DEFAULT_CSV_ILTER
+#define DEFAULT_CSV_FILTER "BORS"
+#endif
+
 
 // organized into a struct
 typedef struct ParametersStruct {
@@ -120,6 +124,7 @@ typedef struct ParametersStruct {
     uint8_t  promiscuousEnabled;
     uint8_t  p2pAddressFilterEnabled;
     uint8_t  gridSize;
+    char     csvFilter[10];
 } PARAMETERS;
 
 //for opening nvram preferences
@@ -170,6 +175,7 @@ class ParametersClass {
       const char* promiscuousEnabled = "PromisEnabled";
       const char* p2pAddressFilterEnabaled = "P2pAFEnabled";
       const char* gridSize = "gridSize";
+      const char* csvFilter = "csvFilter";
     } Key;
   private:
     static Preferences preferences;
