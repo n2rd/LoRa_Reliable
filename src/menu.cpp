@@ -50,10 +50,8 @@ void act_item_init()
   act_item[5] = 0;
   #endif
   if (MENU_DEBUG) Serial.printf("act_item_init: gps %i\n", act_item[5]);
-  tx_lock = PARMS.parameters.tx_lock;
-  if (MENU_DEBUG) Serial.printf("act_item_init: tx_lock %i\n", tx_lock);
-  short_pause = PARMS.parameters.short_pause;
-  if (MENU_DEBUG) Serial.printf("act_item_init: short_pause %i\n", short_pause);
+  if (MENU_DEBUG) Serial.printf("act_item_init: tx_lock %i\n", PARMS.parameters.tx_lock);
+  if (MENU_DEBUG) Serial.printf("act_item_init: short_pause %i\n", PARMS.parameters.short_pause);
 }
 
 void rotary_setup()
@@ -189,12 +187,12 @@ void menu() //pick the menu type
       #endif
       display.setTextAlignment(TEXT_ALIGN_LEFT);
       display.setFont(ArialMT_Plain_10);
-      if (tx_lock) {
+      if (PARMS.parameters.tx_lock) {
         display.drawString(52, 20, "on");
       } else {
         display.drawString(52, 20, "off");
       }
-      if (short_pause) {
+      if (PARMS.parameters.short_pause) {
         display.drawString(52, 35, "on");
       } else {
         display.drawString(52, 35, "off");
@@ -323,10 +321,10 @@ bool activate(int citem)
       case SET_MENU:
         switch (citem) {
           case 0: //TX LOCK 
-            tx_lock = !tx_lock;
+          PARMS.parameters.tx_lock = !PARMS.parameters.tx_lock;
             break;
           case 1: //short pause
-            short_pause = !short_pause;
+          PARMS.parameters.short_pause = !PARMS.parameters.short_pause;
             break;
           case 2: //WRITE NV
             PARMS.update();
