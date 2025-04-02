@@ -152,7 +152,7 @@ void telnetDebugOutput(char c) {
     //thread pick it up and push it to the telnet stream
     //since we are in an event_task we can't call telnet.print()
 
-    if (telnet.isConnected()) {
+    if (telnet.isConnected() && (strchr(PARMS.parameters.csvFilter,'D') != NULL)) {
         if (!telDbgBuffer.isFull())
             telDbgBuffer.push(c);
     }
