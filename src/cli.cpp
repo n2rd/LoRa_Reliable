@@ -14,7 +14,9 @@ Required commands
 CLI Command set
 
     Wifi Credentials        /@ SSID, passcode
-    Parametrics Dispaly     /1
+    Parametrics Dispaly     /1 
+    CSV Filtering           /2 <B, D, O, R, S and/or - (dash)>              Defai;t = BORS-
+    Statistics              /3 or /3CLEAR
     Transmitted grid length /6  6, 8 or 10                                  Default = 6
     Radio Address           /A                                              Default = 0
     Beacon Disable and      /B <OFF|ON>                                     Default = OFF
@@ -288,9 +290,10 @@ char        current_char_value1;
 char        current_char_value2;
 bool        valid_gridsquare_format;
 char        grid4_str_value[5];
-char        csvValidFilters[] = {'B', 'O', 'R', 'S', '-'};
+char        csvValidFilters[] = {'B', 'D', 'O', 'R', 'S', '-'};     //D=Debug and not included in defaults and help text
 bool        csvValidFilter;
 bool        csvFilterFound;
+char        strClear[] = "CLEAR";
 
 
 strcpy(command, command_arg);
@@ -472,16 +475,30 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
                 }
             }
             else {
-                ps_st.printf("NG:CSV message filter must be a combination of the letters B, O, R and S\r\n");
+                ps_st.printf("NG:CSV message filter must be a combination of the letters B, O, R, S and - (dash)\r\n");
             }
         }
         break;
-    case '3':
-    ps_st.printf("OK:stats follow for received devices\r\n");
-        ps_st.printf("=========================================================\r\n");
-        dumpStats(ps_st);
-        ps_st.printf("=========================================================\r\n");
+
+//      Statistics (stations heard, count, minimum RSSI, ...)
+//      /3      to display
+//      /3CLEAR to clear station history 
+        case '3':
+        if (command[0] == '\0') {
+            ps_st.printf("OK:stats follow for received devices\r\n");
+            ps_st.printf("=========================================================\r\n");
+            dumpStats(ps_st);
+            ps_st.printf("=========================================================\r\n");
+        }
+        else if (strcmp(&command[0], strClear) == 0) {
+            //clearP2pStats();
+            ps_st.printf("clearP2pStats()\r\n");
+        }
+        else {
+            ps_st.printf("NG:Statistics command must be /3 or /3CLEAR\r\n");
+        }
         break;
+
 //      Transmitted GridSize (# of characters)---------------------------------
     case '6':
         local_params.gridSize = PARMS.parameters.gridSize;

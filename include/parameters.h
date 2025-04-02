@@ -97,7 +97,7 @@
 #define DEFAULT_GRID_SIZE 6
 #endif
 #ifndef DEFAULT_CSV_ILTER
-#define DEFAULT_CSV_FILTER "BORS"
+#define DEFAULT_CSV_FILTER "BORS-"
 #endif
 
 
