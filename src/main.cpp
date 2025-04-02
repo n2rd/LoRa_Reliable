@@ -289,7 +289,7 @@ void check_button()
 
   // single click will wake up sleeping unit
   if (button.isDoubleClick()) {
-    dumpCompactStats(display);
+    p2pDumpCompactStats(display);
   }
   //long press puts to sleep
   if (button.pressedFor(1000)) 

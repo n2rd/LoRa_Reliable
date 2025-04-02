@@ -487,13 +487,13 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         if (command[0] == '\0') {
             ps_st.printf("OK:stats follow for received devices\r\n");
             ps_st.printf("=========================================================\r\n");
-            dumpStats(ps_st);
+            p2pDumpStats(ps_st);
             ps_st.printf("=========================================================\r\n");
         }
         else if (strcmp(&command[0], strClear) == 0) {
-            dumpStats(ps_st);
-            //clearP2pStats();
-            ps_st.printf("clearP2pStats()\r\n");
+            p2pDumpStats(ps_st);
+            p2pClearStats();
+            ps_st.printf("OK:display and clear P2P Stats()\r\n");
         }
         else {
             ps_st.printf("NG:Statistics command must be /3 or /3CLEAR\r\n");

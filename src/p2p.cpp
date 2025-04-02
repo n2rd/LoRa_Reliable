@@ -28,7 +28,7 @@ void addReceivedStats(int address, int rssi) {
   }
 }
 
-void dumpStats(Print& printDev)
+void p2pDumpStats(Print& printDev)
 {
   SimpleVector<int> keys = stats.keys();
   for (int address : keys) {
@@ -37,13 +37,17 @@ void dumpStats(Print& printDev)
   }
 }
 
-void dumpCompactStats(Print& printDev)
+void p2pDumpCompactStats(Print& printDev)
 {
   SimpleVector<int> keys = stats.keys();
   for (int address : keys) {
     ReceivedStats rs = stats.getElement(address);
     printDev.printf("%3d cnt: %4d minRssi: %3d dbm\r\n",rs.address, rs.count, rs.minRSSI);
   }
+}
+
+void p2pClearStats() {
+  stats.clear();
 }
 
 #ifndef USE_RANDOM_SIGREP_SLOT
@@ -67,7 +71,6 @@ bool randomSignalReportSlot = USE_RANDOM_SIGREP_SLOT;
 
 // some state variables
 extern bool menu_active;
-bool short_pause = false;
 unsigned long effective_pause = 0;
 uint64_t broadcast_time = 0;
 
@@ -642,7 +645,7 @@ void p2pSetup(bool broadcastOnlyArg)
   // every PAUSE seconds add a broadcast message to the message queue to be sent
   // if short_aouse is true then the pause interval is cut by half
   // this is to facilitate testing
-  if (short_pause) {
+  if (PARMS.parameters.short_pause) {
     effective_pause = PAUSE * 1000 / 2;
   }
   else {
@@ -668,12 +671,7 @@ void p2pSetup(bool broadcastOnlyArg)
 //unsigned long lastLoop = micros();
 void p2pLoop(void)
 {
-  //log_e("loop time %ld in micros",micros() - lastLoop);
-  //lastLoop = micros();
-  //unsigned long topOfLoop = micros();
-  //log_e("Loop time is %ld", micros() - topOfLoop);
-  //yield();
-  //vTaskDelay(1);
+// Placeholder for now
 }
 //--------------------------------------------------------------------------------------------------
 void broadcastOnlyLoop()
