@@ -491,6 +491,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
             ps_st.printf("=========================================================\r\n");
         }
         else if (strcmp(&command[0], strClear) == 0) {
+            dumpStats(ps_st);
             //clearP2pStats();
             ps_st.printf("clearP2pStats()\r\n");
         }
