@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include "ArduinoQueue.h"
 #include "reversePriorityQueue.h"
-#include "Hashtable.h"
+#include "hashtable.h"
 
 class ReceivedStats {
   public:
