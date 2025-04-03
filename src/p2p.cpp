@@ -16,6 +16,7 @@ class ReceivedStats {
 };
 
 static Hashtable<int,ReceivedStats> stats;
+static unsigned long statsFirstMillis = 0;
 
 void addReceivedStats(int address, int rssi) {
   ReceivedStats* ptrRS = stats.get(address);
@@ -30,6 +31,7 @@ void addReceivedStats(int address, int rssi) {
 
 void p2pDumpStats(Print& printDev)
 {
+  //TODO: Display Stats for the last stasFirstMillis in days,hours,minutes,seconds
   SimpleVector<int> keys = stats.keys();
   for (int address : keys) {
     ReceivedStats rs = stats.getElement(address);
@@ -39,6 +41,7 @@ void p2pDumpStats(Print& printDev)
 
 void p2pDumpCompactStats(Print& printDev)
 {
+  //TODO: Display Stats for the last stasFirstMillis in days,hours,minutes,seconds
   SimpleVector<int> keys = stats.keys();
   for (int address : keys) {
     ReceivedStats rs = stats.getElement(address);
@@ -48,6 +51,7 @@ void p2pDumpCompactStats(Print& printDev)
 
 void p2pClearStats() {
   stats.clear();
+  statsFirstMillis = millis();
 }
 
 #ifndef USE_RANDOM_SIGREP_SLOT
@@ -221,6 +225,7 @@ void p2pTaskDisplayCSV(void *pvParameter)
         MUTEX_LOCK(csvOutputMutex);
         csv_serial.data(receivedMsg.timeStamp, csvChar, from, to, headerId, rssi, snr, gridLocator);
         csv_telnet.data(receivedMsg.timeStamp, csvChar, from, to, headerId, rssi, snr, gridLocator);
+        csv_bleTerm.data(receivedMsg.timeStamp, csvChar, from, to, headerId, rssi, snr, gridLocator);
         MUTEX_UNLOCK(csvOutputMutex);
       }
     }
@@ -378,6 +383,7 @@ void queueABroadcastMsg(uint8_t from = RH_BROADCAST_ADDRESS, unsigned long timeT
     MUTEX_LOCK(csvOutputMutex);
     csv_serial.debug("p2p",(char *)"Transmit queue full\n");
     csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
+    csv_bleTerm.debug("p2p",(char *)"Transmit queue full\n");
     MUTEX_UNLOCK(csvOutputMutex);
   }
 }
@@ -430,6 +436,7 @@ void transmitAQueuedMsg()
             MUTEX_LOCK(csvOutputMutex);
             csv_serial.broadcast(GPS.getTimeStamp(), from, message.headerID, message.gridLocator);
             csv_telnet.broadcast(GPS.getTimeStamp(), from, message.headerID, message.gridLocator);
+            csv_bleTerm.broadcast(GPS.getTimeStamp(), from, message.headerID, message.gridLocator);
             MUTEX_UNLOCK(csvOutputMutex);
           }
         }
@@ -439,6 +446,7 @@ void transmitAQueuedMsg()
             MUTEX_LOCK(csvOutputMutex);
             csv_serial.signalReport(GPS.getTimeStamp(), from, message.to, message.headerID, message.gridLocator);
             csv_telnet.signalReport(GPS.getTimeStamp(), from, message.to, message.headerID, message.gridLocator);
+            csv_bleTerm.signalReport(GPS.getTimeStamp(), from, message.to, message.headerID, message.gridLocator);
             MUTEX_UNLOCK(csvOutputMutex);
           }
         }
@@ -497,6 +505,7 @@ void listenForMessage()
           MUTEX_LOCK(csvOutputMutex);
           csv_serial.debug("p2p",(char *)"receive_queue full\n");
           csv_telnet.debug("p2p",(char *)"receive_queue full\n");
+          csv_bleTerm.debug("p2p",(char *)"receive_queue full\n");
           MUTEX_UNLOCK(csvOutputMutex);
         }
 
@@ -520,6 +529,7 @@ void listenForMessage()
           MUTEX_LOCK(csvOutputMutex);
           csv_serial.debug("p2p",(char *)"Transmit queue full\n");
           csv_telnet.debug("p2p",(char *)"Transmit queue full\n");
+          csv_bleTerm.debug("p2p",(char *)"Transmit queue full\n");
           MUTEX_UNLOCK(csvOutputMutex);
         }
       //} else {
@@ -539,6 +549,7 @@ void listenForMessage()
           MUTEX_LOCK(csvOutputMutex);
           csv_serial.debug("p2p",(char *)"receive_queue full\n");
           csv_telnet.debug("p2p",(char *)"receive_queue full\n");
+          csv_bleTerm.debug("p2p",(char *)"receive_queue full\n");
           MUTEX_UNLOCK(csvOutputMutex); 
         }
       }
@@ -694,6 +705,7 @@ void debugMessage(char* message)
     sprintf(ct," %10ld, -, ", GPS.getTimeStamp());
     csv_serial.debug(ct,message);
     csv_telnet.debug(ct,message);
+    csv_bleTerm.debug(ct,message);
     MUTEX_UNLOCK(csvOutputMutex);
   }  
 }

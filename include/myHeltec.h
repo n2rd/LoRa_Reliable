@@ -21,7 +21,7 @@
 #else
   #include "driver/temp_sensor.h"
 #endif
-
+#define HAS_BLUETOOTH 1
 #include <RH_SX126x.h>
 extern RH_SX126x driver;
 #define DRIVER_TYPE RH_SX126x

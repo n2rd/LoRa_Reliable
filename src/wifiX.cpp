@@ -1,15 +1,22 @@
 #include "main.h"
 #if USE_WIFI > 0
-void WifiClass::setup() {}
+void WifiClass::setup() { bIsReIniting = false; }
 
 void WifiClass::connectToWIFITask(void *pvParameter)
 {
     WifiClass *me = (WifiClass *)pvParameter;
-    WiFi.mode(WIFI_STA);
-    WiFi.setHostname("Lora_Reliable");
-    WiFi.setAutoReconnect(true);
-    WiFi.persistent(true);
-    WiFi.begin(PARMS.parameters.wifiSSID, PARMS.parameters.wifiKey);
+    sprintf(me->hostnameBuffer,"Lora_RKR-%d",PARMS.parameters.address);
+    if (me->bIsReIniting) {
+        WiFi.reconnect();
+        me->bIsReIniting = false;
+    }
+    else {
+        WiFi.mode(WIFI_STA);
+        WiFi.setHostname(me->hostnameBuffer);
+        WiFi.setAutoReconnect(true);
+        WiFi.persistent(true);
+        WiFi.begin(PARMS.parameters.wifiSSID, PARMS.parameters.wifiKey);
+    }
     const TickType_t tickDelay = 5000;
     int tryCount = 0;
     while ((WiFi.status() != WL_CONNECTED) && (tryCount < 8)) {
@@ -101,16 +108,21 @@ void WifiClass::notifyDisconnected()
     display.print("Disconnected from ");
     display.println(PARMS.parameters.wifiSSID);
 }
-bool WifiClass::init()
+bool WifiClass::init(bool bReinit)
 {
     xTaskCreatePinnedToCore(connectToWIFITask,"wifixCTWTask",10000,this,1,&wifixCTWTaskHandle, xPortGetCoreID());
     delay(4500); // Wait for connection or failure in Task
     return (WiFi.status() == WL_CONNECTED) ? true : false;
 }
 
-void WifiClass::disconnect()
+void WifiClass::killTask()
 {
-    WiFi.disconnect(false,false);
+    vTaskDelete(wifixCTWTaskHandle);
+}
+
+void WifiClass::disconnect(bool bRadioOff, bool bEraseAP)
+{
+    WiFi.disconnect(bRadioOff,bEraseAP);
 }
 bool WifiClass::changeAP()
 {

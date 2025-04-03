@@ -58,7 +58,7 @@ size_t Telnet::write(uint8_t* bytes, unsigned int size)
 /* ------------------------------------------------- */
 /* ------------------------------------------------- */
 DECLARE_MUTEX(telnetBufferMutex);
-CircularBuffer<uint8_t,10000> telnetBuffer;
+CircularBuffer<uint8_t,100000> telnetBuffer;
 size_t Telnet::bufWrite(uint8_t*data, int len)
 {
     MUTEX_LOCK(telnetBufferMutex);

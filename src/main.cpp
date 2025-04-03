@@ -23,26 +23,45 @@
 #define TIMEOUT     200  //for sendtoWait
 #define RETRIES     3     //for sendtoWait
 
-// some state variables
-
-
-
 //
-#if USE_TELNET > 0
-CsvClass csv_telnet(telnet);
-#else //USE_TELNET == 0
-CsvClass csv_telnet((Print&)dummyPrintSplitter);
+// csv_ variables 
+//
+#if (USE_TELNET > 0) && (USE_BLUETOOTH > 0)
+  CsvClass csv_bleTerm(bleTerminal);
+  CsvClass csv_telnet(telnet);
+#elif USE_TELNET > 0
+  CsvClass csv_bleTerm((Print&)dummyPrintSplitter);
+  CsvClass csv_telnet(telnet);
+#elif USE_BLUETOOTH > 0
+  CsvClass csv_bleTerm(bleTerminal);
+  CsvClass csv_telnet((Print&)dummyPrintSplitter);
 #endif //USE_TELNET == 0
 CsvClass csv_serial(Serial);
+//
+// PrintSplitter variables
+//
+#if (USE_TELNET > 0) && (USE_BLUETOOTH > 0)
+PrintSplitter csv_both(csv_serial,csv_telnet,csv_bleTerm);
+#elif USE_TELNET > 0
 PrintSplitter csv_both(csv_serial,csv_telnet);
+#elif USE_BLUETOOTH > 0
+PrintSplitter csv_both(csv_serial,csv_bleTerm);
+#endif
+
 PrintSplitter ps_both(Serial, display);
-#if USE_TELNET > 0
+#if (USE_TELNET > 0) && (USE_BLUETOOTH > 0)
+PrintSplitter ps_st(Serial,telnet,bleTerminal);
+PrintSplitter ps_all(Serial,telnet, bleTerminal, display);
+#elif USE_TELNET > 0
 PrintSplitter ps_st(Serial,telnet);
 PrintSplitter ps_all(Serial,telnet, display);
-#else //USE_TELNET == 0
+#elif USE_BLUETOOTH > 0
+PrintSplitter ps_st(Serial,bleTerminal);
+PrintSplitter ps_all(Serial,bleTerminal, display);
+#else
 PrintSplitter ps_st(Serial);
 PrintSplitter ps_all(Serial,display);
-#endif //USE_TELNET == 0
+#endif 
 
 RHDatagram manager(driver, 0);  
 bool broadcastOnly = false;
@@ -64,6 +83,9 @@ void initializeNetwork() {
   #endif
   #if USE_TELNET > 0
     telnet.setup();
+  #endif
+  #if USE_BLUETOOTH
+    //bleTerminal.setup();
   #endif
   }
 
@@ -90,7 +112,7 @@ void setup()
   display.displayOn();
   display.setFont(ArialMT_Plain_16);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)-16 /* font height */, "Lora_Reliable");
+  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)-16 /* font height */, PRODUCT_NAME);
   display.drawString(display.getWidth() / 2, (display.getHeight() / 3)*2-16 /* font height */, VERSION);
   display.display();
   delay(3000);
@@ -172,9 +194,9 @@ else {
     ps_all.printf("BMP280 Temp: %3.2f°\r\n",BMP280.readTempF());
   }
 
-
   csv_telnet.setOutputEnabled(PARMS.parameters.telnetCSVEnabled);
   csv_serial.setOutputEnabled(PARMS.parameters.serialCSVEnabled);
+  csv_bleTerm.setOutputEnabled(true);
   //log_e("exiting setup()");
 }
 /***********************************************************/
@@ -225,6 +247,7 @@ void serial_input_loop()
 /***********************************************************/
 unsigned long loopTimer = 0;
 unsigned long lastLoopTimer = 0;
+bool BLEOnWiFiOff = false;
 /***********************************************************/
 void loop()
 {
@@ -254,6 +277,12 @@ void loop()
   }
   #if defined(USE_OTA) && (USE_OTA >0)
     ota_loop();
+  #endif
+
+  #if defined(USE_BLUETOOTH) && (USE_BLUETOOTH > 0)
+    if (BLEOnWiFiOff) {
+      bleTerminal.loop();
+    }
   #endif
 
 // #if HAS_GPS
@@ -290,6 +319,33 @@ void check_button()
   // single click will wake up sleeping unit
   if (button.isDoubleClick()) {
     p2pDumpCompactStats(display);
+  }
+  if (button.isTripleClick()) {
+    if (BLEOnWiFiOff) {
+      //we are switching from bluetooth to Wifi or ... nothing 
+      BLEOnWiFiOff = false;
+      bleTerminal.disconnect();
+      #if USE_WIFI > 0
+        //WIFI.changeAP();
+        WIFI.init(true);
+        ps_all.printf(" WIFI ON BlueTooth OFF\r\n");
+      #else
+        ps_all.printf("BlueTooth OFF\r\n");
+      #endif
+    }
+    else {
+      //we are switching from Wifi or nothing to bluettooth
+      BLEOnWiFiOff = true;
+      #if USE_WIFI > 0
+        WIFI.disconnect(true);
+        WIFI.killTask();
+        bleTerminal.setup();
+        ps_all.printf("BlueTooth ON WIFI OFF\r\n");
+      #else
+        bleTerminal.setup();
+        ps_all.printf("BlueTooth ON\r\n");
+      #endif
+    }
   }
   //long press puts to sleep
   if (button.pressedFor(1000)) 

@@ -1,5 +1,7 @@
 #ifndef VERSION_H
 #define VERSION_H
+//Produt Name
+#define PRODUCT_NAME "Lora_RKR"
 //version
 #define BUILD_DATE __DATE__
 #define BUILD_TIME __TIME__

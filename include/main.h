@@ -44,6 +44,10 @@
 #include "inaSensor.h"
 #endif //has_ina219
 
+#if HAS_BLUETOOTH > 0
+#include "bluetoothUart.h"
+#endif 
+
 /*
 #if USE_WIFI >0
     #if defined(ESP32)
@@ -82,6 +86,7 @@
 #define MUTEX_UNLOCK(X) pthread_mutex_unlock(&X)
 
 extern CsvClass csv_telnet;
+extern CsvClass csv_bleTerm;
 extern CsvClass csv_serial;
 extern PrintSplitter csv_both;
 extern PrintSplitter ps_both;

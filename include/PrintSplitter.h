@@ -15,6 +15,7 @@ class PrintSplitter : public Print {
     PrintSplitter(Print &_a);
     PrintSplitter(Print &_a, Print &_b);
     PrintSplitter(Print &_a, Print &_b, Print &_c);
+    PrintSplitter(Print &_a, Print &_b, Print &_c, Print &_d);
     size_t write(uint8_t c);
     size_t write(const char* str);
   private:
@@ -22,6 +23,7 @@ class PrintSplitter : public Print {
     Print &a;
     Print &b;
     Print &c;
+    Print &d;
     //DummyPrintSplitter& dummy();    
 };
 

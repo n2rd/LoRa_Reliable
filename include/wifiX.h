@@ -4,14 +4,18 @@
 class WifiClass {
     public:
         void setup();
-        bool init();
-        void disconnect();
+        bool init(bool bReinit = false);
+        void killTask();
+        void disconnect(bool bRadioOff = false,bool eraseAP = false);
         bool changeAP();
     private:
-    static void connectToWIFITask(void *pvParameter);
-    static TaskHandle_t wifixCTWTaskHandle;
-    void notifyConnected();
-    void notifyDisconnected();
+        static void connectToWIFITask(void *pvParameter);
+        static TaskHandle_t wifixCTWTaskHandle;
+        void notifyConnected();
+        void notifyDisconnected();
+        //----------------------//
+        bool bIsReIniting;
+        char hostnameBuffer[13];
 };
 
 extern WifiClass WIFI;
