@@ -54,6 +54,7 @@ void WifiClass::connectToWIFITask(void *pvParameter)
         wStatus = WiFi.status();
         if ((wStatus == WL_CONNECTED) && bWasntConnected) {
             //We reconnected
+            mdns_start();
             bWasntConnected = false;
             bWasConnected = true;
             me->notifyConnected();
@@ -64,6 +65,7 @@ void WifiClass::connectToWIFITask(void *pvParameter)
                     //we disconnected or never was connected ??
                     bWasntConnected = true;
                     bWasConnected = false;
+                    mdns_stop();
                     me->notifyDisconnected();
                     //WiFi.disconnect(false,false); This caused the reconnection to not happen
                 }
