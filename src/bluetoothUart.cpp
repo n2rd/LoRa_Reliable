@@ -44,15 +44,25 @@ void BLEPrint::setup() {
 
 void BLEPrint::loop() {
     static int chCount = 0;
+    static bool lastWasaCR = true;
     static uint8_t buffer[100];
 
     if (serialBLE.available()) {
         int ch = serialBLE.read();
-        buffer[chCount++] = ch;
-        if (ch == '\r') {
-            buffer[chCount] = 0;
-            cli_execute((const char *)buffer);
-            chCount = 0;
+        if (lastWasaCR && (ch == '\n')) {
+            lastWasaCR = false;
+        }
+        else {
+            buffer[chCount++] = ch;
+            if ((ch == '\r') || (ch == '\n')) {
+                buffer[chCount] = 0;
+                cli_execute((const char *)buffer);
+                chCount = 0;
+                if (ch == '\r')
+                    lastWasaCR = true;
+            }
+            else
+                lastWasaCR = false;
         }
     }
 }
