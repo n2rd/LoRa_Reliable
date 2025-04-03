@@ -35,6 +35,7 @@
 #include "gps.h"
 #include "menu.h"
 #include "bmp280sensor.h"
+#include "utils.h"
 
 #if defined(USE_WM5500_ETHERNET) && (USE_WM5500_ETHERNET == 1)
 #include "wm5500.h"

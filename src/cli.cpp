@@ -892,7 +892,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
 //      Invalid Command--------------------------------------------------------
         default:
-            ps_st.printf("NG:Unrecognized command %c [@, 1, 2, 6, A, B, C, E, F, G, H, I, L, M, P, R, T, U, V, W, X, Y]\r\n", cmd_code);
+            ps_st.printf("NG:Unrecognized command %c [@, 1, 2, 3, 6, A, B, C, E, F, G, H, I, L, M, P, R, T, U, V, W, X, Y]\r\n", cmd_code);
         }
     }
     else {
