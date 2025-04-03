@@ -43,8 +43,10 @@ void onOTAEnd(bool success) {
 
 void ota_setup(void) {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    char buffer[200];
-    sprintf(buffer,"Welcome ! This is a %s device.\r\n\r\nThis radio is #%u ASYNC\r\n\r\nFirmware Version: %s %s\r\n",manager.thisAddress(),PRODUCT_NAME,BUILD_DATE,BUILD_TIME);
+    char buffer[120];
+    int sz = sprintf(buffer,"Welcome ! This is a %s device.\r\n\r\nThis radio is #%u\r\n\r\nFirmware Version built on: %s %s\r\n",PRODUCT_NAME,manager.thisAddress(),BUILD_DATE,BUILD_TIME);
+    if (sz >= sizeof(buffer))
+      log_e("size of buffer needed to be %d and is %d MEMORY HAS BEEN OVERWRITTEN !!!!",sz,sizeof(buffer));
     request->send(200, "text/plain",buffer);
   });
 
