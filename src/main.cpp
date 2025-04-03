@@ -8,7 +8,10 @@
   #define HELTEC_DEFAULT_POWER_BUTTON   // must be before "#include <heltec_unofficial.h>"
   #include "myHeltec.h"
 #endif
-
+#if ((USE_WM5500_ETHERNET > 0) || (USE_WIFI > 0))
+  //Do include for mDNS advertising
+  #include <ESPmDNS.h>
+#endif 
 #if defined(USE_WIFI) && (USE_WIFI >0)
   #if defined(ESP32)
     #if defined(ELEGANTOTA_USE_ASYNC_WEBSERVER) && ELEGANTOTA_USE_ASYNC_WEBSERVER == 1
@@ -72,7 +75,7 @@ double lastLon = 0;
 #endif //HAS_GPS
 
 void initializeNetwork() {
-  #ifdef USE_WM5500_ETHERNET
+  #ifdef USE_WM5500_ETHERNET > 0
     WM5500_Setup();
   #endif
   #if USE_WIFI > 0
@@ -121,6 +124,8 @@ void setup()
   display.cls();
 
   initializeNetwork();
+
+  mdns_start();
 
   //start the radio
   if (!manager.init()) 
@@ -332,11 +337,13 @@ void check_button()
       #else
         ps_all.printf("BlueTooth OFF\r\n");
       #endif
+      mdns_start();
     }
     else {
       //we are switching from Wifi or nothing to bluettooth
       BLEOnWiFiOff = true;
       #if USE_WIFI > 0
+        mdns_stop();
         WIFI.disconnect(true);
         WIFI.killTask();
         bleTerminal.setup();
