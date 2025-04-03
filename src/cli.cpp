@@ -294,6 +294,7 @@ char        csvValidFilters[] = {'B', 'D', 'O', 'R', 'S', '-'};     //D=Debug an
 bool        csvValidFilter;
 bool        csvFilterFound;
 char        strClear[] = "CLEAR";
+float       uptimeHours;
 
 
 strcpy(command, command_arg);
@@ -410,6 +411,10 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         ps_st.printf("OK:Parametrics follow for connected devices\r\n");
         ps_st.printf("=========================================================\r\n");
 
+        uptimeHours = millis()/(1000*60*60);
+        ps_st.printf("Up time: %.1f hours\r\n", uptimeHours);
+        ps_st.printf("----------------------------------------------------------\r\n");
+
         if (BMP280.isPresent()) {
             ps_st.printf("BMP280 temperature sensor present\r\n");
             ps_st.printf("Temperature: %f°\r\n", BMP280.readTempF());
@@ -429,7 +434,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
 
         ps_st.printf("==========================================================\r\n");
-       break;
+        break;
 
 //      CSV Filtering (B, O, R, S)
     case '2':
@@ -458,8 +463,9 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
                          }
                     }
                     else {
-                        j++;
+                        //j++;
                     }
+                j++;
                 }
                 if (!csvFilterFound) csvValidFilter = false;
             }
