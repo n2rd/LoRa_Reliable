@@ -295,6 +295,7 @@ bool        csvValidFilter;
 bool        csvFilterFound;
 char        strClear[] = "CLEAR";
 float       uptimeHours;
+char        uptimeStr[14];
 
 
 strcpy(command, command_arg);
@@ -412,7 +413,8 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         ps_st.printf("=========================================================\r\n");
 
         uptimeHours = millis()/(1000*60*60);
-        ps_st.printf("Up time: %.1f hours\r\n", uptimeHours);
+        milliToDhms(uptimeStr, millis());
+        ps_st.printf("Up time: %s\r\n", uptimeStr);
         ps_st.printf("----------------------------------------------------------\r\n");
 
         if (BMP280.isPresent()) {

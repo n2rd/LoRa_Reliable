@@ -40,7 +40,9 @@ static void statsHeader(Print& printDev)
 } 
 void p2pDumpStats(Print& printDev)
 {
-  //TODO: Display Stats for the last stasFirstMillis in days,hours,minutes,seconds
+  char        statsTimeStr[14];
+  milliToDhms(statsTimeStr, millis()-statsFirstMillis);
+  printDev.printf("History statistics for the past %s\r\n", statsTimeStr);
   statsHeader(printDev);
   SimpleVector<int> keys = stats.keys();
   for (int address : keys) {
@@ -57,7 +59,9 @@ static void compactStatsHeader(Print& printDev)
 
 void p2pDumpCompactStats(Print& printDev)
 {
-  //TODO: Display Stats for the last stasFirstMillis in days,hours,minutes,seconds
+  char        statsTimeStr[14];
+  milliToDhms(statsTimeStr, millis()-statsFirstMillis);
+  printDev.printf("History statistics for the past %s\r\n", statsTimeStr);
   compactStatsHeader(printDev);
   SimpleVector<int> keys = stats.keys();
   for (int address : keys) {
