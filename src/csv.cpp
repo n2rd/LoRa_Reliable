@@ -62,7 +62,7 @@ void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId
         bearing = GPS.bearing(myLat, myLon, bcastLat, bcastLon);
     }
     printObject.printf(
-        "B, %10ld, O, %3d, 255, %3u,     ,    , %s, %4.2lf, %3.1lf\r\n",
+        "B, %10ld, O, %3d, 255, %3u,     ,    , %10s, %4.2lf, %3.1lf\r\n",
         timeStamp,
         from,
         headerId,
@@ -86,7 +86,7 @@ void CsvClass::signalReport(unsigned long timeStamp,uint8_t from, uint8_t to , u
         bearing = GPS.bearing(myLat, myLon, bcastLat, bcastLon);
     }
     printObject.printf(
-        "R, %10ld, R, %3d, %3d, %3u,     ,    , %s, %4.2lf, %3.2lf\r\n",
+        "R, %10ld, R, %3d, %3d, %3u,     ,    , %10s, %4.2lf, %3.2lf\r\n",
         timeStamp,
         from,
         to,
