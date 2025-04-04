@@ -58,7 +58,7 @@ void ota_setup(void) {
   ElegantOTA.onEnd(onOTAEnd);
   //ElegantOTA.setFWVersion("0.1.0"); //In Pro version only
   //ElegantOTA.setID("my_device_001"); //In Pro version only
-  ElegantOTA.setAuth("Lora","Reliable");
+  ElegantOTA.setAuth("Lora","RKR");
 
   server.begin();
   log_i("HTTP server started");
