@@ -10,42 +10,59 @@ class ReceivedStats {
     int address;
     int count;
     int minRSSI;
-    ReceivedStats() : address(-1), count(0), minRSSI(100) {}
-    ReceivedStats(int _address) : address(_address), count(1), minRSSI(100) {}
-    ReceivedStats(int _address, int _RSSI) : address(_address), count(1), minRSSI(_RSSI) {}
+    double meanRSSI;
+    double distance;
+    ReceivedStats() : address(-1), count(0), minRSSI(100), meanRSSI(0.0), distance(0.0) {}
+    ReceivedStats(int _address) : address(_address), count(1), minRSSI(100), meanRSSI(0.0), distance(0.0) {}
+    ReceivedStats(int _address, int _RSSI) : address(_address), count(1), minRSSI(_RSSI), meanRSSI(0.0), distance(0.0) {}
+    ReceivedStats(int _address, int _RSSI, double _distance) : address(_address), count(1), minRSSI(_RSSI), meanRSSI(_RSSI), distance(_distance) {}
 };
 
 static Hashtable<int,ReceivedStats> stats;
 static unsigned long statsFirstMillis = 0;
 
-void addReceivedStats(int address, int rssi) {
+void addReceivedStats(int address, int rssi, double distance) {
   ReceivedStats* ptrRS = stats.get(address);
   if (ptrRS) {
     ptrRS->count+= 1;
     ptrRS->minRSSI = min(ptrRS->minRSSI,rssi);
+    ptrRS->meanRSSI += (rssi - ptrRS->meanRSSI) / ptrRS->count;
+    ptrRS->distance = max(ptrRS->distance,distance);
   }
   else {
-    stats.put(address,ReceivedStats(address,rssi));
+    stats.put(address,ReceivedStats(address, rssi, distance));
   }
 }
-
+static void statsHeader(Print& printDev)
+{
+  printDev.printf("radio      min   mean   max  \r\n"); 
+  printDev.printf(" id   cnt  RSSI  RSSI   dist \r\n");
+} 
 void p2pDumpStats(Print& printDev)
 {
   //TODO: Display Stats for the last stasFirstMillis in days,hours,minutes,seconds
+  statsHeader(printDev);
   SimpleVector<int> keys = stats.keys();
   for (int address : keys) {
     ReceivedStats rs = stats.getElement(address);
-    printDev.printf("%3d cnt: %4d minRssi: %3d dbm\r\n",rs.address, rs.count, rs.minRSSI);
+    printDev.printf("%3d  %4d  %3d %3.2lf %3.2lf \r\n",rs.address, rs.count, rs.minRSSI, rs.meanRSSI, rs.distance);
   }
 }
+
+static void compactStatsHeader(Print& printDev)
+{
+  printDev.printf("radio heard  min   max  \r\n"); 
+  printDev.printf(" id       cnt   RSSI  dist \r\n");
+} 
 
 void p2pDumpCompactStats(Print& printDev)
 {
   //TODO: Display Stats for the last stasFirstMillis in days,hours,minutes,seconds
+  compactStatsHeader(printDev);
   SimpleVector<int> keys = stats.keys();
   for (int address : keys) {
     ReceivedStats rs = stats.getElement(address);
-    printDev.printf("%3d cnt: %4d minRssi: %3d dbm\r\n",rs.address, rs.count, rs.minRSSI);
+    printDev.printf("%3d     %4d     %3d    %3.2f\r\n",rs.address, rs.count, rs.minRSSI, rs.distance);
   }
 }
 
@@ -175,6 +192,24 @@ bool checkTransmitQueueForItem(){
   return bRet;
 }
 //--------------------------------------------------------------------------------------------------
+static bool calculateDistanceFromMe(char *gridLocator, double* pMiles, double* pBearing)
+{
+  double myLat,myLon, dataLat, dataLon;
+  double miles = -1;
+  if (gridLocator) {
+      GPS.maidenheadGridToLatLon(gridLocator,&dataLat,&dataLon);
+      GPS.getLastLatLon(&myLat, &myLon);
+      if (pMiles)
+        *pMiles = GPS.distance(myLat, myLon, dataLat, dataLon);
+      if (pBearing)
+        *pBearing = GPS.bearing(myLat, myLon, dataLat, dataLon);
+      return true;
+  }
+  return false;
+}
+//--------------------------------------------------------------------------------------------------
+uint displayHeaderCount = 0;
+//--------------------------------------------------------------------------------------------------
 void p2pTaskDisplayCSV(void *pvParameter)
 {
   do {
@@ -192,11 +227,13 @@ void p2pTaskDisplayCSV(void *pvParameter)
       char gridLocator[11];
       char csvChar = 'X';
       extractGridLocatorFromData(2, receivedMsg.packet, len, gridLocator);
+      double distance,bearing;
+      calculateDistanceFromMe(gridLocator,&distance,&bearing);
       if (to == RH_BROADCAST_ADDRESS) {
         //display the broadcast message
         snr = receivedMsg.snr;
         rssi = receivedMsg.rssi;
-        addReceivedStats(from,rssi);
+        addReceivedStats(from,rssi,distance);
 
         csvChar = 'B';
       } else {
@@ -212,15 +249,16 @@ void p2pTaskDisplayCSV(void *pvParameter)
       if (strchr(PARMS.parameters.csvFilter,csvChar)) {
         if (!menu_active && (csvChar == 'B')) {
           display.printf(
-            "B %u-%03u #%i RSSI %i\n",
+            "B %u-%03u R:%i D:%3.2f B:%3.0f\n",
             from,
             headerId,
-            (int)(receivedMsg.packet[0]*256 + receivedMsg.packet[1]),
-            rssi
+            rssi,
+            distance,
+            bearing
             ); //Do it all in one
         }
         else if (!menu_active && ((csvChar == 'S') || (csvChar == 'P'))) {
-          display.printf("%c %u-%03u RSSI %i\n",csvChar, from, headerId, rssi);
+          display.printf("%c %u-%03u R:%i D:%3.2f B:%3.0f\n",csvChar, from, headerId, rssi, distance, bearing);
         }
         MUTEX_LOCK(csvOutputMutex);
         csv_serial.data(receivedMsg.timeStamp, csvChar, from, to, headerId, rssi, snr, gridLocator);

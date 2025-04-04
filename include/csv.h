@@ -11,6 +11,7 @@ typedef struct CsvData {
     float snr;
     char gridLocator[11];
     double miles;
+    double bearing;
 } CSVDATA, *CSVDATAPTR;
 
 class CsvClass : public Print { //we derive from Print so that we can use printSplitter 

@@ -75,7 +75,7 @@ double lastLon = 0;
 #endif //HAS_GPS
 
 void initializeNetwork() {
-  #ifdef USE_WM5500_ETHERNET > 0
+  #if USE_WM5500_ETHERNET > 0
     WM5500_Setup();
   #endif
   #if USE_WIFI > 0
@@ -125,7 +125,7 @@ void setup()
 
   initializeNetwork();
 
-  mdns_start();
+  mdns_start(true);
 
   //start the radio
   if (!manager.init()) 
@@ -337,7 +337,7 @@ void check_button()
       #else
         ps_all.printf("BlueTooth OFF\r\n");
       #endif
-      mdns_start();
+      mdns_start(true);
     }
     else {
       //we are switching from Wifi or nothing to bluettooth

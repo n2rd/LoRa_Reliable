@@ -32,6 +32,7 @@ class GPSClass {
         void maidenheadGridToLatLon(char* grid,double *lat, double *lon);
         const char *getPowerStateName(PowerState state);
         double distance(double lat1, double lon1, double lat2, double lon2);
+        double bearing(double lat1, double lon1, double lat2, double lon2);
         bool getLastLatLon(double *lat, double *lon);
         bool getRtcIsSet() { return rtcIsSet; }
         ESP32Time *getRtc() { return &rtc; }

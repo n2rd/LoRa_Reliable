@@ -54,18 +54,21 @@ void CsvClass::broadcast(unsigned long timeStamp,uint8_t from , uint8_t headerId
     char nul = 0;
     double myLat,myLon,bcastLat,bcastLon;
     double miles = -1;
+    double bearing = -1;
     if (gridLocator) {
         GPS.maidenheadGridToLatLon(gridLocator,&bcastLat,&bcastLon);
         GPS.getLastLatLon(&myLat, &myLon);
         miles = GPS.distance(myLat, myLon, bcastLat, bcastLon);
+        bearing = GPS.bearing(myLat, myLon, bcastLat, bcastLon);
     }
     printObject.printf(
-        "B, %10ld, O, %3d, 255, %3u,     ,    , %s, %4.2lf\r\n",
+        "B, %10ld, O, %3d, 255, %3u,     ,    , %s, %4.2lf %3.1lf\r\n",
         timeStamp,
         from,
         headerId,
         gridLocator == NULL ? &nul : gridLocator,
-        miles
+        miles,
+        bearing
         );  
 }
 /*----------------------------------------------------*/
@@ -75,19 +78,22 @@ void CsvClass::signalReport(unsigned long timeStamp,uint8_t from, uint8_t to , u
     char nul = 0;
     double myLat,myLon,bcastLat,bcastLon;
     double miles = -1;
+    double bearing = -1;
     if (gridLocator) {
         GPS.maidenheadGridToLatLon(gridLocator,&bcastLat,&bcastLon);
         GPS.getLastLatLon(&myLat, &myLon);
         miles = GPS.distance(myLat, myLon, bcastLat, bcastLon);
+        bearing = GPS.bearing(myLat, myLon, bcastLat, bcastLon);
     }
     printObject.printf(
-        "R, %10ld, R, %3d, %3d, %3u,     ,    , %s, %4.2lf\r\n",
+        "R, %10ld, R, %3d, %3d, %3u,     ,    , %s, %4.2lf %3.2lf\r\n",
         timeStamp,
         from,
         to,
         headerId,
         gridLocator == NULL ? &nul : gridLocator,
-        miles
+        miles,
+        bearing
         );  
 }
 /*----------------------------------------------------*/
@@ -95,7 +101,7 @@ void CsvClass::data(CSVDATAPTR data)
 {
     CHECKOUTPUT;
     printObject.printf(
-        "D, %10ld, %c, %3d, %3d, %3u, %4.0f, %3.0f, %s, %4.2lf\r\n",
+        "D, %10ld, %c, %3d, %3d, %3u, %4.0f, %3.0f, %s, %4.2lf, %3.1lf\r\n",
         data->timeStamp,
         data->recvType,
         data->from,
@@ -104,7 +110,8 @@ void CsvClass::data(CSVDATAPTR data)
         data->rssi,
         data->snr,
         data->gridLocator,
-        data->miles
+        data->miles,
+        data->bearing
     );
 }
 /*----------------------------------------------------*/
@@ -130,6 +137,7 @@ void CsvClass::data(unsigned long timeStamp,char recvType, int from, int to, uin
         GPS.maidenheadGridToLatLon(gridLocator,&dataLat,&dataLon);
         GPS.getLastLatLon(&myLat, &myLon);
         datastruct.miles = GPS.distance(myLat, myLon, dataLat, dataLon);
+        datastruct.bearing = GPS.bearing(myLat, myLon, dataLat, dataLon);
     }
     else datastruct.miles = -1;
 

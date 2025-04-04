@@ -21,10 +21,11 @@ static HardwareSerial GPSSerial(2);    //use Hardware UART1 for GPS
 #endif
 
 GPSClass GPS;
-
+//-----------------------------------------------------------------------------
 //
 //Constructor 
 //
+//-----------------------------------------------------------------------------
 GPSClass::GPSClass()
 {
   rtcIsSet = false;
@@ -32,6 +33,7 @@ GPSClass::GPSClass()
   lastLon = 0;
   setup();
 }
+//-----------------------------------------------------------------------------
 //
 // GPSClass class FUNCTIONS
 //
@@ -44,7 +46,7 @@ volatile bool hsErrorOccurred = false;
 HardwareSerial *gpsSerialPtr;
 char rxBuffer[2000];
 bool firstReceive = true;
-
+//-----------------------------------------------------------------------------
 void hsErrorCb(hardwareSerial_error_t hsError) 
 {
   if ((hsError == UART_FRAME_ERROR) || (hsError == UART_PARITY_ERROR) || (hsError == UART_BREAK_ERROR)) {
@@ -57,7 +59,7 @@ void hsErrorCb(hardwareSerial_error_t hsError)
     log_d("Changing GPS BaudRate to %d", newBaudRate);
   }
 }
-
+//-----------------------------------------------------------------------------
 void onReceive()
 {
   int count;
@@ -81,7 +83,7 @@ void onReceive()
       GPS.gps.encode(rxBuffer[i]);
   }
 }
-
+//-----------------------------------------------------------------------------
 void GPSClass::GPSTask(void *pvParameter)
 {
   GPSClass* me = (GPSClass *)pvParameter;
@@ -136,7 +138,7 @@ void GPSClass::GPSTask(void *pvParameter)
   }
 }
 #endif //ARDUINO_ARCH_ESP32
-
+//-----------------------------------------------------------------------------
 void GPSClass::setup() {
   pinMode(GPS_ON_PIN, OUTPUT);  
   digitalWrite(GPS_ON_PIN, HIGH);//supply power to the GPS
@@ -151,7 +153,7 @@ void GPSClass::setup() {
   baudTestBufferLen = -1;
 }
 
-
+//-----------------------------------------------------------------------------
 void GPSClass::onoff(PowerState state) {
   //turn on or off the GPS
   // if the state is GPS_TX, the GPS will be turned on only when transmitting
@@ -165,12 +167,12 @@ void GPSClass::onoff(PowerState state) {
   }
   powerState = state;
 }
-
+//-----------------------------------------------------------------------------
 GPSClass::PowerState GPSClass::onoffState()
 {
   return powerState;
 }
-
+//-----------------------------------------------------------------------------
 void GPSClass::loop()
 {
 #if defined(ARDUINO_ARCH_ESP32) && TESTGPS_TASK == 0
@@ -198,7 +200,7 @@ void GPSClass::loop()
   }
 #endif
 }
-
+//-----------------------------------------------------------------------------
 unsigned long GPSClass::getTimeStamp()
 {
   if (rtcIsSet)
@@ -207,7 +209,7 @@ unsigned long GPSClass::getTimeStamp()
     return millis() / 1000;
 }
 
-
+//-----------------------------------------------------------------------------
 bool GPSClass::getLocation(double *lat, double *lng, double *alt, double *hdop) {
   bool gps_fix = false;
   unsigned long gps_start = millis();
@@ -256,6 +258,7 @@ bool GPSClass::getLocation(double *lat, double *lng, double *alt, double *hdop) 
   } 
   return gps_fix;
 }
+//-----------------------------------------------------------------------------
 #if 0
 char* GPSClass::latLonToMaidenhead(double latitude, double longitude, int precision = 6) {
     if (latitude < -90.0 || latitude > 90.0 || longitude < -180.0 || longitude > 180.0) {
@@ -307,12 +310,14 @@ char* GPSClass::latLonToMaidenhead(double latitude, double longitude, int precis
 extern "C" {
 #endif
 #endif //0
+//-----------------------------------------------------------------------------
 static char letterize(int x, bool upper) {
   if (upper)
     return (char) x + 65;
   else
     return (char) (x + (int)'a');
 }
+//-----------------------------------------------------------------------------
 char* GPSClass::latLonToMaidenhead(double lat, double lon, int size = 6) {
     static char locator[11];
     double LON_F[]={20,2.0,0.083333,0.008333,0.0003472083333333333};
@@ -337,7 +342,7 @@ char* GPSClass::latLonToMaidenhead(double lat, double lon, int size = 6) {
     locator[i*2]=0;
     return locator;
 }
-
+//-----------------------------------------------------------------------------
 static char* complete_mh(char* locator) {
     static char locator2[11]; // = "LL55LL55LL";
     strcpy(locator2,"LL55LL55LL");
@@ -372,22 +377,28 @@ static double mh2lat(char* locator) {
     precsquare = (locator[9] - 'A') / 5760.0;
     return field + square + subsquare + extsquare + precsquare - 90.0 - 1.33888; /* last is correction factor - bad math?? */
 }
-
+//-----------------------------------------------------------------------------
 void GPSClass::maidenheadGridToLatLon(char* grid,double *lat, double *lon) {
   *lat = mh2lat(complete_mh(grid));
   *lon = mh2lon(complete_mh(grid));
 }
-
+//-----------------------------------------------------------------------------
 const char *GPSClass::getPowerStateName(GPSClass::PowerState state){
   return powerStateNames[(int)state];
 }
-
+//-----------------------------------------------------------------------------
 static double degreesToRadians(double d)
 {
   return d * (PI / 180.0);
 }
-//
-//@brief returns distance in miles between 2 pairs of lat/lon data
+//-----------------------------------------------------------------------------
+/// @brief returns distance in miles between 2 pairs of lat/lon data
+/// @param lat1 
+/// @param lon1 
+/// @param lat2 
+/// @param lon2 
+/// @return distance between lat1/lon1 to lat2/lon2
+//-----------------------------------------------------------------------------
 double GPSClass::distance(double lat1, double lon1, double lat2, double lon2)
 {
   const double earthRadius = 6371.0; //in kilometers
@@ -405,7 +416,41 @@ double GPSClass::distance(double lat1, double lon1, double lat2, double lon2)
   double miles = distanceInKilometers / 1.6; //convert to miles
   return miles;
 }
+//-----------------------------------------------------------------------------
+/// @brief caculates bearing between two lat/lon pairs
+/// @param lat1 
+/// @param lon1 
+/// @param lat2 
+/// @param lon2 
+/// @return bearing from lat1/lon1 to lat2/lon2
+//-----------------------------------------------------------------------------
+double GPSClass::bearing(double lat1, double lon1, double lat2, double lon2)
+ {
+  // Convert latitude and longitude from degrees to radians
+  lat1 = degreesToRadians(lat1);
+  lon1 = degreesToRadians(lon1);
+  lat2 = degreesToRadians(lat2);
+  lon2 = degreesToRadians(lon2);
 
+  // Calculate the difference in longitudes
+  double delta_lon = lon2 - lon1;
+
+  // Calculate y and x components for the bearing formula
+  double y = sin(delta_lon) * cos(lat2);
+  double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(delta_lon);
+
+  // Calculate the bearing in radians
+  double bearing_rad = atan2(y, x);
+
+  // Convert bearing from radians to degrees
+  double bearing_deg = bearing_rad * 180.0 / PI;
+
+  // Normalize bearing to be within the range [0, 360)
+  bearing_deg = fmod(bearing_deg + 360.0, 360.0);
+
+  return bearing_deg;
+}
+//-----------------------------------------------------------------------------
 bool GPSClass::getLastLatLon(double *lat, double *lon)
 {
   bool retVal = true;
@@ -421,3 +466,5 @@ bool GPSClass::getLastLatLon(double *lat, double *lon)
   }
   return retVal;
 }
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
