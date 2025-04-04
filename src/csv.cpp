@@ -101,7 +101,7 @@ void CsvClass::data(CSVDATAPTR data)
 {
     CHECKOUTPUT;
     printObject.printf(
-        "D, %10ld, %c, %3d, %3d, %3u, %4.0f, %3.0f, %s, %4.2lf, %3.1lf\r\n",
+        "D, %10ld, %c, %3d, %3d, %3u, %4.0f, %3.0f, %10s, %4.2lf, %3.1lf\r\n",
         data->timeStamp,
         data->recvType,
         data->from,
