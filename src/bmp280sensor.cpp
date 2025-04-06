@@ -19,7 +19,7 @@
 */
 #include "main.h"
 #include <Wire.h>
-#include "SparkFunBME280.h"
+#include "Adafruit_BMP280.h"
 
 BMP280Sensor BMP280;
 
@@ -32,19 +32,19 @@ bool BMP280Sensor::setup()
 {
   //scanI2CBus();
   bIsPresent = false;
-  myBMP280.setI2CAddress(0x76);
-  bool devicePresentResult = myBMP280.beginI2C(Wire1);
-  log_v("DevicePresentResult = %d",devicePresentResult);
+  //myBMP280.setI2CAddress(0x76);
+  bool devicePresentResult = myBMP280.begin(0x76,0x58 /*BMP280*/); //myBMP280.beginI2C(Wire1);
+  if (!devicePresentResult)
+    devicePresentResult = myBMP280.begin(0x76,0x60 /*BME280*/);
+  uint8_t sensorID = myBMP280.sensorID(); //0x61 for BME680, 0x60 for BME280, 0x56, 0x57, 0x58 for BMP280
+  log_v("DevicePresentResult = %d ChipID= 0x%02X",devicePresentResult,sensorID);
   if (devicePresentResult) {
-    uint8_t  result = myBMP280.begin();
-    if ( result == 0x58) //0x58 for bmp 0x60 for bme device
-      log_v("BMP280 detected");
-    else if ( result == 0x60) //0x58 for bmp 0x60 for bme device
-      log_v("BME280 detected");
-    else {
-      log_d("No BMP280 or BME280 detected");
-      return false;
-    }
+    myBMP280.setSampling(Adafruit_BMP280::MODE_FORCED,     /* Operating Mode. */
+      Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+      Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+      Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+      Adafruit_BMP280::STANDBY_MS_500 /* Standby time. */
+      );    
     bIsPresent = true;
     return true;
   }
@@ -52,6 +52,23 @@ bool BMP280Sensor::setup()
     log_d("No BMP280 or BME280 detected");
     return false;
   }
+}
+
+float BMP280Sensor::readTempF()
+{ 
+  return (readTempC() * 9.0f/5.0f) + 32.0f;
+}
+
+float BMP280Sensor::readTempC()
+{
+  myBMP280.takeForcedMeasurement();
+  return myBMP280.readTemperature();
+}
+
+float BMP280Sensor::readPressurePa()
+{
+  myBMP280.takeForcedMeasurement();
+  return myBMP280.readPressure();
 }
 
 void scanI2CBus(Print& printDev, TwoWire& WIRE) {
