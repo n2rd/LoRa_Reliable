@@ -253,16 +253,31 @@ void p2pTaskDisplayCSV(void *pvParameter)
       if (strchr(PARMS.parameters.csvFilter,csvChar)) {
         if (!menu_active && (csvChar == 'B')) {
           display.printf(
-            "B %u-%03u R:%i D:%3.2f B:%3.0f\n",
+            //"B %u-%03u R:%i D:%3.2f B:%3.0f\n",
+            //"%u %idB %3.0fd %4.1fm\n",
+            "B%3u %5ddB %4.0fd %5.1fm\n",
             from,
-            headerId,
+            //headerId,
             rssi,
-            distance,
-            bearing
+            bearing,
+            distance
+            //bearing
             ); //Do it all in one
         }
         else if (!menu_active && ((csvChar == 'S') || (csvChar == 'P'))) {
-          display.printf("%c %u-%03u R:%i D:%3.2f B:%3.0f\n",csvChar, from, headerId, rssi, distance, bearing);
+          //display.printf("%c %u-%03u R:%i D:%3.2f B:%3.0f\n",csvChar, from, headerId, rssi, distance, bearing);
+          display.printf(
+            //"B %u-%03u R:%i D:%3.2f B:%3.0f\n",
+            //"%u %idB %3.0fd %4.1fm\n",
+            "%c%3u %5ddB %4.0fd %5.1fm\n",
+            csvChar,
+            from,
+            //headerId,
+            rssi,
+            bearing,
+            distance
+            //bearing
+            ); //Do it all in one
         }
         MUTEX_LOCK(csvOutputMutex);
         csv_serial.data(receivedMsg.timeStamp, csvChar, from, to, headerId, rssi, snr, gridLocator);
