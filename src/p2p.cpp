@@ -255,7 +255,7 @@ void p2pTaskDisplayCSV(void *pvParameter)
           display.printf(
             //"B %u-%03u R:%i D:%3.2f B:%3.0f\n",
             //"%u %idB %3.0fd %4.1fm\n",
-            "B%3u %5ddB %4.0fd %5.1fm\n",
+            "B%3u %5ddB %4.0fd %5.2fm\n",
             from,
             //headerId,
             rssi,
@@ -269,7 +269,7 @@ void p2pTaskDisplayCSV(void *pvParameter)
           display.printf(
             //"B %u-%03u R:%i D:%3.2f B:%3.0f\n",
             //"%u %idB %3.0fd %4.1fm\n",
-            "%c%3u %5ddB %4.0fd %5.1fm\n",
+            "%c%3u %5ddB %4.0fd %5.2fm\n",
             csvChar,
             from,
             //headerId,
