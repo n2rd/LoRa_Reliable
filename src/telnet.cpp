@@ -68,6 +68,7 @@ size_t Telnet::bufWrite(uint8_t*data, int len)
     return len;
 }
 /* ------------------------------------------------- */
+/* ------------------------------------------------- */
 void Telnet::bufDump()
 {
     MUTEX_LOCK(telnetBufferMutex);
@@ -76,6 +77,19 @@ void Telnet::bufDump()
     telnetBuffer.copyToArray(tempBuf);
     telnetBuffer.clear();
     ESPTelnet::write(tempBuf,size);
+    free(tempBuf);
+    MUTEX_UNLOCK(telnetBufferMutex);  
+}
+/* ------------------------------------------------- */
+/* ------------------------------------------------- */
+void Telnet::bufDump(Print& printDev)
+{
+    MUTEX_LOCK(telnetBufferMutex);
+    decltype(telnetBuffer)::index_t size = telnetBuffer.size();
+    uint8_t *tempBuf = static_cast<uint8_t*>(malloc(size));
+    telnetBuffer.copyToArray(tempBuf);
+    telnetBuffer.clear();
+    printDev.write(tempBuf,size);
     free(tempBuf);
     MUTEX_UNLOCK(telnetBufferMutex);  
 }
@@ -120,38 +134,17 @@ void Telnet::onTelnetConnectionAttempt(String ip)
 void Telnet::onTelnetInput(String str)
 {
     if (telnet.isLineModeSet()) {
-        // checks" for a certain command
         int result=cli_execute(str.c_str());
-        #if 0
-        if (str == "ping") {
-            telnet.println("> pong"); 
-            Serial.println("- Telnet: pong");
-        // disconnect the client
-        } else if (str == "bye") {
-            telnet.println("> disconnecting you...");
-            telnet.disconnectClient();
-        } else {
-            telnet.println(str);
-        }
-        #endif
     }
     else {
         telnet.print(str);
-        //Serial.print(str.length());
         Serial.print(str);
-        //Serial.flush(true);
     }
 }
 /* ------------------------------------------------- */
 CircularBuffer<char,1000> telDbgBuffer;
 
 void telnetDebugOutput(char c) {
-    //telnet.print(c);
-    //Not implemented yet ... gets called but we need to 
-    //put the output into a buffer and then let another
-    //thread pick it up and push it to the telnet stream
-    //since we are in an event_task we can't call telnet.print()
-
     if (telnet.isConnected() && (strchr(PARMS.parameters.csvFilter,'D') != NULL)) {
         if (!telDbgBuffer.isFull())
             telDbgBuffer.push(c);

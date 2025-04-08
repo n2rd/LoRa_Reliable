@@ -23,7 +23,7 @@ class Telnet : public ESPTelnet, public Print {
     size_t write(uint8_t ch);
     size_t write(const char* str);
     size_t write(uint8_t* bytes, unsigned int size);
-
+    void bufDump(Print& printDev);
   private:
     static void errorMsg(String error, bool restart = true);
     static void onTelnetConnect(String ip);
