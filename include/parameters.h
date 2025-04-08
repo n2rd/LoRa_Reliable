@@ -30,6 +30,12 @@
 #define MENU_ARRAY_SIZE 6  //used for power, modulation, settings menus
 
 //DEFAULT_XXX values. These are overrideable in myConfig.h by defining them
+#ifndef DEFAULT_PARAMETERSVERSION
+#define DEFAULT_PARAMETERSVERSION 0x0001;
+#endif
+#ifndef DEFAULT_LAST_PRODUCT_VERSION
+#define DEFAULT_LAST_PRODUCT_VERSION PRODUCT_VERSION
+#endif
 #ifndef DEFAULT_CALLSIGN
 #define DEFAULT_CALLSIGN    "----"
 #endif
@@ -103,6 +109,8 @@
 
 // organized into a struct
 typedef struct ParametersStruct {
+    uint16_t parametersVersion; //version of this structure.
+    char     lastProductVersion[10]; //capture product version when written to nvs ram
     char     callsign[10];    // (10B) 9 char max
     uint8_t  frequency_index;  // (1B) index 0 to 103 freq = 902.125 + 0.25 * index in MHz
     uint8_t  gps_state;     // (1B) 0 off, 1 on at tx, 2 on all the time
@@ -137,14 +145,6 @@ class ParametersClass {
     float frequency_index_to_frequency(uint8_t index);
     uint8_t frequency_to_frequency_index(float frequency); 
     bool set_frequency();  //based on frequency_index
-    //bool set_callsign();
-    //bool set_gps_state();
-    //bool set_tx_lock();
-    //bool set_short_pause();
-    //bool set_lat_lon();
-    //bool set_grid4();
-    //bool set_grid5();
-    //bool set_grid6();
     bool set_power();
     bool set_modulation();
     void set_address();
@@ -153,6 +153,8 @@ class ParametersClass {
     PARAMETERS parameters; //parameters for the radio
 
     struct keyStruct {
+      const char* parametersVersion = "ParmsVersion";
+      const char* lastProductVersion = "lastProdVersn";
       const char* callsign = "callsign";
       const char* frequency_index = "frequency_index";
       const char* gps_state = "gps_state";

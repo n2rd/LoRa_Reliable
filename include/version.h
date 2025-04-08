@@ -3,6 +3,9 @@
 //Produt Name
 #define PRODUCT_NAME "Lora_RKR"
 //version
+#ifndef PRODUCT_VERSION
+#define PRODUCT_VERSION "0.0.0"
+#endif
 #define BUILD_DATE __DATE__
 #define BUILD_TIME __TIME__
 //#define VERSION_DATE "12:20 03-4-2025" //Old method

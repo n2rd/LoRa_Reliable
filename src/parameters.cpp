@@ -43,6 +43,8 @@ void ParametersClass::init() {
             //Failed again
             log_e("nvs_flash_init_partition failed. Using defaults");
             //use defaults here
+            parameters.parametersVersion = DEFAULT_PARAMETERSVERSION;
+            strcpy(parameters.lastProductVersion,DEFAULT_LAST_PRODUCT_VERSION);
             strcpy(parameters.callsign, DEFAULT_CALLSIGN);
             parameters.frequency_index = DEFAULT_FREQUENCY_INDEX;
             parameters.gps_state = DEFAULT_GPS_STATE;
@@ -68,6 +70,20 @@ void ParametersClass::init() {
             return;
       }
       log_e("nvs_flash_init_partition Succeeded");
+  }
+
+  if (preferences.isKey(Key.parametersVersion)) {
+      // Preferences exist, read from it and put into mypreferences
+      parameters.parametersVersion = preferences.getUInt(Key.parametersVersion);
+  } else { //use defaults and write to nvram
+      parameters.parametersVersion = DEFAULT_PARAMETERSVERSION;
+      preferences.putUInt(Key.parametersVersion, parameters.parametersVersion);
+  }
+  if (preferences.isKey(Key.lastProductVersion)) {
+      strcpy(parameters.lastProductVersion, preferences.getString(Key.lastProductVersion).c_str());
+  } else { //use defaults and write to nvram
+      strcpy(parameters.lastProductVersion, DEFAULT_LAST_PRODUCT_VERSION);
+      preferences.putString(Key.lastProductVersion, parameters.lastProductVersion);
   }
   if (preferences.isKey(Key.callsign)) {
         strcpy(parameters.callsign, preferences.getString(Key.callsign).c_str());
@@ -240,6 +256,12 @@ void ParametersClass::update() {
     }
     //update the parameters in the preferences
     //write only new values as writing to the preferences is slow
+    if (preferences.getUInt(Key.parametersVersion) != parameters.parametersVersion) {
+      preferences.putUInt(Key.parametersVersion, parameters.parametersVersion);
+    }
+    if (strcmp(preferences.getString(Key.lastProductVersion).c_str(), parameters.lastProductVersion) != 0) {
+      preferences.putString(Key.lastProductVersion, parameters.lastProductVersion);
+    }
     if (strcmp(preferences.getString(Key.callsign).c_str(), parameters.callsign) != 0) {
         preferences.putString(Key.callsign, parameters.callsign);
     }
