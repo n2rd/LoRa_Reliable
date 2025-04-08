@@ -436,7 +436,14 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
         }
 
        break;
-
+    case '^':
+        if (!parameter_query) {
+            ps_all.printf("Rebooting in 3 seconds ....");
+            delay(3000);
+            ESP.restart();
+            delay(10000);
+        }
+        break;
 //      Parametrics Display (no user input)       
     case '1':
         ps_st.printf("OK:Parametrics follow for connected devices\r\n");
@@ -643,6 +650,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
     //case '?':
         ps_st.printf("WiFi credentials                 /@<ssid>,<passcode>   Note: case\r\n");
         ps_st.printf("                                   sensitive and spaces not permitted!\r\n");
+        ps_st.printf("Reboot the uinit                 /^\r\n");
         ps_st.printf("Display parametrics              /1\r\n");
         ps_st.printf("Set CSV Filtering                /2 <string>\r\n");
         ps_st.printf("                                    String is a combination of the letters B, O, R & S\r\n");
@@ -829,7 +837,7 @@ network stacks must still be prepared to handle arbitrary values in the SSID fie
 
 //      Version---------------------------------------------------------
         case 'V':
-            ps_st.printf("OK: Version: %s\r\nOK: Build date: %s %s\r\n", "TBD", VERSION_DATE, VERSION_TIME); 
+            ps_st.printf("OK: Version: %s\r\nOK: Build date: %s %s\r\n", PRODUCT_VERSION, VERSION_DATE, VERSION_TIME); 
             break;
 
 //      Write to NVRAM---------------------------------------------------------
