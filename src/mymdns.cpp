@@ -2,7 +2,7 @@
 #include "mymdns.h"
 #include <ESPmDNS.h>
 
-void mdns_start(bool bAnnounceWhoIAM)
+void mdns_start()
 {
     #if ((USE_WM5500_ETHERNET > 0) || (USE_WIFI > 0))
         //Do setup for mDNS advertising --- PRODUCT_NAME-<radio-address>.local
@@ -18,8 +18,6 @@ void mdns_start(bool bAnnounceWhoIAM)
             MDNS.addService("telnet", "tcp", 23);
         }
         log_i("mDNS responder started");
-        if (bAnnounceWhoIAM)
-            ps_all.printf("I am %s\r\n",buffer);
     #endif  
 }
 
