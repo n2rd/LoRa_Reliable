@@ -20,4 +20,11 @@ void milliToDhms(char* returnString, int millis) {
     return;
 }
 
-
+char* whoIam()
+{
+    static char buffer[16];
+    int sz = sprintf(buffer,"%s-%d",PRODUCT_NAME,PARMS.parameters.address);
+    if (sz >= sizeof(buffer))
+        log_e("BUFFER OVERRUN");  
+    return buffer;  
+}
