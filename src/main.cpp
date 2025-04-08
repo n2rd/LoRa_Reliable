@@ -77,6 +77,7 @@ double lastLon = 0;
 void initializeNetwork() {
   #if USE_WM5500_ETHERNET > 0
     WM5500_Setup();
+    mdns_start();
   #endif
   #if USE_WIFI > 0
     WIFI.init();
@@ -113,19 +114,22 @@ void setup()
   display.setContrast(255);
   display.flipScreenVertically();
   display.displayOn();
-  display.setFont(ArialMT_Plain_16);
+  display.setFont(ArialMT_Plain_24);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)-16 /* font height */, PRODUCT_NAME);
-  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)*2-16 /* font height */, VERSION);
+  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)-20 /* font height */, PRODUCT_NAME);
+  display.setFont(ArialMT_Plain_16);
+  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)*2-12 /* font height */,PRODUCT_VERSION);
+  display.setFont(ArialMT_Plain_10);
+  display.drawString(display.getWidth() / 2, (display.getHeight() / 3)*3-14 /* font height */,VERSION_DATE " " VERSION_TIME);
   display.display();
-  delay(3000);
+  delay(5000);
   display.setFont(ArialMT_Plain_10);
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.cls();
 
   initializeNetwork();
 
-  mdns_start(true);
+  ps_all.printf("I am %s\r\n",whoIam());
 
   //start the radio
   if (!manager.init()) 
@@ -337,7 +341,7 @@ void check_button()
       #else
         ps_all.printf("BlueTooth OFF\r\n");
       #endif
-      mdns_start(true);
+      mdns_start();
     }
     else {
       //we are switching from Wifi or nothing to bluettooth
