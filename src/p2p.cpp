@@ -47,7 +47,7 @@ void p2pDumpStats(Print& printDev)
   SimpleVector<int> keys = stats.keys();
   for (int address : keys) {
     ReceivedStats rs = stats.getElement(address);
-    printDev.printf("%3d  %4d  %3d %3.2lf %3.2lf \r\n",rs.address, rs.count, rs.minRSSI, rs.meanRSSI, rs.distance);
+    printDev.printf("%3d  %4d  %3d   %3.2lf %3.2lf \r\n",rs.address, rs.count, rs.minRSSI, rs.meanRSSI, rs.distance);
   }
 }
 
