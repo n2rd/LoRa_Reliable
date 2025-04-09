@@ -951,7 +951,7 @@ int cli_execute(const char* command_arg) {
     
         char command[50],command_original_case[50];
         char command_query[4];
-        char command_codes[]={'1', '2', '@', '3', '6', 'A', 'B', 'C', 'E', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
+        char command_codes[]={'^', '1', '2', '@', '3', '6', 'A', 'B', 'C', 'E', 'F', 'G', 'I', 'L', 'M', 'P', 'R', 'T', 'U', 'V', 'X', 'Y'};
     
         strcpy(command, command_arg);
     
